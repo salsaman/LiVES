@@ -1452,6 +1452,7 @@ boolean lives_startup(livespointer data) {
 
   splash_msg("Initialising timing data metrics...", SPLASH_LEVEL_PREP);
   glob_timing_init();
+  show_timing_subsys();
   capable->features_ready |= FEATURE_TIMING;
 
   d_print("Initialiding timing metrics. Will gather information from the following subsystems:\n");
@@ -1720,10 +1721,8 @@ boolean lives_startup(livespointer data) {
 
         if (prefs->startup_phase || prefs->startup_phase > 1)
           startup_message_nonfatal_dismissable(msg, WARN_MASK_CHECK_PLUGINS);
-
       }
     }
-    // *INDENT-ON*
   } else {
     // capture mode
     mainw->foreign_key = atoi(zargv[2]);

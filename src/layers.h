@@ -241,8 +241,8 @@ weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *, boolean isfloat);
 weed_layer_t *weed_layer_set_audio_src(weed_layer_t *, int src_type);
 int weed_layer_get_audio_src(weed_layer_t *);
 
-weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *, double seekto);
-double weed_layer_get_audio_seek(weed_layer_t *);
+weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *, int64_t pos);
+int64_t weed_layer_get_audio_seek(weed_layer_t *);
 
 weed_layer_t *weed_layer_set_audio_pos(weed_layer_t *, int64_t pos);
 int64_t weed_layer_get_audio_pos(weed_layer_t *);

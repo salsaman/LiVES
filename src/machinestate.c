@@ -1191,77 +1191,6 @@ LIVES_GLOBAL_INLINE uint64_t fast_hash64(const char *key) {
   return hash64;
 }
 
-///////////////// to do - move to performance manager ////
-
-/// estimate the machine load
-static boolean inited = FALSE;
-static int struggling = 0;
-static tab_data_t *force = NULL;
-
-void reset_effort(void) {
-  if (force) {
-    free_tabdata(force);
-    force = NULL;
-  }
-  prefs->pb_quality = future_prefs->pb_quality;
-  inited = TRUE;
-  struggling = 0;
-  if ((mainw->is_rendering || (mainw->multitrack
-                               && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
-    mainw->effort = -EFFORT_RANGE_MAX;
-  else {
-    if (mainw->effort > EFFORT_LIMIT_MED) mainw->effort = EFFORT_LIMIT_MED;
-    if (mainw->effort < -EFFORT_LIMIT_MED) mainw->effort = -EFFORT_LIMIT_MED;
-  }
-}
-
-
-void update_effort(double impulse) {
-  short pb_quality = prefs->pb_quality;
-
-  if (LIVES_IS_RENDERING) {
-    mainw->effort = -EFFORT_RANGE_MAX;
-    prefs->pb_quality = PB_QUALITY_HIGH;
-    return;
-  }
-
-  if (!force) force = init_tab_data(1, EFFORT_RANGE_MAX >> 2);
-
-  tabdata_update(force, &impulse);
-  mainw->effort = (int)force->tots[0];
-
-  //g_print("eff is %d\n", mainw->effort);
-
-  if (mainw->effort > EFFORT_RANGE_MAX) mainw->effort = EFFORT_RANGE_MAX;
-  if (mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
-
-  if (mainw->effort <= 0) struggling--;
-  else struggling++;
-
-  //g_print("strf is %d\n", struggling);
-
-  if (struggling > EFFORT_LIMIT_MED) struggling = EFFORT_LIMIT_MED;
-  if (struggling < -EFFORT_LIMIT_MED) struggling = -EFFORT_LIMIT_MED;
-
-  if (mainw->effort > 0) {
-    if (struggling >= EFFORT_LIMIT_MED && mainw->effort >= EFFORT_LIMIT_MED)
-      pb_quality = PB_QUALITY_LOW;
-    else if (struggling > 0 && pb_quality == PB_QUALITY_HIGH)
-      pb_quality = PB_QUALITY_MED;
-  }
-
-  if (mainw->effort < 0) {
-    if (struggling <= -EFFORT_LIMIT_MED && mainw->effort <= EFFORT_LIMIT_MED)
-      pb_quality = PB_QUALITY_HIGH;
-    else if (struggling > 0 && pb_quality == PB_QUALITY_LOW)
-      pb_quality = PB_QUALITY_MED;
-  }
-
-  if (pb_quality != future_prefs->pb_quality)
-    future_prefs->pb_quality = pb_quality;
-  //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
-}
-
 
 char *grep_in_cmd(const char *cmd, int mstart, int npieces, const char *mphrase, int ridx, int rlen, boolean partial) {
   char **lines, **words, **mwords;
@@ -3166,9 +3095,6 @@ boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
   fclose(file);
   return FALSE;
 }
-
-#define N_CPU_MEAS 64
-#define CPU_MEAS_THRESH 1000000
 
 static cpuloadvals_t *cpu_stats = NULL;
 

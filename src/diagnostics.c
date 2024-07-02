@@ -820,14 +820,11 @@ LIVES_GLOBAL_INLINE double get_inst_fps(boolean get_msg) {
   boolean refresh = TRUE;
   if (mainw->fps_mini_ticks == last_mini_ticks) {
     double tdelta = (currtime - last_curr_time);
-    g_print("play--- 112221 %f\n", tdelta);
     if (tdelta > STATS_MSEC / 1000.) {
       mainw->inst_fps = inst_fps = (double)(mainw->fps_mini_measure - last_mm) / tdelta;
-      g_print("!!!!!!!!!!!!!play--- uuuu112221 %f\n", (double)(mainw->fps_mini_measure - last_mm));
     } else refresh = FALSE;
   } else last_mini_ticks = mainw->fps_mini_ticks;
   if (refresh) {
-    g_print("play--- 111zzzzn");
     last_mm = mainw->fps_mini_measure;
     last_curr_time = currtime;
   }
@@ -1289,13 +1286,13 @@ char *get_stats_msg(boolean calc_only) {
     fgpal = get_palette_name_for_clip(mainw->current_file);
 
     msg = lives_strdup_printf((tmp3 = _("%sFrame %d / %d / %d, fps %.3f (target: %.3f)\n"
-                                        "CPU load %.2f %%\n"
+                                        "CPU load %.2f %% (threshold %.2f %%)\n"
                                         "Effort: %d / %d, quality: %d, %s (%s)\n%s\n"
                                         "Fg clip: %d X %d, palette: %s\n%s\n%s")),
                               audmsg ? audmsg : "",
                               sfile->frameno, sfile->last_req_frame, sfile->frames,
                               inst_fps * sig(sfile->pb_fps), sfile->pb_fps,
-                              load, mainw->effort, EFFORT_RANGE_MAX,
+                              load, glob_timing->player.cpu_load_thresh, mainw->effort, EFFORT_RANGE_MAX,
                               prefs->pb_quality,
                               tmp = lives_strdup(prefs->pb_quality == PB_QUALITY_LOW ? _("Low")
                                     : prefs->pb_quality == PB_QUALITY_MED ? _("Med") : _("High")),

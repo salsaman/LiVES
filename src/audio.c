@@ -45,6 +45,13 @@ lives_result_t sw_resample(void **in_data, int in_samps_per_chan, int in_achans,
   struct SwrContext *swr_ctx = swr_alloc();
   if (!swr_ctx) return LIVES_RESULT_ERROR;
 
+  g_print("SWR convert %p %d %d %d %d %p %d %d %d %d\n",
+	  in_data, in_samps_per_chan, in_achans, in_arate, infmt,
+	  out_data, out_samps_per_chan, out_achans, out_arate, outfmt);
+  
+  g_print("SWR convert %p %p %p   %p %p %p\n",
+	  in_data, in_data[0], in_data[1], out_data, out_data[0], out_data[1]);
+
   swr_ctx = swr_alloc_set_opts(swr_ctx, out_achans == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO,
                                outfmt, out_arate, in_achans == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO,
                                infmt, in_arate, 0, 0);
@@ -955,7 +962,8 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
     for (int i = 0; i < chans; i++) {
       if (volx != ovolx || coffs != lcoffs) {
         valf[i] = float_buffer[i][interleaved ? (coffs * chans) : coffs];
-        if (isnan(valf[i]) || valf[i] > HARD_CLIP_LIM ||  valf[i] < -HARD_CLIP_LIM) continue;
+
+        if (isnan(valf[i]) || valf[i] > HARD_CLIP_LIM || valf[i] < -HARD_CLIP_LIM) continue;
 
         valf[i] *= volx;
         fval = fabsf(valf[i]);
@@ -997,7 +1005,7 @@ int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsam
     lcoffs = coffs;
 
     if (scale < 0.) coffs = (off_t)((coffs_d += scale) - .4999);
-    else coffs = (off_t)((coffs_d += scale) + .4999);
+    else coffs = (off_t)((coffs_d += scale));// + .4999);
   }
 
   coffs_d -= (double)coffs;
@@ -3406,23 +3414,304 @@ static lives_proc_thread_t athread;
 static pthread_cond_t cond  = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
+//static void fill_layer(weed_layer_t *layer) {
+  // layer should have an audio_src
+  // if it is a file, we calculate nsamples from arate
+  // read in as much as we can, then resample from in vals to out vals
 
-// audio_cacher
-// - run as proc_thread, as soon as it starts in auto pauses
-// and waits for resume request or cancel request
-// the goal is to keep buffers for each layer topped up
-// and also convert / duplicate the buffers to 32bit float
-// at the sample rate / channels of the player
-//
-// each layer has an associated buffered filereader
-// thus we just read sufficient bytes to keep topped up
-//
-// the buffers may also have float versions
-// so there are 2 operations - preload and pull
-// preload - set file uris, seek points, direction, rate, chans, asamps, aendian, asigned
-// buffers will be filled to a preload time, converted to float,
-// pull then just triggers reload
+  // if we already have audio, if amt remaining < threshold, shift down and top up
+  //
+  //
+  // we use a ring buffer here
+  // if we are reading forward, we have the following
+  //
+  // <rev space > offs <fwd space>
+  //     0.25            0.75
+  // initially
+  //
+  // <rev space> offs <fwd space>
+  // 0.5< x <0.75    0.5> x > 0.25
+  //  top up !
+  // this is buffer 0
+  //
+  // if vel < 0., then fwd space, rev space are swapped.
+  //
+  // this is handled by the file buffering system, as well as reversing the buffer
+  // if playback direction changes, we do nothing - the inversion will happen when read.
+  // however we reverse for buffer 1, first we ensure fwd remaining >= 0.25,
+  // then we copy fwd remaining ->rev space, limited to .25, then copy rev space reversed, then top up
 
+  // in free playback, we read and store at the input arate, converting only achans, asamps. afloat, aendian, asigned
+  // since velocity is instantaneous, we resample at output time
+  //
+  // We read in based on time values = nseconds * arate * achans * (asamps >> 3)
+  // supposing max time was 10 sec, arate 96000, achans = 2, asamps = 32, size of buffer is 96000 * 10 * 2 * 4 == 7.68 MB
+  // we double this for 2 ring buffers - 15.35MB,
+  // if we wanted to limit audio cache space to 100MB, we could cache up to 6 layers. For 192K, 3 layers.
+  //
+  // Thus we limit arate to 2 X player rate.
+  //
+  // layer will have value to determine what happens when we reach eof fwd or 0 backward
+  // for ping pong, either we seek to other end and continue or we invert velocity
+  // when this happens we set a value - the offset where this first happens.
+  // If the user enables or disables ping pong, we set buffer 0 invalid from this point, and in buffer 1, re read the part from
+  // there onwards.
+  //
+  // copy offs.
+  // copy rev space -> 0.25 in buffer1, offs, copy remainder of fwd space, top up fwd space
+  //
+  // thus - each buffer 0, 1 has reversed, first eof, invalid from, ping pong,
+  // the associated layer has -  arate, asamps, etc
+  // the layer has a buffered reader in ringbuff mode
+  // we have a mutex which the player locks, and a call to swap buffers.
+  // we actually have 3 buffers 0 - in use by player; 1 - buffer to be swapped in; 2 - new data to be swapped into 1
+  // the swap call locks 1, and swaps it into 0, unlocks 1, update waits for 1 to be unlocked, locks 1, swaps in 2.
+  // buffers have reversed flag, dir change is applied to buffer 2
+  // altering ping pong sets invalid from in buffer 0 and buffer 1
+  //
+
+/* #define maxtime 60. */
+/* #define mintime 20. */
+
+/*   ____FUNC_ENTRY____(fill_layer, "", "P"); */
+
+/*   int fd = weed_get_int_value(layer, "abuff_id", NULL); */
+/*   int clip = lives_layer_get_clip(layer); */
+/*   lives_clip_t *sfile = RETURN_VALID_CLIP(clip); */
+/*   if (!sfile) */
+/*     ____FUNC_EXIT____; */
+  
+/*   int in_arate = sfile->arate; */
+/*   int in_inter = TRUE; */
+/*   int in_achans = sfile->achans; */
+/*   int in_asamps = sfile->asampsize; */
+/*   int in_float = FALSE; */
+
+/*   int out_nchans = weed_layer_get_naudchans(layer); */
+/*   int out_arate = weed_layer_get_audio_rate(layer); */
+
+/*   int out_asamps = weed_layer_get_audio_asamps(layer); */
+/*   int out_inter = weed_layer_get_audio_interleaved(layer); */
+
+/*   static size_t bufsz = 0, minbufsz; */
+
+/*   if (!bufsz) { */
+/*     bufsz = (size_t)(maxtime * out_arate) * (out_inter ? out_nchans : 1) * (out_asamps >> 3); */
+/*     minbufsz = (size_t)(mintime * out_arate) * (out_inter ? out_nchans : 1) * (out_asamps >> 3); */
+/*     if (minbufsz < bufsz >> 1) minbufsz = bufsz >> 1; */
+/*   } */
+
+/*   // we have 3 buffsizes - bufsz - configured size */
+/*   // - real_bb_size - buffsize + rounding */
+/*   // new_bb_size - size reserved adter resampling */
+
+/*   // a) calc bytes needed to fill to bufsz - if > minbufsz, exit */
+/*   // b) calc in bytes needed */
+/*   // c) round in bytes to quanta */
+/*   // d) recalc out bytes, this becomes new_bb_size */
+/*   // e) alloc inbuff(s) size == in_bytes */
+/*   // f) read from src -> inbuffs */
+/*   // g) alloc tmpbuff - size == new_bb_size */
+/*   // h) copy/shift from bbuff to tmpbuff - size real_bb_size - bb_offs + rev */
+/*   // i) resample from inbuffs to tmpbuf, append after, up to new_bb_size */
+/*   // j) lock mutex, swap in tmpbuf for bb_buff */
+/*   // k) unlock mutex, free old bb_buffs */
+/*   // l) real_bb_size = new_bb_size */
+
+/*   void **bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL); */
+/*   int64_t bb_offs = weed_get_int64_value(layer, "bb_offs", NULL); */
+/*   int64_t real_bb_size = weed_get_int64_value(layer, "real_bb_size", NULL), new_bb_size; */
+
+/*   size_t needed = 0; */
+/*   size_t used = 0, unused; */
+/*   size_t mv = real_bb_size; */
+
+/*   int in_smps, out_smps; */
+/*   size_t in_bytes, out_bytes; */
+  
+/*   if (fd <= 0) { */
+/*     int64_t xseek = weed_layer_get_audio_seek(layer); */
+/*     char *filename = lives_get_audio_file_name(clip); */
+/*     fd = lives_open_buffered_rdonly(filename); */
+/*     lives_free(filename); */
+/*     // tell the file reader to fill to MIN(remainder in  buffer,  65536) */
+/*     lives_buffered_rdonly_set_quanta(fd, 65536); */
+/*     weed_set_int_value(layer, "abuff_id", fd); */
+/*     lives_lseek_buffered_rdonly_absolute(fd, xseek); */
+/*     if (weed_layer_get_audio_vel(layer) < 1.0) */
+/*       lives_buffered_rdonly_set_reversed(fd, TRUE); */
+/*     else lives_buffered_rdonly_set_reversed(fd, FALSE); */
+/*   } */
+
+/*   if (!real_bb_size) real_bb_size = bufsz; */
+
+/*   if (!bb_buff) { */
+/*     bb_buff = LIVES_CALLOC_SIZEOF(void *, out_nchans); */
+/*     bb_offs = 0; */
+/*   } */
+/*   if (!bb_buff[0]) needed = bufsz >> 3; */
+/*   else { */
+/*     used = bb_offs; // eg. 0.7 */
+/*     unused = real_bb_size - used; // eg. 0.3 */
+/*     if (unused > minbufsz) { */
+/*       if (bb_buff) lives_free(bb_buff); */
+/*       return; */
+/*     } */
+/*     mv = used - (bufsz >> 2);  // .45 */
+/*     used = (bufsz >> 2); // 0.25 */
+/*     needed = bufsz - used - unused; */
+/*     // 0.7 - 0.25 = 0.45 */
+/*   } */
+
+/*   if (needed) { */
+/*     void **tmpbufs; */
+/*     void **inbuffs; */
+/*     //void **xtmp; */
+/*     void **xbufs; */
+
+/*     // calc in bytes needed */
+
+/*     //if (out_inter) needed /= out_nchans; */
+/*     out_smps = needed / (out_asamps >> 3); */
+
+/* #if HAVE_SWRESAMPLE */
+/*     enum AVSampleFormat outfmt, infmt; */
+/*     in_smps = get_swr_fmts(out_smps, -out_asamps, out_arate, out_inter, in_float ? -in_asamps : in_asamps, */
+/*                            in_arate, in_inter, &infmt, &outfmt, FALSE); */
+/* #else */
+/* #endif */
+
+/*     in_bytes = in_smps * (in_asamps >> 3); */
+/*     if (in_inter) in_bytes *= in_achans; */
+
+/*     // round in_bytes up to 65536 */
+/*     in_bytes = ((in_bytes + 65535) >> 16) << 16; */
+/*     in_smps = in_bytes / (in_asamps >> 3) / in_achans; */
+/*     // */
+/* #if HAVE_SWRESAMPLE */
+/*     out_smps = get_swr_fmts(in_smps, in_asamps, in_arate, in_inter, out_asamps, */
+/*                             out_arate, out_inter, NULL, NULL, TRUE); */
+/*     int zin_smps = get_swr_fmts(out_smps, out_asamps, out_arate, out_inter, in_asamps, */
+/* 				in_arate, in_inter, NULL, NULL, FALSE); */
+/*     LIVES_ASSERT(zin_smps == in_smps); */
+
+/* #endif */
+/*     in_bytes = in_smps * (in_asamps >> 3); */
+
+/*     ////// */
+/*     if (in_inter) { */
+/*       ssize_t rem_bytes = in_bytes, in_offs = 0; */
+/*       inbuffs = LIVES_CALLOC_SIZEOF(void *, in_achans); */
+/*       inbuffs[0] = lives_malloc(in_bytes + 128); */
+/*       do { */
+/* 	ssize_t read_bytes = lives_read_buffered(fd, inbuffs[0] + in_offs, rem_bytes, TRUE); */
+/*         if (read_bytes < 0) { */
+/*           // throw err */
+
+/*         } */
+/*         rem_bytes -= read_bytes; */
+/*         in_offs += read_bytes; */
+/*         // check for EOF and set direction or reseek */
+/*         if (0) { */
+/*           // eof */
+
+/*         } */
+/*       } while (rem_bytes >= 65536); */
+
+/*       in_bytes -= rem_bytes; */
+/*       in_smps = in_bytes / (in_asamps >> 3) / in_achans; */
+
+/* #if HAVE_SWRESAMPLE */
+/*       out_smps = get_swr_fmts(in_smps, in_asamps, in_arate, in_inter, out_asamps, */
+/*                               out_arate, out_inter, NULL, NULL, TRUE); */
+/* #endif */
+
+/*       out_bytes = out_smps * (out_asamps >> 3); */
+
+/*       if (out_inter) out_bytes *= out_nchans; */
+/*       new_bb_size = out_bytes + real_bb_size - mv; */
+
+/*       ////////////////////////////////////////////////// */
+/*       xbufs = LIVES_CALLOC_SIZEOF(void *, in_achans); */
+/*       tmpbufs = LIVES_CALLOC_SIZEOF(void *, in_achans); */
+
+/*       for (int i = 0; i < in_achans; i++) { */
+/* 	tmpbufs[i] = lives_malloc(new_bb_size + 128); */
+/* 	if (!bb_buff[i]) xbufs[i] = tmpbufs[i]; */
+/* 	else { */
+/* 	  lives_memcpy(tmpbufs[i], bb_buff[i] + mv, real_bb_size - mv); */
+/* 	  xbufs[i] = tmpbufs[i] + real_bb_size - mv; */
+/* 	} */
+/*       } */
+/*     } */
+
+
+/*     ///////////////////////////////////////////////// */
+
+/*     //g_print("reading in %ld %ld %d %ld (%ld) bytes\n", needed, out_bytes, in_smps, in_bytes, read_bytes); */
+
+/*     // lock buffer */
+
+/*     if (in_asamps != out_asamps || in_arate != out_arate || out_inter || in_achans != out_nchans) { */
+
+/* #if HAVE_SWRESAMPLE */
+/*       sw_resample(inbuffs, in_smps, in_achans, in_arate, infmt, */
+/* 		  xbufs, out_smps, out_nchans, out_arate, outfmt); */
+
+/*       // g_print("RES %p, %d, %d, %d, %d ==  %d, %p %d %d %d %d ==  %d\n", */
+/*       //         inbuffs, in_smps, in_achans, in_arate, infmt, AV_SAMPLE_FMT_S16, */
+/*       //         xbufs, out_smps, out_nchans, out_arate, outfmt, AV_SAMPLE_FMT_FLTP); */
+/* #else */
+
+/* #endif */
+/*     } else lives_memcpy(tmpbufs[0], inbuffs[0], out_bytes); */
+
+/*     for (int i = 0; i < in_achans; i++)  { */
+/*       if (inbuffs[i]) lives_free(inbuffs[i]); */
+/*       //if (!bb_buff[i])bb_buff[i] = tmpbufs[i]; */
+/*     } */
+
+/*     int64_t delta; */
+/*     int64_t old_bb_offs; */
+/*     for (int i = 1; i < out_nchans; i++) { */
+/*       if (bb_buff[i]) lives_free(bb_buff[i]); */
+/*       bb_buff[i] = tmpbufs[i]; */
+/*     } */
+/*     old_bb_offs = bb_offs; */
+
+/*     pthread_mutex_t *bufmutex = */
+/*       (pthread_mutex_t *)weed_get_voidptr_value(layer, "bufmutex", NULL); */
+/*     if (!bufmutex) { */
+/*       pthread_mutexattr_t mattr; */
+/*       pthread_mutexattr_init(&mattr); */
+/*       pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED); */
+/*       bufmutex = LIVES_CALLOC_SIZEOF(pthread_mutex_t, 1); */
+/*       pthread_mutex_init(bufmutex, &mattr); */
+/*       weed_set_voidptr_value(layer, "bufmutex", bufmutex); */
+/*     } */
+    
+/*     ///////////////////// */
+/*     pthread_mutex_lock(bufmutex); */
+/*     /////////////////////////////// */
+
+/*     bb_offs = weed_get_int64_value(layer, "bb_offs", NULL); */
+/*     delta = bb_offs - old_bb_offs; */
+/*     bb_offs +=  delta - mv; */
+
+/*     weed_set_int64_value(layer, "bb_size", bufsz); */
+/*     weed_set_int64_value(layer, "bb_offs", bb_offs); */
+/*     weed_set_int64_value(layer, "bb_real_size", new_bb_size); */
+/*     weed_set_voidptr_array(layer, "bb_buff", out_nchans, tmpbufs); */
+
+/*     for (int i = 0; i < out_nchans; i++) if (bb_buff[i]) lives_free(bb_buff[i]); */
+    
+/*     if (bb_buff) lives_free(bb_buff); */
+/*     if (tmpbufs) lives_free(tmpbufs); */
+/*     if (xbufs) lives_free(xbufs); */
+/*     pthread_mutex_unlock(bufmutex); */
+/*   } */
+/*   ____FUNC_EXIT____; */
+/* } */
 
 static void fill_layer(weed_layer_t *layer) {
   // layer should have an audio_src
@@ -3531,8 +3820,10 @@ static void fill_layer(weed_layer_t *layer) {
   // l) real_bb_size = new_bb_size
 
   if (fd <= 0) {
-    const char *uri = weed_get_const_string_value(layer, "orig_uri", NULL);
-    fd = lives_open_buffered_rdonly(uri);
+   char *filename = lives_get_audio_file_name(clip    char *filename = lives_get_audio_file_name(fnum);
+);
+   //weed_get_const_string_value(layer, "orig_uri", NULL);
+    fd = lives_open_buffered_rdonly(filename);
     // tell the file reader to fill to MIN(remainder in  buffer,  65536)
     lives_buffered_rdonly_set_quanta(fd, 65536);
     weed_set_int_value(layer, "abuff_id", fd);
@@ -3740,28 +4031,19 @@ static void fill_layer(weed_layer_t *layer) {
   ____FUNC_EXIT____;
 }
 
-// we have an audio layer attached to buffered read
-// we read in larger chunks at normal velocity
-// for the player we want a smaller chunk, which may be resampled
-//
-// need_float: FALSE - no float needed, ie. no hook callbacks; output in float or s16
-///    freed after use
-//
-// TRUE - data hooks - append to float data, - if we have dp hooks, new audio sent to cbs
-// convert to s16
-// if we send to data_ready, float data becomes dr_data, and we nullify float data
-// we then write to float data, when we async_join, we do not block; if all cbs are done,
-// we free and nullify dr_data. For data preview, we pass float data from plugin in to plugin, then convert to s16,
-// if necessary
-//
 
 static void fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
-                         double vel, double clip_vol, boolean has_cbs) {
+                         double vel, double clip_vol) {
+  boolean has_cbs =  TRUE;
   if (!layer || !aplayer) return;
 
   pthread_mutex_t *bufmutex = (pthread_mutex_t *)
                               weed_get_voidptr_value(layer, "bufmutex", NULL);
   if (!bufmutex) return;
+
+    pthread_mutex_lock(bufmutex);
+
+  void **bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
 
   int in_achans = weed_layer_get_naudchans(layer);
   int in_arate = weed_layer_get_audio_rate(layer);
@@ -3780,8 +4062,6 @@ static void fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
 
   boolean out_interf = out_inter, out_interi = out_inter;
 
-  int xout_nchansi = out_nchans;
-  int xout_nchansf = out_nchans;
 
   // max = allocated
   int64_t sbf_maxsize = weed_get_int64_value(layer, "sbf_maxsize", NULL);
@@ -3792,28 +4072,16 @@ static void fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
 
   void **sbf_buff = weed_get_voidptr_array(layer, "sbf_buff", NULL);
   void **sbi_buff = weed_get_voidptr_array(layer, "sbi_buff", NULL);
-  void **bb_buff, **in_datap, **out_datap;
+  void **in_datap, **out_datap;
   int insamples, xinsamples;
 
   size_t xin_bytes;
 
-  size_t out_bytesi = nsamples * 2;
-  size_t out_bytesf = nsamples * 4;
+  size_t out_bytes = nsamples * 4;
 
   ///////////////////////
   // TODO handle clip vol, handle swap_endian
   /////////////////////////
-
-  if (out_float)
-    out_interi = lives_aplayer_get_interleaved(aplayer);
-  else
-    out_interf = lives_aplayer_get_interleaved(aplayer);
-
-  if (out_interi) xout_nchansi = 1;
-  if (out_interf) xout_nchansf = 1;
-
-  if (out_interi) out_bytesi *= out_nchans;
-  if (out_interf) out_bytesf *= out_nchans;
 
   if (!sbf_size) {
     if (sbf_buff) {
@@ -3828,35 +4096,19 @@ static void fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
   }
 
   if (!out_float && !has_cbs) {
-    if (!sbi_buff)
-      sbi_buff = LIVES_CALLOC_SIZEOF(void *, out_nchans);
-    if (sbi_maxsize < out_bytesi) {
-      sbi_maxsize = out_bytesi;
-      weed_set_int64_value(layer, "sbi_maxsize", sbi_maxsize);
-      for (int i = 0; i < xout_nchansi; i++)
-        sbi_buff[i] = lives_malloc(sbi_maxsize);
-      weed_set_voidptr_array(layer, "sbi_buff", out_nchans, sbi_buff);
-    }
   } else {
     if (!sbf_buff) {
       sbf_buff = LIVES_CALLOC_SIZEOF(void *, out_nchans);
       sbf_size = sbf_maxsize = 0;
     }
     if (!has_cbs) {
-      if (sbf_maxsize < out_bytesf) {
-        sbf_maxsize = out_bytesf;
-        weed_set_int64_value(layer, "sbf_maxsize", sbf_maxsize);
-        for (int i = 0; i < xout_nchansf; i++) {
-          if (sbf_buff[i]) lives_free(sbf_buff[i]);
-          sbf_buff[i] = lives_malloc(sbf_maxsize);
-        }
-        weed_set_voidptr_array(layer, "sbf_buff", out_nchans, sbf_buff);
-      }
     } else {
       // if we send to data ready, sbf_buff
       // should be passed in adtls and nullfied in the layer
-      for (int i = 0; i < xout_nchansf; i++)
-        sbf_buff[i] = lives_realloc(sbf_buff[i], sbf_size + out_bytesf);
+      for (int i = 0; i < out_nchans; i++) {
+	g_print("alloc sbf_buff %d to size %ld\n", i, sbf_size + out_bytes);
+        sbf_buff[i] = lives_realloc(sbf_buff[i], sbf_size + out_bytes);
+      }
       weed_set_voidptr_array(layer, "sbf_buff", out_nchans, sbf_buff);
     }
   }
@@ -3869,54 +4121,54 @@ static void fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
 
   xin_bytes = xinsamples * (in_inter ? in_achans : 1) * (in_asamps >> 3);
 
-  pthread_mutex_lock(bufmutex);
-
-  bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
   LIVES_ASSERT(bb_buff && bb_buff[0] && bb_buff[1]);
 
   bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
 
   if (in_arate == out_arate) {
-    if (in_float) {
-      for (int i = 0; i < xout_nchansf; i++)
-        lives_memcpy(sbf_buff[i] + sbf_size, bb_buff[i] + bb_offs, out_bytesf);
-      if (1 || out_float) goto done;
-    } else {
-      for (int i = 0; i < xout_nchansi; i++)
-        lives_memcpy(sbi_buff[i], bb_buff[i] + bb_offs, out_bytesi);
-      if (!out_float && !has_cbs) goto done;
-    }
+    for (int i = 0; i < out_nchans; i++)
+      lives_memcpy(sbf_buff[i] + sbf_size, bb_buff[i] + bb_offs, out_bytes);
+    goto done;
   }
 
   in_datap = LIVES_CALLOC_SIZEOF(void *, in_achans);
   out_datap = LIVES_CALLOC_SIZEOF(void *, out_nchans);
 
   for (int i = 0; i < in_achans; i++) {
-    if (bb_buff[i]) in_datap[i] = bb_buff[i] + bb_offs;
+    if (bb_buff[i]) {
+      g_print("indatap %d = bb_buff %p + offs %ld\n",
+	      i, bb_buff[i], bb_offs);
+      in_datap[i] = bb_buff[i] + bb_offs;
+    }
   }
 
-  if (((out_float || has_cbs) && (in_arate != out_arate))
-      || (!((out_float || has_cbs) && (in_arate == out_arate))))
-    for (int i = 0; i < out_nchans; i++)
+  for (int i = 0; i < out_nchans; i++) {
+      g_print("outdatap %d = sbf_buff %p + size %ld\n",
+	      i, sbf_buff[i], sbf_size);
       out_datap[i] = sbf_buff[i] + sbf_size;
-  else
-    for (int i = 0; i < out_nchans; i++)
-      out_datap[i] = sbi_buff[i];
-
+  }
 #if HAVE_SWRESAMPLE
   enum AVSampleFormat infmt, outfmt;
   int zinsamples, xin_asamps = in_asamps, xout_asamps = out_asamps;
-
-  if (out_float) xout_asamps = -out_asamps;
-  if (in_float) xin_asamps = -in_asamps;
-
-  zinsamples = get_swr_fmts(nsamples, xout_asamps, out_arate, out_inter,  xin_asamps,
+  zinsamples = get_swr_fmts(nsamples, -out_asamps, out_arate, out_inter, -in_asamps,
                             in_arate, in_inter, &infmt, &outfmt, FALSE);
   LIVES_ASSERT(zinsamples == insamples);
-  //in_bytes = insamples * (in_inter ? in_achans : 1) * (in_asamps >> 3);
+  xin_bytes = insamples * (in_asamps >> 3);
 
-  /* g_print("data size is %ld: offs is %ld / %ld\n%p %p\n %d %d", in_bytes, bb_offs, bb_size, */
-  /* 	  bb_buff, bb_buff[0], insamples, nsamples); */
+  g_print("data size is %ld: offs is %ld \n%p %p\n %d %d", xin_bytes, bb_offs, 
+  	  bb_buff, bb_buff[0], insamples, nsamples);
+
+
+  g_print("resampling %d samples, %d chans %d Hz inff mt %d "
+	  "to %d samples, %d chans %d Hz outmt %d\n"
+	  "in_buffers %p %p %p out %p %p %p\n",
+	  insamples, in_achans, in_arate, infmt,
+	  nsamples, out_nchans, out_arate, outfmt,
+	  in_datap, in_datap[0], in_datap[1], out_datap,
+	  out_datap[0], out_datap[1]);
+	  
+
+
 
   sw_resample(in_datap, insamples, in_achans, in_arate, infmt,
               out_datap, nsamples, out_nchans, out_arate, outfmt);
@@ -3928,10 +4180,9 @@ static void fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
   lives_free(in_datap);
 
 done:
-  sbf_size +=  out_bytesf;
+  sbf_size +=  out_bytes;
   weed_set_int64_value(layer, "sbf_size", sbf_size);
-  weed_set_int64_value(layer, "sbf_newsize", out_bytesf);
-  weed_set_int64_value(layer, "sbi_size", out_bytesi);
+  weed_set_int64_value(layer, "sbf_newsize", out_bytes);
 
   bb_offs += xin_bytes;
   weed_set_int64_value(layer, "bb_offs", bb_offs);
@@ -3941,7 +4192,6 @@ done:
   if (sbf_buff) lives_free(sbf_buff);
   if (bb_buff) lives_free(bb_buff);
 }
-
 
 static void discard_layer(weed_layer_t *layer) {
   /* lives_close_buffered(cbuffer->_fd); */
@@ -4018,11 +4268,10 @@ lives_result_t audio_cache(int op, ...) {
     VA_TO_T_ARRAY(params, op, "ddb");
     double vel = params[0]->values.d[0];
     double clip_vol = params[1]->values.d[0];
-    boolean has_cbs = params[2]->values.b[0];
     T_ARRAY_FREE(params);
 
     pthread_mutex_t *bufmutex = (pthread_mutex_t *)
-                                weed_get_voidptr_value(layers[0], "bufmutex", NULL);
+      weed_get_voidptr_value(layers[0], "bufmutex", NULL);
 
     if (!bufmutex) {
       if (lives_proc_thread_is_paused(caud_lpt))
@@ -4041,7 +4290,7 @@ lives_result_t audio_cache(int op, ...) {
 
     pthread_mutex_unlock(bufmutex);
 
-    for (int i = 0; i < nlayers; i++) fill_cbuffer(layers[i], aplayer, vel, clip_vol, has_cbs);
+    for (int i = 0; i < nlayers; i++) fill_cbuffer(layers[i], aplayer, vel, clip_vol);
 
     if (lives_proc_thread_is_paused(caud_lpt))
       lives_proc_thread_request_resume(caud_lpt);
@@ -4072,385 +4321,6 @@ lives_result_t audio_cache(int op, ...) {
 
   return LIVES_RESULT_INVALID;
 }
-
-
-/**
-   @brief audio caching worker thread function
-
-   run as a thread (from audio_cache_init())
-
-   read audio from file into cache
-   must be done in real time since other threads may be waiting on the cache
-
-   This function is also used to cache audio when playing from an event_list. Effects may be applied and the mixer volumes
-   adjusted.
-*/
-//static void *cache_my_audio(void *arg) {
-/*   volatile lives_audio_buf_t **pcbuffer = (volatile lives_audio_buf_t **)arg; */
-/*   lives_audio_buf_t *cbuffer; */
-/*   char *filename; */
-/*   int i; */
-
-/*   while (!((*pcbuffer)->die)) { */
-/*     // wait for request from client (setting cbuffer->is_ready or cbuffer->die) */
-/*     while ((*pcbuffer)->is_ready && !(*pcbuffer)->die && mainw->abufs_to_fill <= 0) { */
-/*       pthread_mutex_lock(&cond_mutex); */
-/*       pthread_cond_wait(&cond, &cond_mutex); */
-/*       pthread_mutex_unlock(&cond_mutex); */
-/*     } */
-
-/*     cbuffer = *((lives_audio_buf_t **)pcbuffer); */
-
-/*     if (cbuffer->die) { */
-/*       if (!mainw->event_list || mainw->record */
-/*           || (mainw->is_rendering && mainw->preview && !mainw->preview_rendering)) { */
-/*         if (cbuffer->_fd != -1) { */
-/*           lives_close_buffered(cbuffer->_fd); */
-/*           cbuffer->_fd = -1; */
-/*         } */
-/*       } */
-/*       return cbuffer; */
-/*     } */
-
-/*     // read from file and process data */
-/*     //lives_printerr("got buffer request !\n"); */
-
-/*     ////  for multitrack: */
-
-/* #ifdef ENABLE_JACK */
-/*     if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->abufs_to_fill > 0) { */
-/*       mainw->jackd->abufs[mainw->write_abuf]->samples_filled = 0; */
-/*       fill_abuffer_from(mainw->jackd->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE); */
-/*       continue; */
-/*     } */
-/* #endif */
-/* #ifdef HAVE_PULSE_AUDIO */
-/*     if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->abufs_to_fill > 0) { */
-/*       mainw->pulsed->abufs[mainw->write_abuf]->samples_filled = 0; */
-/*       fill_abuffer_from(mainw->pulsed->abufs[mainw->write_abuf], mainw->event_list, NULL, FALSE); */
-/*       continue; */
-/*     } */
-/* #endif */
-
-/*     if (cbuffer->operation != LIVES_READ_OPERATION) { */
-/*       cbuffer->is_ready = TRUE; */
-/*       continue; */
-/*     } */
-
-/*     //// for jack audio, free playback */
-
-/*     cbuffer->eof = FALSE; */
-
-/*     // TODO - if out_asamps changed, we need to free all buffers and set _cachans==0 */
-/*     if (cbuffer->out_asamps != cbuffer->_casamps) { */
-/*       if (cbuffer->bufferf) { */
-/*         // free float channels */
-/*         for (i = 0; i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) { */
-/*           lives_free(cbuffer->bufferf[i]); */
-/*         } */
-/*         lives_free(cbuffer->bufferf); */
-/*         cbuffer->bufferf = NULL; */
-/*       } */
-
-/*       if (cbuffer->buffer16) { */
-/*         // free 16bit channels */
-/*         for (i = 0; i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) { */
-/*           lives_free(cbuffer->buffer16[i]); */
-/*         } */
-/*         lives_free(cbuffer->buffer16); */
-/*         cbuffer->buffer16 = NULL; */
-/*       } */
-
-/*       cbuffer->_cachans = 0; */
-/*       cbuffer->_cout_interleaf = FALSE; */
-/*       cbuffer->_csamp_space = 0; */
-/*     } */
-
-/*     // do we need to allocate output buffers ? */
-/*     switch (cbuffer->out_asamps) { */
-/*     case 8: */
-/*     case 24: */
-/*       // not yet implemented */
-/*       break; */
-/*     case 16: */
-/*       // we need 16 bit buffer(s) only */
-/*       if (cbuffer->bufferf) { */
-/*         // free float channels */
-/*         for (i = 0; i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) { */
-/*           lives_free(cbuffer->bufferf[i]); */
-/*         } */
-/*         lives_free(cbuffer->bufferf); */
-/*         cbuffer->bufferf = NULL; */
-/*       } */
-
-/*       if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) != (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans) */
-/*           || (cbuffer->samp_space / (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) != */
-/*               (cbuffer->_csamp_space / (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)))) { */
-/*         // channels or samp_space changed */
-
-/*         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) { */
-/*           // output channels increased */
-/*           cbuffer->buffer16 = (int16_t **) */
-/*                               lives_realloc(cbuffer->buffer16, */
-/*                                             (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *)); */
-/*           for (i = (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); */
-/*                i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) { */
-/*             cbuffer->buffer16[i] = NULL; */
-/*           } */
-/*         } */
-
-/*         for (i = 0; i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) { */
-/*           // realloc existing channels and add new ones */
-/*           cbuffer->buffer16[i] = (int16_t *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(int16_t) * */
-/*                                  (cbuffer->out_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES); */
-/*         } */
-
-/*         // free any excess channels */
-
-/*         for (i = (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); */
-/*              i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) { */
-/*           lives_free(cbuffer->buffer16[i]); */
-/*         } */
-
-/*         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) { */
-/*           // output channels decreased */
-/*           cbuffer->buffer16 = (int16_t **) */
-/*                               lives_realloc(cbuffer->buffer16, */
-/*                                             (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *)); */
-/*         } */
-/*       } */
-
-/*       break; */
-/*     case -32: */
-/*       // we need 16 bit buffer(s) and float buffer(s) */
-
-/*       // 16 bit buffers follow in out_achans but in_interleaf */
-
-/*       if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) != (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans) */
-/*           || (cbuffer->samp_space / (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) != */
-/*               (cbuffer->_csamp_space / (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)))) { */
-/*         // channels or samp_space changed */
-
-/*         if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)) { */
-/*           // output channels increased */
-/*           cbuffer->buffer16 = (int16_t **) */
-/*                               lives_realloc(cbuffer->buffer16, */
-/*                                             (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *)); */
-/*           for (i = (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans); */
-/*                i < (cbuffer->in_interleaf ? 1 : cbuffer->out_achans); i++) { */
-/*             cbuffer->buffer16[i] = NULL; */
-/*           } */
-/*         } */
-
-/*         for (i = 0; i < (cbuffer->in_interleaf ? 1 : cbuffer->out_achans); i++) { */
-/*           // realloc existing channels and add new ones */
-/*           cbuffer->buffer16[i] = (int16_t *)lives_realloc(cbuffer->buffer16[i], cbuffer->samp_space * sizeof(int16_t) * */
-/*                                  (cbuffer->in_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES); */
-/*         } */
-
-/*         // free any excess channels */
-
-/*         for (i = (cbuffer->in_interleaf ? 1 : cbuffer->out_achans); i < (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans); i++) { */
-/*           lives_free(cbuffer->buffer16[i]); */
-/*         } */
-
-/*         if ((cbuffer->in_interleaf ? 1 : cbuffer->out_achans) < (cbuffer->_cin_interleaf ? 1 : cbuffer->_cachans)) { */
-/*           // output channels decreased */
-/*           cbuffer->buffer16 = (int16_t **) */
-/*                               lives_realloc(cbuffer->buffer16, */
-/*                                             (cbuffer->in_interleaf ? 1 : cbuffer->out_achans) * sizeof(int16_t *)); */
-/*         } */
-/*       } */
-
-/*     case 32: */
-/*       if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) != (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans) */
-/*           || (cbuffer->samp_space / (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) != */
-/*               (cbuffer->_csamp_space / (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)))) { */
-/*         // channels or samp_space changed */
-
-/*         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) { */
-/*           // output channels increased */
-/*           cbuffer->bufferf = (float **) */
-/*                              lives_realloc(cbuffer->bufferf, */
-/*                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(float *)); */
-/*           for (i = (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); */
-/*                i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) { */
-/*             cbuffer->bufferf[i] = NULL; */
-/*           } */
-/*         } */
-
-/*         for (i = 0; i < (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); i++) { */
-/*           // realloc existing channels and add new ones */
-/*           cbuffer->bufferf[i] = (float *)lives_realloc(cbuffer->bufferf[i], cbuffer->samp_space * sizeof(float) * */
-/*                                 (cbuffer->out_interleaf ? cbuffer->out_achans : 1) + EXTRA_BYTES); */
-/*         } */
-
-/*         // free any excess channels */
-
-/*         for (i = (cbuffer->out_interleaf ? 1 : cbuffer->out_achans); */
-/*              i < (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans); i++) { */
-/*           lives_free(cbuffer->bufferf[i]); */
-/*         } */
-
-/*         if ((cbuffer->out_interleaf ? 1 : cbuffer->out_achans) > (cbuffer->_cout_interleaf ? 1 : cbuffer->_cachans)) { */
-/*           // output channels decreased */
-/*           cbuffer->bufferf = (float **) */
-/*                              lives_realloc(cbuffer->bufferf, */
-/*                                            (cbuffer->out_interleaf ? 1 : cbuffer->out_achans) * sizeof(float *)); */
-/*         } */
-/*       } */
-
-/*       break; */
-/*     default: */
-/*       break; */
-/*     } */
-
-/*     // update _cinterleaf, etc. */
-/*     cbuffer->_cin_interleaf = cbuffer->in_interleaf; */
-/*     cbuffer->_cout_interleaf = cbuffer->out_interleaf; */
-/*     cbuffer->_csamp_space = cbuffer->samp_space; */
-/*     cbuffer->_cachans = cbuffer->out_achans; */
-/*     cbuffer->_casamps = cbuffer->out_asamps; */
-
-/*     // lock the mutex - we need to make sure eveything is updated together */
-/*     pthread_mutex_lock(&cbuffer->atomic_mutex); */
-
-/*     if (cbuffer->fileno != cbuffer->_cfileno) { */
-/*       if (cbuffer->_fd >= 0) { */
-/*         if (LIVES_IS_PLAYING && IS_VALID_CLIP(cbuffer->fileno)) { */
-/*           lives_clip_t *afile = mainw->files[cbuffer->_fd]; */
-/*           afile->aplay_fd = cbuffer->_fd; */
-/*         } else lives_close_buffered(cbuffer->_fd); */
-/*         cbuffer->_fd = -1; */
-/*       } */
-/*     } */
-
-/*     if (!IS_VALID_CLIP(cbuffer->fileno)) { */
-/*       cbuffer->in_achans = 0; */
-/*       cbuffer->_cfileno = cbuffer->fileno = -1; ///< let client handle this */
-/*       cbuffer->is_ready = TRUE; */
-/*       pthread_mutex_unlock(&cbuffer->atomic_mutex); */
-/*       continue; */
-/*     } */
-
-/*     if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->_fd == -1) { */
-/*       lives_clip_t *afile; */
-/*       afile = mainw->files[cbuffer->fileno]; */
-/*       if (afile->aplay_fd > -1) { */
-/*         cbuffer->_fd = afile->aplay_fd; */
-/*       } else { */
-/*         filename = get_audio_file_name(cbuffer->fileno, afile->opening); */
-/*         cbuffer->_fd = lives_open_buffered_rdonly(filename); */
-/*         if (cbuffer->_fd == -1) { */
-/*           lives_printerr("audio cache thread: error opening %s\n", filename); */
-/*           cbuffer->in_achans = 0; */
-/*           cbuffer->_cfileno = cbuffer->fileno = -1; ///< let client handle this */
-/*           cbuffer->is_ready = TRUE; */
-/*           pthread_mutex_unlock(&cbuffer->atomic_mutex); */
-/*           continue; */
-/*         } */
-/*         lives_free(filename); */
-/*         cbuffer->_cfileno = -1; */
-/*         lives_buffered_rdonly_slurp(cbuffer->_fd, 0); */
-/*       } */
-
-/*       if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek || */
-/*           cbuffer->shrink_factor != cbuffer->_shrink_factor) { */
-/*         if (cbuffer->sequential || cbuffer->shrink_factor > 0.) { */
-/*           lives_buffered_rdonly_set_reversed(cbuffer->_fd, FALSE); */
-/*         } else { */
-/*           lives_buffered_rdonly_set_reversed(cbuffer->_fd, TRUE); */
-/*         } */
-/*         if (cbuffer->fileno != cbuffer->_cfileno || cbuffer->seek != cbuffer->_cseek) { */
-/*           lives_lseek_buffered_rdonly_absolute(cbuffer->_fd, cbuffer->seek); */
-/*         } */
-/*       } */
-/*       cbuffer->_cseek = cbuffer->seek; */
-/*     } */
-
-/*     cbuffer->_cfileno = cbuffer->fileno; */
-/*     cbuffer->_shrink_factor = cbuffer->shrink_factor; */
-
-/*     // prepare file read buffer */
-
-/*     if (cbuffer->bytesize != cbuffer->_cbytesize) { */
-/*       cbuffer->_filebuffer = (uint8_t *)lives_realloc(cbuffer->_filebuffer, cbuffer->bytesize); */
-
-/*       if (!cbuffer->_filebuffer) { */
-/*         cbuffer->_cbytesize = cbuffer->bytesize = 0; */
-/*         cbuffer->in_achans = 0; */
-/*         cbuffer->is_ready = TRUE; */
-/*         pthread_mutex_unlock(&cbuffer->atomic_mutex); */
-/*         continue; */
-/*       } */
-/*     } */
-
-/*     // read from file */
-/*     //g_print("NEED %ld\n", cbuffer->bytesize); */
-/*     cbuffer->_cbytesize = lives_read_buffered(cbuffer->_fd, cbuffer->_filebuffer, cbuffer->bytesize, TRUE); */
-
-/*     if (cbuffer->_cbytesize <= 0) { */
-/*       // there is not much we can do if we get a read error, since we are running in a realtime thread here */
-/*       // just mark it as 0 channels, 0 bytes */
-/*       cbuffer->bytesize = cbuffer->_cbytesize = 0; */
-/*       cbuffer->in_achans = 0; */
-/*       cbuffer->is_ready = TRUE; */
-/*       pthread_mutex_unlock(&cbuffer->atomic_mutex); */
-/*       continue; */
-/*     } */
-/*     if (cbuffer->_cbytesize < cbuffer->bytesize) { */
-/*       cbuffer->eof = TRUE; */
-/*       cbuffer->_csamp_space = (int64_t)((double)cbuffer->samp_space / (double)cbuffer->bytesize * (double)cbuffer->_cbytesize); */
-/*       cbuffer->samp_space = cbuffer->_csamp_space; */
-/*     } */
-
-/*     cbuffer->bytesize = cbuffer->_cbytesize; */
-/*     cbuffer->_cseek = (cbuffer->seek += cbuffer->bytesize); */
-
-/*     // do conversion */
-
-/*     // convert from 8 bit to 16 bit and mono to stereo if necessary */
-/*     // resample as we go */
-/*     if (cbuffer->in_asamps == 8) { */
-/*       // TODO - error on non-interleaved */
-/*       if (cbuffer->shrink_factor < 0.) { */
-/*         if (reverse_buffer(cbuffer->_filebuffer, cbuffer->bytesize, cbuffer->in_achans)) */
-/*           cbuffer->shrink_factor = -cbuffer->shrink_factor; */
-/*       } */
-/*       sample_move_d8_d16(cbuffer->buffer16[0], (uint8_t *)cbuffer->_filebuffer, cbuffer->samp_space, cbuffer->bytesize, */
-/*                          cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans, 0); */
-/*     } else { */
-/*       if (cbuffer->in_asamps == 16) { */
-/*         // 16 bit input samples */
-/*         // resample as we go */
-/*         if (cbuffer->shrink_factor < 0.) { */
-/*           if (reverse_buffer(cbuffer->_filebuffer, cbuffer->bytesize, cbuffer->in_achans * 2)) */
-/*             cbuffer->shrink_factor = -cbuffer->shrink_factor; */
-/*         } */
-/*         sample_move_d16_d16(cbuffer->buffer16[0], (int16_t *)cbuffer->_filebuffer, cbuffer->samp_space, cbuffer->bytesize, */
-/*                             cbuffer->shrink_factor, cbuffer->out_achans, cbuffer->in_achans, */
-/*                             cbuffer->swap_endian ? SWAP_X_TO_L : 0, 0); */
-/*       } else { */
-/*         // 32 bit (not working yet...) */
-/*         if (cbuffer->shrink_factor < 0.) { */
-/*           if (reverse_buffer(cbuffer->_filebuffer, cbuffer->bytesize, cbuffer->in_achans * 4)) */
-/*             cbuffer->shrink_factor = -cbuffer->shrink_factor; */
-/*         } */
-/*         for (i = 0; i < cbuffer->out_achans; i++) { */
-/*           float_deinterleave(cbuffer->bufferf[i], (float *)cbuffer->_filebuffer, cbuffer->samp_space, */
-/*                              cbuffer->shrink_factor, cbuffer->in_achans, 1.); */
-/*         } */
-/*       } */
-/*     } */
-/*     cbuffer->shrink_factor = cbuffer->_shrink_factor; */
-
-/*     // if our out_asamps is 16, we are done */
-
-/*     cbuffer->is_ready = TRUE; */
-/*     pthread_mutex_unlock(&cbuffer->atomic_mutex); */
-/*   } */
-/*   return NULL; */
-/* } */
 
 
 void wake_audio_thread(void) {
@@ -4619,7 +4489,7 @@ boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
   if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) lvary = TRUE;
 
-getaud1:
+ getaud1:
 
   channel = get_enabled_channel(inst, 0, FALSE);
   if (channel) {
@@ -5489,3 +5359,64 @@ lives_result_t await_audio_queue(uint64_t nsec) {
 
       return LIVES_RESULT_SUCCESS;
 }
+
+
+
+// fill_layer()
+// layer should have an audio_src
+// if it is a file, we calculate nsamples from arate
+// read in as much as we can, then resample from in vals to out vals
+
+// if we already have audio, if amy remaining < threshold, shift down and top up
+//
+//
+// we use a ring buffer here
+// if we are reading forward, we have the following
+//
+// <rev space > offs <fwd space>
+//     0.25            0.75
+// initially
+//
+// <rev space> offs <fwd space>
+// 0.5< x <0.75    0.5> x > 0.25
+//  top up !
+// this is buffer 0
+//
+// if vel < 0., then fwd space, rev space are swapped.
+//
+// this is handled by the file buffering system, as well as reversing the buffer
+// if playback direction changes, we do nothing - the inversion will happen when read.
+// however we reverse for buffer 1, first we ensure fwd remaining >= 0.25,
+// then we copy fwd remaining ->rev space, limited to .25, then copy rev space reversed, then top up
+
+// in free playback, we read and store at the internal arate, achans, asamps. float
+// since velocity is instantaneous, we resample at output time
+//
+// We read in based on time values = nseconds * arate * achans * (asamps >> 3)
+// supposing max time was 10 sec, arate 96000, achans = 2, asamps = 32, size of buffer is 96000 * 10 * 2 * 4 == 7.68 MB
+// we double this for 2 ring buffers - 15.35MB,
+// if we wanted to limit audio cache space to 100MB, we could cache up to 6 layers. For 192K, 3 layers.
+//
+// Thus we limit arate to 2 X player rate.
+//
+// layer will have value to determine what happens when we reach eof fwd or 0 backward
+// for ping pong, either we seek to other end and continue or we invert velocity
+// when this happens we set a value - the offset where this first happens.
+// If the user enables or disables ping pong, we set buffer 0 invalid from this point, and in buffer 1, re read the part from
+// there onwards.
+//
+// copy offs.
+// copy rev space -> 0.25 in buffer1, offs, copy remainder of fwd space, top up fwd space
+//
+// thus - each buffer 0, 1 has reversed, first eof, invalid from, ping pong,
+// the associated layer has -  arate, asamps, etc
+// the layer has a buffered reader in ringbuff mode
+// we have a mutex which the player locks, and a call to swap buffers.
+// we actually have 3 buffers 0 - in use by player; 1 - buffer to be swapped in; 2 - new data to be swapped into 1
+// the swap call locks 1, and swaps it into 0, unlocks 1, update waits for 1 to be unlocked, locks 1, swaps in 2.
+// buffers have reversed flag, dir change is applied to buffer 2
+// altering ping pong sets invalid from in buffer 0 and buffer 1
+//
+//
+// there aew 3 situations to handle separateley - reseek / clip change / direction change
+// ping-pong change 

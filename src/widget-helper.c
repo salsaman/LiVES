@@ -2137,8 +2137,6 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
 
   lives_widget_context_update();
 
-  g_print("agpt res[ %d\n", resp);
-
   return resp;
 }
 
@@ -3467,14 +3465,18 @@ typedef struct {
 static weed_plant_t *idx_plant = NULL;
 
 static weed_plant_t *get_plant_for_agrp(LiVESAccelGroup * accel_group) {
+  weed_plant_t *res;
   char *key = lives_strdup_printf("%p", accel_group);
   if (!idx_plant) idx_plant = lives_plant_new(LIVES_PLANT_INDEX);
   if (!weed_plant_has_leaf(idx_plant, key)) {
     weed_plant_t *agrp = lives_plant_new(LIVES_PLANT_BAG_OF_HOLDING);
     weed_set_plantptr_value(idx_plant, key, agrp);
+    lives_free(key);
     return agrp;
   }
-  return weed_get_plantptr_value(idx_plant, key, NULL);
+  res = weed_get_plantptr_value(idx_plant, key, NULL);
+  lives_free(key);
+  return res;
 }
 
 void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
@@ -3493,6 +3495,8 @@ void lives_accel_group_connect(LiVESAccelGroup * accel_group, uint32_t keyval,
   weed_set_voidptr_value(agrp, ukey, amap);
   _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags,
                              _lives_cclosure_new(LIVES_GUI_CALLBACK(func), user_data, dest));
+  lives_free(ukey);
+
   /* _lives_accel_group_connect(accel_group, keyval, accel_mods, accel_flags, */
   /*                            _lives_cclosure_new(LIVES_GUI_CALLBACK(accel_act), user_data, dest)); */
   /* entries = gtk_accel_group_query(accel_group, keyval, accel_mods, &nvals); */

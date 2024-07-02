@@ -552,7 +552,6 @@ static weed_layer_t *make_output_layer(pulse_driver_t *pulsed, int clipno) {
 
 static tab_data_t *avers = NULL;
 
-//static void pulse_audio_write_process(pa_stream *pstream, size_t nbytes, void *arg) {
 static void pulse_audio_write_process(pa_stream *pstream, ...) {
   va_list ap;
   va_start(ap, pstream);
@@ -577,8 +576,9 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   pa_volume_t pavol;
   char *filename;
 
+  void **fbuffer = NULL, **xfbuffer = NULL; 
+  
   static lives_thread_data_t *tdata = NULL;
-  static void *rec_rcpt = NULL;
   //static arec_details *dets = NULL;
 
   boolean got_cmd = FALSE;
@@ -626,10 +626,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   if (!mainw->is_ready || !pulsed || ((!LIVES_IS_PLAYING || !pulsed->in_use) && !pulsed->msgq)) {
     sample_silence_pulse(pulsed, -nbytes);
     //g_print("pt a1 %ld %d %p %d %p %ld\n",nsamples, mainw->is_ready, pulsed, mainw->playing_file, pulsed->msgq, nbytes);
-    in_ap = FALSE;
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-    ____FUNC_EXIT____;
+    goto done;
   }
 
   /// handle control commands from the main (video) thread
@@ -653,14 +650,11 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
         got_cmd = TRUE;
 
-        /* 	pulsed->in_use = TRUE; */
-        /* 	pulsed->playing_file = new_file; */
-        /* 	lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE); */
+	pulsed->in_use = TRUE;
+	pulsed->playing_file = new_file;
+	lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE);
 
         alayers[0] = make_output_layer(pulsed, new_file);
-        filename = lives_get_audio_file_name(new_file);
-        weed_set_const_string_value(alayers[0], "orig_uri", filename);
-        lives_free(filename);
 
         paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
         pa_operation_unref(paop);
@@ -669,20 +663,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           pulsed->in_use = TRUE;
           pulsed->playing_file = new_file;
           lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE);
-
-          if (mainw->files[new_file]->aplay_fd > 0) {
-            pulsed->fd = mainw->files[new_file]->aplay_fd;
-          } else {
-            /* filename = lives_get_audio_file_name(new_file); */
-            /* pulsed->fd = lives_open_buffered_rdonly(filename); */
-            /* if (pulsed->fd == -1) { */
-            /*   // dont show gui errors - we are running in realtime thread */
-            /*   LIVES_ERROR("pulsed: error opening"); */
-            /*   LIVES_ERROR(filename); */
-            /*   pulsed->playing_file = -1; */
-            /* } else lives_buffered_rdonly_slurp(pulsed->fd, 0); */
-            /* lives_free(filename); */
-          }
         }
 
         fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
@@ -695,15 +675,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
         paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
         pa_operation_unref(paop);
-#if 0
-        if (pulsed->fd >= 0) {
-          if (LIVES_IS_PLAYING && IS_VALID_CLIP(pulsed->playing_file)) {
-            afile->aplay_fd = pulsed->fd;
-            //if (!mainw->audio_seek_ready) afile->sync_delta = mainw->startticks - mainw->currticks;
-          } else lives_close_buffered(pulsed->fd);
-        }
-#endif
-
         pulsed->fd = pulsed->playing_file = -1;
         pulsed->in_use = FALSE;
         if (cmd != (int)msg->command) {
@@ -777,7 +748,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     float clip_vol = 1.;
     /* the ratio of samples in : samples out - may be negative. This is NOT the same as the velocity as it incluides a resampling factor */
     //boolean alock_mixer = FALSE;
-    boolean has_cbs = TRUE;
     float **xfbuffer = NULL;
     float **fbuffer = NULL;
 
@@ -785,10 +755,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       // while waiting for video seek, we play silence, and the clock is advancing
       // however, the video player will add this extra time to its sync_delta
       sample_silence_pulse(pulsed, -nbytes);
-      in_ap = FALSE;
-      lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-      lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-      ____FUNC_EXIT____;
+      goto done;
     }
 
 #ifdef DEBUG_PULSE
@@ -835,19 +802,17 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
           if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = afile->vol;
 
-          vel = (double)afile->pb_fps / (double)afile->fps;
+	  if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
+	    vel = (double)afile->pb_fps / (double)afile->fps;
 
           lives_aplayer_set_data_len(self, nsamples);
 
-          if (audio_cache(0, vel, clip_vol, has_cbs) == LIVES_RESULT_BUSY_RETRY) {
+          if (audio_cache(0, vel, clip_vol) == LIVES_RESULT_BUSY_RETRY) {
             if (got_cmd || !mainw->audio_seek_ready) {
               sample_silence_pulse(pulsed, nbytes);
-              in_ap = FALSE;
-              lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-              lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-              ____FUNC_EXIT____;
+	      goto done;
             }
-            lives_microsleep_while_true(audio_cache(0, vel, clip_vol, has_cbs) == LIVES_RESULT_BUSY_RETRY);
+            lives_microsleep_while_true(audio_cache(0, vel, clip_vol) == LIVES_RESULT_BUSY_RETRY);
           }
 
           /////////////////////////////////
@@ -856,8 +821,13 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           fbytes = weed_get_int64_value(alayers[0], "sbf_newsize", NULL);
           //////////////////////////////////////////////////////
 
+	  if (!fbuffer || fbytes < nbytes) {
+	    sample_silence_pulse(pulsed, nbytes);
+	    goto done;
+	  }
+	  
           fb_offs = ofbytes - fbytes;
-          xfbuffer = LIVES_CALLOC_SIZEOF(float *, pulsed->out_achans);
+          xfbuffer = LIVES_CALLOC_SIZEOF(void *, pulsed->out_achans);
           for (int i = 0; i < pulsed->out_achans; i++)
             xfbuffer[i] = &fbuffer[i][fb_offs >> 2];
 
@@ -872,16 +842,11 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
                                  (nbytes >> 1) / pulsed->out_achans, pulsed->out_arate, clip_vol);
         } else {
           sample_silence_pulse(pulsed, nbytes);
-          lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-          lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-          in_ap = FALSE;
-          if (xfbuffer) lives_free(xfbuffer);
-          if (fbuffer) lives_free(fbuffer);
-          ____FUNC_EXIT____;
+	  goto done;
         }
       } else {
         if (has_hook_cbs(mystacks, DATA_PREVIEW_HOOK)) {
-          lives_aplayer_set_data(self, (void **)xfbuffer);
+          lives_aplayer_set_data(self, xfbuffer);
           lives_aplayer_set_data_len(self, fbytes / (pulsed->out_asamps >> 3));
           lives_hook_trigger(mystacks, DATA_PREVIEW_HOOK, "P", self);
         }
@@ -900,12 +865,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
           if (mainw->video_seek_ready && !LIVES_IS_PLAYING) {
             mainw->audio_seek_ready = TRUE;
             sample_silence_pulse(pulsed, nbytes);
-            lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-            lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
-            in_ap = FALSE;
-            if (xfbuffer) lives_free(xfbuffer);
-            if (fbuffer) lives_free(fbuffer);
-            ____FUNC_EXIT____;
+	    goto done;
           }
         }
       }
@@ -939,7 +899,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       buffer = pulsed->sound_buffer;
 #endif
       // convert to s16
-      nsamples = sample_move_float_int((void *)buffer, xfbuffer, nsamples, 1.,
+      nsamples = sample_move_float_int((void *)buffer, (float **)xfbuffer, nsamples, 1.,
                                        pulsed->out_achans, PA_SAMPSIZE, FALSE, FALSE, FALSE, 1.0);
 
       ibytes = nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3);
@@ -986,7 +946,17 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
 #endif
   ____FUNC_EXIT____;
+
+
+ done:
+  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
+  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+  in_ap = FALSE;
+  if (xfbuffer) lives_free(xfbuffer);
+  if (fbuffer) lives_free(fbuffer);
+  ____FUNC_EXIT____;
 }
+
 
 //static void pulse_audio_read_process(pa_stream * pstream, size_t nbytes, void *arg) {
 static void pulse_audio_read_process(pa_stream *pstream, ...) {

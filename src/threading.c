@@ -492,7 +492,7 @@ static lives_funcinst_t *lives_funcinst_create_valist(lives_funcdef_t *fdef, liv
     fdef = create_funcdef(fname, func, return_type, xargs_fmt, NULL, 0, 0);
 
     if (mainw->is_ready)
-      if (fname) add_quick_fn(fname, fdef);
+      if (fname) add_quick_fn(func, fdef);
     if (xargs_fmt) lives_free(xargs_fmt);
   }
   lives_funcinst_t *finst = lives_funcinst_new(fdef);
@@ -1567,6 +1567,9 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
         lives_microsleep;
         if (is_fg) fg_service_fulfill();
       }
+
+      cleanup_self_receipts();
+
       lives_proc_thread_unref(lpt);
       return TRUE;
     }
@@ -2839,8 +2842,10 @@ boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
   // (this can be done even if the proc_thread is not explicitly 'cancellable',
   if (lives_proc_thread_should_cancel(lpt)) {
     if (!lives_proc_thread_was_cancelled(lpt))
-      lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
-
+      lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
+    lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
+    if (!(lives_proc_thread_get_attrs(lpt) & LIVES_THRDATTR_NO_HOOKS))
+      lives_hook_trigger(hook_stacks, CANCELLED_HOOK);
     state = lives_proc_thread_set_final_state(lpt);
     if (!(attrs & LIVES_THRDATTR_DONTCARE)) {
       // notify successful completion

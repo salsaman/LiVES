@@ -46,7 +46,9 @@ double *get_proc_loads(boolean reset) {
     if (get_cpu_loads(&cpuvals, capable->hw.ncpus)) {
       if (!cpu_stats) cpu_stats = &cpuvals;
       tabdata_update(cpuloadtab, cpuvals.loads);
-      for (int i = capable->hw.ncpus; i--;) cpuvals.avgs[i] = cpuloadtab->avgs[i];
+      for (int i = capable->hw.ncpus; i--;) {
+	cpuvals.avgs[i] = cpuloadtab->avgs[i];
+      }
     }
   }
   return cpuvals.avgs;
@@ -56,7 +58,6 @@ double *get_proc_loads(boolean reset) {
 double get_cpu_load(void) {
   double *cpuvars = get_proc_loads(FALSE);
   glob_timing->curr_cpuload = cpuvars[0];
-  //double cpuloadval = *glob_timing->cpuloadvar;
   return glob_timing->curr_cpuload;
 }
 
@@ -69,23 +70,22 @@ volatile double const *get_core_loadvar(int corenum) {
 }
 
 
+void show_timing_subsys(void) {
+  print_enabled(player);
+  print_enabled(plan);
+  print_enabled(aplayer);
+}
+
+
 void glob_timing_init(void) {
   if (glob_timing) return;
   glob_timing = LIVES_CALLOC_SIZEOF(glob_timedata_t, 1);
   glob_timing->cpuloadvar = get_core_loadvar(0);
+  glob_timing->plan.enabled = TRUE;
+  glob_timing->player.enabled = TRUE;
+  glob_timing->aplayer.enabled = TRUE;
 }
 
-/* if (glob_timing->active) */
-/*   cpuloadval =  */
-/*           pthread_mutex_unlock(&glob_timing->upd_mutex); */
-/* } */
-/* if (!cpuloadval) { */
-/*   cpuload = get_core_loadvar(0); */
-
-void show_timing_subsys(void) {
-
-
-}
 
 // do nothing and see how long it takes to do it
 double do_nothing(int type_of_nothing) {
@@ -189,10 +189,41 @@ LIVES_GLOBAL_INLINE ticks_t lives_get_relative_ticks(ticks_t origticks) {
   return NSEC_TO_TICKS(lives_get_relative_time(TICKS_TO_NSEC(origticks)));
 }
 
+// if we have delta time (nsec) > this, we assume the process was suspended and ignore the interval
+#define DELTA_THRESH ONE_BILLION
 
 LIVES_GLOBAL_INLINE int64_t lives_get_session_time_nsec(void) {
   // return time since application was (re)started
-  return lives_get_relative_time(mainw->initial_time) - mainw->susp_time;
+  //
+  // when running through GDB
+  // we also check for any large jumps in the time
+  // - these are considred as susp (application suspend)
+  int64_t nsec = lives_get_relative_time(mainw->initial_time) - mainw->susp_time;
+
+  if (RUNNER_IS(gdb)) {
+    int64_t clock_delta;
+    static int64_t last_nsec = 0;
+    static boolean inited = FALSE;
+    if (!inited) {
+      inited = TRUE;
+      last_nsec = nsec;
+    }
+
+    mainw->time_jump = 0;
+
+    clock_delta = nsec - last_nsec;
+
+    if (clock_delta > DELTA_THRESH || clock_delta < -0.0001) {
+      g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
+      if (clock_delta > 0) mainw->susp_time += clock_delta;
+      nsec -= clock_delta;
+      mainw->time_jump = clock_delta;
+    }
+    last_nsec = nsec;
+  }
+
+  return nsec;
+
 }
 
 
@@ -300,9 +331,9 @@ static int64_t baseItime, Itime, last_itime;
 static double R, X, catchup;
 static int last_tsource;
 static int64_t lclock_nsec, last_current, prev_current, base_current;
-static int64_t tot_deltas, av_delta, drift, owed_nsec, last_scnsec;
-static uint64_t ncalls;
-static volatile double timer_load;
+static int64_t drift, owed_nsec, last_scnsec;
+
+static tab_data_t *tabdata = NULL;
 
 void reset_playback_clock(void) {
   // susp_time = total suspended time
@@ -325,37 +356,46 @@ void reset_playback_clock(void) {
   last_tsource = LIVES_TIME_SOURCE_NONE;
   prev_current = last_current = base_current = last_scnsec = 0;
   Itime = baseItime = last_itime = 0;
-  tot_deltas = av_delta = 0;
-  ncalls = 0;
-  timer_load = 1.;
+  //
   drift = 0;
   owed_nsec = 0;
   catchup = 0.1;
+  if (tabdata) free_tabdata(tabdata);
+  tabdata = NULL;
 }
 
-double get_pbtimer_load(void) {return timer_load * 100.;}
 
-double get_pbtimer_avcycle(void) {return av_delta / TICKS_PER_SECOND_DBL;}
-
-uint64_t get_pbtimer_ncalls(void) {return ncalls;}
-
-double get_pbtimer_clock_ratio(void) {return X * R;}
-
-double get_pbtimer_drift(void) {return drift / TICKS_PER_SECOND_DBL;}
-
-
-void show_pbtimer_stats(void) {
+static void get_pbtimer_stats(double clock_delta) {
   char *tmp, *tmp2;
-  g_printerr("Stats for pbtimer:\n");
-  g_printerr("After %lu calls, average cycle time is %s, current load is %.2f, "
-             "current clock ratio is %.4f, drift is %s\n",
-             ncalls,
-             (tmp = lives_format_timing_string(get_pbtimer_avcycle())),
-             get_pbtimer_load(),
-             get_pbtimer_clock_ratio(),
-             (tmp2 = lives_format_timing_string(get_pbtimer_drift())));
-  lives_free(tmp); lives_free(tmp2);
+  /* g_printerr("Stats for pbtimer:\n"); */
+  /* g_printerr("After %lu calls, average cycle time is %s, current load is %.2f, " */
+  /*            "current clock ratio is %.4f, drift is %s\n", */
+  if (!tabdata) tabdata = init_tab_data(2, 50);
+
+  glob_timing->player.timer_ncalls++;
+
+  glob_timing->player.timer_clock_ratio = X * R;
+  glob_timing->player.timer_drift = drift / TICKS_PER_SECOND_DBL;
+
+  if (glob_timing->player.timer_ncalls > 10000) {
+    double newvals[2], av_delta, timer_load;
+    newvals[0] = clock_delta;
+    newvals[1] = 0.;
+    tabdata_update(tabdata, newvals);
+    av_delta = tabdata->avgs[0];
+    timer_load = (double)clock_delta / (double)av_delta;
+    newvals[1] = timer_load * 2.;
+    tabdata_update(tabdata, newvals);
+    glob_timing->player.timer_avcycle = tabdata->avgs[0];
+    glob_timing->player.timer_load = tabdata->avgs[1];
+  }
 }
+
+  /* (tmp = lives_format_timing_string(get_pbtimer_avcycle())), */
+  /*            get_pbtimer_load(), */
+  /*            get_pbtimer_clock_ratio(), */
+  /*            (tmp2 = lives_format_timing_string(get_pbtimer_drift()))); */
+  /* lives_free(tmp); lives_free(tmp2); */
 
 /// synchronised timing
 // assume we have several time sources, each running at a slightly varying rate and with their own offsets
@@ -383,48 +423,27 @@ void show_pbtimer_stats(void) {
 // we check if last Itime + sc delta > or < then adjust X.
 
 
-// if we have delta time (nsec) > this, we assume the process was suspended and ignore the interval
-#define DELTA_THRESH ONE_BILLION
-
 ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
   // get the time using a variety of methods
   // time_source may be NULL or LIVES_TIME_SOURCE_NONE to set auto
   // or another value to force it (EXTERNAL cannot be forced)
   lives_time_source_t tsource;
   int64_t current = 0, clock_delta = 0, clock_nsec, tdiff;
-  double thresh_factor = 1.;
-  if (RUNNER_IS(valgrind)) thresh_factor = 10.;
 
   if (time_source) tsource = *time_source;
   else tsource = LIVES_TIME_SOURCE_NONE;
 
-  mainw->time_jump = 0;
-  ncalls++;
+  // clock time since playback started
+  //mainw->clock_nsec + mainw->orignsec == session_nsec
+  clock_nsec = lives_get_session_time_nsec();
 
-  while (1) {
-    // clock time since playback started
-    //mainw->clock_nsec + mainw->orignsec == session_nsec
-    clock_nsec = lives_get_session_time_nsec();
-
-    if (lclock_nsec < 0) lclock_nsec = clock_nsec;
-    clock_delta = clock_nsec - lclock_nsec;
-
-    if (clock_delta > DELTA_THRESH || clock_delta < 0) {
-      g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
-      if (thresh_factor > 1. && clock_delta > 0. && clock_delta < DELTA_THRESH * thresh_factor) {
-        g_print("Ignoring as we are running through valgrind\n");
-      } else {
-        mainw->force_show = TRUE;
-        if (clock_delta > 0) mainw->susp_time += clock_delta;
-        clock_nsec -= clock_delta;
-        lclock_nsec = clock_nsec;
-        mainw->time_jump = clock_delta;
-        ncalls--;
-        continue;
-      }
-    }
-    break;
+  if (mainw->time_jump) {
+    mainw->time_jump = 0;
+    mainw->force_show = TRUE;
   }
+
+  if (lclock_nsec < 0) lclock_nsec = clock_nsec;
+  clock_delta = clock_nsec - lclock_nsec;
 
   lclock_nsec = clock_nsec;
 
@@ -556,31 +575,22 @@ ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
 
   tdiff = clock_delta * R * X;
 
-  if (mainw->time_jump) {
-    if (mainw->avsync_time) mainw->avsync_time += mainw->time_jump / ONE_BILLION_DBL;
-  } else  {
-    if (clock_delta) {
-      int64_t toomuch = 0;//tdiff - (int64_t)(prefs->pbtimer_maxdiff);
-      if (ncalls > 10000) {
-        tot_deltas += clock_delta;
-        av_delta = tot_deltas / ncalls;
-        timer_load = (double)clock_delta / (double)av_delta;
-      }
-      if (toomuch > 0) {
-        //g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
-        owed_nsec += toomuch;
-        tdiff -= toomuch;
-      } else {
-        int64_t allowed;
-        if (!owed_nsec) catchup = .1;
-        allowed = tdiff * catchup;
-        if (allowed > owed_nsec) {
-          allowed = owed_nsec;
-          catchup = (double)allowed / (double)tdiff;
-        } else catchup *= 1.1;
-        tdiff += allowed;
-        owed_nsec -= allowed;
-      }
+  if (clock_delta) {
+    int64_t toomuch = 0;//tdiff - (int64_t)(prefs->pbtimer_maxdiff);
+    if (toomuch > 0) {
+      //g_print("tdiff was %ld, toomuch by  %ld\n",tdiff, toomuch);
+      owed_nsec += toomuch;
+      tdiff -= toomuch;
+    } else {
+      int64_t allowed;
+      if (!owed_nsec) catchup = .1;
+      allowed = tdiff * catchup;
+      if (allowed > owed_nsec) {
+	allowed = owed_nsec;
+	catchup = (double)allowed / (double)tdiff;
+      } else catchup *= 1.1;
+      tdiff += allowed;
+      owed_nsec -= allowed;
     }
 
     Itime += tdiff;
@@ -592,6 +602,10 @@ ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
   }
   if (mainw->mark_time) Itime = last_itime;
   last_itime = Itime;
+
+  if (clock_delta && glob_timing->player.enabled)
+    get_pbtimer_stats(clock_delta);
+  
   return NSEC_TO_TICKS(Itime);
 }
 
@@ -614,6 +628,91 @@ void fdef_add_data(lives_funcdef_t *fdef, ...) {
   IGN_RET(xtime);
   va_end(va);
 }
+
+////////////////////////// effort, pressure, etc
+// - functions to estimate performance issues amd try to remediate
+// some major areas - adaptive quality for playback
+// - soon - adaptive quality for audio
+// memory, disk io. cpu, network
+//
+// memory will try to free up some mapped data areas
+// disk - will try to rebalance disk io
+// cpu - tied to adaptive quality
+// network N/A yet
+
+/// estimate the machine overall load
+static boolean inited = FALSE;
+static int struggling = 0;
+static tab_data_t *force = NULL;
+
+void reset_effort(void) {
+  if (force) {
+    free_tabdata(force);
+    force = NULL;
+  }
+
+  prefs->pb_quality = future_prefs->pb_quality;
+  inited = TRUE;
+  struggling = 0;
+  if ((mainw->is_rendering || (mainw->multitrack
+                               && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
+    mainw->effort = -EFFORT_RANGE_MAX;
+  else {
+    if (mainw->effort > EFFORT_LIMIT_MED) mainw->effort = EFFORT_LIMIT_MED;
+    if (mainw->effort < -EFFORT_LIMIT_MED) mainw->effort = -EFFORT_LIMIT_MED;
+  }
+}
+
+
+void update_effort(double impulse) {
+  short pb_quality = prefs->pb_quality;
+
+  double newvals[1];
+  
+  if (LIVES_IS_RENDERING) {
+    mainw->effort = -EFFORT_RANGE_MAX;
+    prefs->pb_quality = PB_QUALITY_HIGH;
+    return;
+  }
+
+  if (!force) force = init_tab_data(1, EFFORT_RANGE_MAX >> 2);
+
+  newvals[0] = impulse;
+  tabdata_update(force, newvals);
+  mainw->effort = (int)(force->avgs[0]);
+
+  g_print("eff is %f %d\n", force->avgs[0],  mainw->effort);
+
+  if (mainw->effort > EFFORT_RANGE_MAX) mainw->effort = EFFORT_RANGE_MAX;
+  if (mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
+
+  if (mainw->effort <= 0) struggling--;
+  else struggling++;
+
+  g_print("strf is %d\n", struggling);
+
+  if (struggling > EFFORT_LIMIT_MED) struggling = EFFORT_LIMIT_MED;
+  if (struggling < -EFFORT_LIMIT_MED) struggling = -EFFORT_LIMIT_MED;
+
+  if (mainw->effort > 0) {
+    if (struggling >= EFFORT_LIMIT_MED && mainw->effort >= EFFORT_LIMIT_MED)
+      pb_quality = PB_QUALITY_LOW;
+    else if (struggling > 0 && pb_quality == PB_QUALITY_HIGH)
+      pb_quality = PB_QUALITY_MED;
+  }
+
+  if (mainw->effort < 0) {
+    if (struggling <= -EFFORT_LIMIT_MED && mainw->effort <= EFFORT_LIMIT_MED)
+      pb_quality = PB_QUALITY_HIGH;
+    else if (struggling > 0 && pb_quality == PB_QUALITY_LOW)
+      pb_quality = PB_QUALITY_MED;
+  }
+
+  if (pb_quality != future_prefs->pb_quality)
+    future_prefs->pb_quality = pb_quality;
+  //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
+}
+
 
 
 

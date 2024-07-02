@@ -84,32 +84,44 @@ typedef struct {
   LiVESList *proc_times;
   int cpu_nsamples;
   pthread_mutex_t upd_mutex;
-  double last_cyc_duration;
-  double tot_duration;
-  double avg_duration;
-  double tgt_duration;
+  volatile double last_cyc_duration;
+  volatile double tot_duration;
+  volatile double avg_duration;
+  volatile double tgt_duration;
   boolean active;
-  double bytes_per_sec;
-  double gbytes_per_sec;
+  volatile double bytes_per_sec;
+  volatile double gbytes_per_sec;
 } plan_timings;
 
 typedef struct {
   boolean enabled;
-  double inst_arate;
-  double aplayer_pressure;
-  int av_samples;
-  double av_freq;
-  double av_resp_time;
+  volatile double inst_arate;
+  volatile double aplayer_pressure;
+  volatile double av_samples;
+  volatile double av_freq;
+  volatile double av_resp_time;
 } aplayer_timings;
 
 typedef struct {
+  boolean enabled;
+  volatile double cpu_load_thresh;
+  volatile double inst_fps;
+  volatile int64_t timer_ncalls;
+  volatile double timer_load;
+  volatile double timer_avcycle;
+  volatile double timer_clock_ratio;
+  volatile double timer_drift;
+} player_timings;
+
+typedef struct {
   volatile double const *cpuloadvar;
-  double curr_cpuload;
+  volatile double curr_cpuload;
   plan_timings plan;
   aplayer_timings aplayer;
+  player_timings player;
 } glob_timedata_t;
 
-#define print_enabled(subsys) _DW0(if (glob_timing && glob_timing->##subsys.active) \
+#define print_enabled(subsys) _DW0(if (glob_timing && glob_timing->subsys.enabled) \
 				     d_print("%s\n", #subsys);)
 
 void show_timing_subsys(void);

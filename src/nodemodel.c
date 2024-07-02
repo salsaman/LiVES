@@ -44,7 +44,7 @@ LIVES_GLOBAL_INLINE double get_cycle_avg_time(double *dets) {
     pthread_mutex_lock(&glob_timing->plan.upd_mutex);
     ret = glob_timing->plan.avg_duration;
     if (dets) {
-      dets[0] = glob_timing->curr_cpuload;
+      dets[0] = get_cpu_load();
       dets[1] = glob_timing->plan.last_cyc_duration;
       dets[2] = glob_timing->plan.tgt_duration;
     }
@@ -7931,14 +7931,31 @@ lives_result_t inst_node_set_flags(inst_node_t *n, uint64_t flags) {
 
 
 
-void free_nodemodel(lives_nodemodel_t **pnodemodel) {
-  if (!pnodemodel || !*pnodemodel) return;
-  if ((*pnodemodel)->clip_index) lives_free((*pnodemodel)->clip_index);
-  free_all_nodes(*pnodemodel);
-  lives_list_free_all(&(*pnodemodel)->node_chains);
-  lives_free(*pnodemodel);
-  *pnodemodel = NULL;
+static void free_nodemodel_inner(lives_nodemodel_t *nodemodel) {
+  if (!nodemodel) return;
+  //if (nodemodel->clip_index) lives_free(nodemodel->clip_index);
+  free_all_nodes(nodemodel);
+  lives_list_free_all(&(nodemodel->node_chains));
+  lives_free(nodemodel);
 }
+
+
+
+void free_nodemodel(lives_nodemodel_t **pnodemodel) {
+  if (!pnodemodel) return;
+  for (int i = 0; i < 3; i++) {
+    if (mainw->qnodemodels[i]) {
+      if (mainw->qnodemodels[i] == *pnodemodel) *pnodemodel = NULL;
+      free_nodemodel_inner(mainw->qnodemodels[i]);
+      mainw->qnodemodels[i] = NULL;
+    }
+  }
+  if (*pnodemodel) {
+    free_nodemodel_inner(*pnodemodel);
+    *pnodemodel = NULL;
+  }
+}
+
 
 
 static void _build_nodemodel(lives_nodemodel_t **pnodemodel, int ntracks, int *clip_index) {
@@ -8123,14 +8140,6 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
     mainw->layers = NULL;
   }
 
-  for (int i = 0; i < 3; i++) {
-    if (mainw->qnodemodels[i]) {
-      if (mainw->qnodemodels[i] == *nodemodel) *nodemodel = NULL;
-      free_nodemodel(&mainw->qnodemodels[i]);
-      mainw->qnodemodels[i] = NULL;
-    }
-  }
-
   if (*nodemodel) free_nodemodel(nodemodel);
 
   mainw->refresh_model = 1;
@@ -8275,7 +8284,7 @@ void rebuild_nodemodel(void) {
 
     xtime = lives_get_session_time();
     if (!mainw->qnodemodels[prefs->pb_quality - 1]) {
-      mainw->qnodemodels[prefs->pb_quality - 1] = mainw->nodemodel;
+      mainw->debug_ptr = mainw->qnodemodels[prefs->pb_quality - 1] = mainw->nodemodel;
       mainw->qexec_plans[prefs->pb_quality - 1] = mainw->exec_plan;
     }
 
@@ -8303,7 +8312,6 @@ void rebuild_nodemodel(void) {
 
       plan_cycle_trigger(mainw->plan_cycle);
       if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
-
 
       planrunner_lock();
       mainw->refresh_model = 0;
@@ -8343,7 +8351,6 @@ void rebuild_nodemodel(void) {
     reset_ext_player_layer(FALSE);
 
     if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
-
   } else {
     cleanup_nodemodel(&mainw->nodemodel);
     planrunner_lock();

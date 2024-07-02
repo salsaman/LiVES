@@ -135,6 +135,10 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 
 // for afbuffer
 // per chnnel size in bytes
+
+#define MAX_READAHEAD 120.
+#define MIN_READAHEAD 40.
+
 #define ABUF_ARENA_SIZE 32 * 1024 * 1024
 
 #define AREC_BUF_SIZE 2 * 1024 * 1024

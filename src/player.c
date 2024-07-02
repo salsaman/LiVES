@@ -309,7 +309,11 @@ boolean record_setup(ticks_t actual_ticks) {
 #define LAGFRAME_TRIGGER 8
 #define BFC_LIMIT 1000
 
+// this is the initial value, it will adjust itself
+#define CORE_LOAD_THRESH 120.
+
 static frames_t cache_hits = 0, cache_misses = 0;
+static double cpu_load_thresh = CORE_LOAD_THRESH;
 
 static void play_toy(void) {
   if (mainw->toy_type == LIVES_TOY_MAD_FRAMES && !mainw->fs && CURRENT_CLIP_IS_NORMAL) {
@@ -540,6 +544,7 @@ weed_layer_t **map_sources_to_tracks(boolean rndr, boolean map_only) {
 static lives_result_t prepare_frames(frames_t frame) {
   // here we prepare the layers in mainw->layers so they can be loaded
   // mostly this involves checking for precached frames for the player in clip editor mode
+  // currently this is only for the foreground frame, other layers are pulled in bg by the plan runnner
   lives_clip_t *sfile = mainw->files[mainw->playing_file];
   boolean rndr = FALSE;
   int bad_frame_count = 0;
@@ -653,7 +658,7 @@ static lives_result_t prepare_frames(frames_t frame) {
           }
 #ifdef ENABLE_PRECACHE
           // then check if we a have preloaded (cached) frame
-          // there are two ways we an get a preload - either normal playback when we have spare cycles
+          // there are two ways we can get a preload - either normal playback when we have spare cycles
           // or when we are lagging and trying to jump ahead
           // the frame number is in mainw->pred_frame
           // once the frame is loaded (is_layer_ready returns TRUE), we check it is within range
@@ -661,8 +666,22 @@ static lives_result_t prepare_frames(frames_t frame) {
           // otherwise, we may use it
           // we may have up to 4 frame numbers: last frame played, current frame, pred_frame, cached frame, requested frame
           // (example for forwards playback)
-          // if we are ahead of req frame thwn we only play cached or pred if they are 'close', if cached < pred, play cached and cache pred
-          // othwequse, play pred
+	  // this is easiest to show with a picture:
+
+	  //  -------last_frame-------current_frame-----| (range lim) ------[cached_frame]
+	  // now we get pred_frame
+
+	  // ---pred--last_ => discard
+	  //
+	  // ---- last_frame -- pred -- current ----- => play pred frame
+	  //
+	  // ---- last_frame -- pred -- current ----- => play pred frame
+	  //
+	  // ---- last_frame -- current -----pred.....  pred | (range limit)  ==> play pred
+	  //
+	  // ---- last_frame -- current -----pred..... (range limit)  ==> play pred
+	  
+	  
 
           // close == between min jmp and max
           frames_t ccframe = 0, lframe = sfile->last_frameno, rframe = sfile->last_req_frame, pframe = 0;
@@ -731,13 +750,12 @@ no_precache:
                                           lives_layer_get_frame(mainw->cached_frame));
 
             weed_layer_copy(mainw->layers[0], mainw->cached_frame);
-            weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
             mainw->frame_layer = mainw->layers[0];
             frame = ccframe;
+	    evict_cache = TRUE;
           }
 
-          if (evict_cache)
-            weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
+          if (evict_cache) weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
 
           if (cache_pre) {
             mainw->cached_frame = STEAL_POINTER(mainw->frame_layer_preload);
@@ -765,7 +783,6 @@ no_precache:
               frame = pframe;
 
               if (is_virtual_frame(mainw->playing_file, pframe)) {
-                //if (delta_a > MIN_JMP_THRESH) {
                 lives_clipsrc_group_t *srcgrp = get_primary_srcgrp(mainw->playing_file);
                 if (srcgrp) {
                   srcgrp->layer = NULL;
@@ -775,10 +792,9 @@ no_precache:
                 }
               }
               lives_layer_set_status(mainw->frame_layer, LAYER_STATUS_LOADED);
-            }
-          }
-        }
-      }
+	    // *INDENT-OFF*
+            }}}}
+      // *INDENT-ON*
 #else
           if (1) {
 #endif
@@ -791,7 +807,6 @@ skip_precache:
 
     if (!mainw->frame_layer) {
       if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[0] = frame;
-      //lives_layer_set_status(mainw->layers[0], LAYER_STATUS_PREPARED);
     }
   }
 
@@ -867,6 +882,7 @@ static weed_layer_t *old_frame_layer = NULL;
 weed_layer_t *get_old_frame_layer(void) {return mainw->layers ? old_frame_layer : NULL;}
 
 void reset_old_frame_layer(void) {
+  // unref the frame_layer from the previous cycle
   weed_layer_t *layer = (weed_layer_t *)STEAL_POINTER(old_frame_layer);
   if (layer) {
     if (layer != mainw->cached_frame && layer != mainw->frame_layer_preload) {
@@ -882,6 +898,7 @@ void reset_old_frame_layer(void) {
 static boolean vpp_processed_flag = FALSE;
 
 void reset_ext_player_layer(boolean ign_flag) {
+  // for video playet plugin notify
   weed_layer_t *layer = STEAL_POINTER(mainw->ext_player_layer);
   if (layer) {
     if (!ign_flag) {
@@ -1897,7 +1914,6 @@ frames_t calc_new_playback_position(int clipno, ticks_t otc, ticks_t *ntc) {
   return nframe;
 }
 
-
 //#define SHOW_CACHE_PREDICTIONS
 
 static short scratch = SCRATCH_NONE;
@@ -1934,6 +1950,7 @@ void ready_player_one(weed_timecode_t estart) {
   last_time_source = LIVES_TIME_SOURCE_NONE;
   getahead = 0;
   drop_off = FALSE;
+  cpu_load_thresh = CORE_LOAD_THRESH;
   last_spare_cycles = spare_cycles = 0;
 }
 
@@ -2152,8 +2169,6 @@ static frames_t find_best_frame(lives_decoder_t *dplug, frames_t requested_frame
 #ifdef RT_AUDIO
 //#define ADJUST_AUDIO_RATE
 #endif
-
-#define CORE_LOAD_THRESH 120.
 
 //#define SHOW_CACHE_PREDICTIONS
 #define TEST_TRIGGER 9999
@@ -3177,12 +3192,12 @@ update_effort:
         last_eff_upd_time = now;
         mainw->inst_fps = get_inst_fps(FALSE);
         if (mainw->inst_fps) {
-          //g_print("play aa3332\n");
+          g_print("play aa3332\n");
           IGN_RET(avcy = get_cycle_avg_time(dets));
           if (dets[1]) {
             g_print("play a43433a2\n");
             // current target fps, adjusted for sc ratio
-            double crat = get_pbtimer_clock_ratio();
+            double crat = glob_timing->player.enabled ? glob_timing->player.timer_clock_ratio : 1.;
             if (!crat) crat = 1.;
             double tgt = abs(sfile->pb_fps) / crat;
             double rtgt = sfile->fps / crat;
@@ -3190,6 +3205,7 @@ update_effort:
             // averages over (default 5 seconds)
             newvals[0] = mainw->inst_fps;
             newvals[1] = dets[1];
+	    g_print("odoo with %f and %f\n", newvals[0], newvals[1]);
             tabdata_update(avers, newvals);
 
             // multiplying inst_fps by avg cycle time indicates how "busy" the player is
@@ -3332,7 +3348,14 @@ update_effort:
       can_rec = TRUE;
 #endif
 
-      if (cpuloadval < CORE_LOAD_THRESH || mainw->force_show
+      if (cpu_load_thresh) {
+	if (cpuloadval > cpu_load_thresh) cpu_load_thresh += 2.;
+	else if (cpuloadval < cpu_load_thresh) cpu_load_thresh -= .1;
+      }
+
+      if (glob_timing->player.enabled) glob_timing->player.cpu_load_thresh = cpu_load_thresh;
+      
+      if (!cpu_load_thresh || cpuloadval <= cpu_load_thresh || mainw->force_show
 #ifdef ENABLE_PRECACHE
           || (mainw->pred_frame && is_layer_ready(mainw->frame_layer_preload) == LIVES_RESULT_SUCCESS)
 #endif

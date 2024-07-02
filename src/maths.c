@@ -925,6 +925,7 @@ tab_data_t *init_tab_data(int arsize, int maxsize) {
         goto err;
 	// *INDENT-OFF*
       }}}
+  tabdata->maxsize--;
   // *INDENT-ON*
   return tabdata;
 
@@ -952,19 +953,19 @@ LIVES_GLOBAL_INLINE tab_data_t *free_tabdata(tab_data_t *tabdata) {
 void tabdata_update(tab_data_t *tabdata, double * newvals) {
   if (!tabdata) return;
   if (newvals) {
-    int nvals = tabdata->nvals;
-    if (nvals == tabdata->maxsize) {
-      nvals--;
+    if (tabdata->nvals >= tabdata->maxsize) {
+      tabdata->nvals--;
       for (int i = tabdata->arsize; i--;) {
         tabdata->tots[i] -= tabdata->res[i][0];
         lives_memmove(tabdata->res[i], tabdata->res[i] + 1,
                       (tabdata->maxsize - 1) * sizeof(double));
       }
-    } else tabdata->nvals++;
+    }
+    tabdata->nvals++;
     for (int i = tabdata->arsize; i--;) {
       tabdata->tots[i] += newvals[i];
-      tabdata->res[i][nvals] = newvals[i];
-      tabdata->avgs[i] = tabdata->tots[i] / (double)nvals;
+      tabdata->res[i][tabdata->nvals - 1] = newvals[i];
+      tabdata->avgs[i] = tabdata->tots[i] / (double)tabdata->nvals;
       if (newvals[i] > tabdata->max[i]) tabdata->max[i] = newvals[i];
       if (newvals[i] < tabdata->min[i]) tabdata->min[i] = newvals[i];
     }

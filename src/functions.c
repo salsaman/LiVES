@@ -631,7 +631,6 @@ void add_quick_fn(lives_funcptr_t func, lives_funcdef_t *fdef) {
 
 const char *get_funcname(lives_funcptr_t func) {
   return NULL;
-  const char *fname;
   if (!fn_looker) return NULL;
   lives_funcdef_t *fdef = (lives_funcdef_t *)get_from_hash_store_i(fn_looker, (uint64_t)func);
   return fdef ? fdef->funcname : NULL;
@@ -642,14 +641,13 @@ const char *get_funcname(lives_funcptr_t func) {
 void dump_fn_notes(void) {
   if (fn_looker) {
     const char *pfx = lives_index_get_prefix(fn_looker);
-    size_t pfxlen = lives_strlen(pfx);
     char **items = weed_plant_list_leaves(fn_looker, NULL);
     for (int i = 0; items[i]; i++) {
       if (lives_str_starts_with(items[i], pfx)) {
         allvalues_t *allvp = get_databook_item(fn_looker, items[i]);
         lives_funcdef_t *fdef;
         get_val_from_allvals(&fdef, allvp);
-        g_print("know abouit %s\n", fdef->funcname);
+        g_print("know about %s\n", fdef->funcname);
       }
       _ext_free(items[i]);
     }
@@ -1473,7 +1471,6 @@ static boolean unblock_waiter(void *receipt, void *data) {
   // prevent it from pausing and it will clear the request
 
   lives_proc_thread_ensure_resume(adder);
-
   lives_hook_cb_remove(receipt);
   return FALSE;
 }

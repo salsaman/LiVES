@@ -111,6 +111,7 @@ LIVES_GLOBAL_INLINE void *lives_steal_pointer(void **pptr)
 {void *p =  SAFE_DEREF(pptr); if (p) *pptr = NULL; return p;}
 
 
+
 //#if 0
 /* typedef struct { */
 /*   // if set then *ptr_to points to real memory and should be freed */
@@ -1135,7 +1136,7 @@ static char loc_data8M[_MB_(8)];
 static char loc_data1M[_MB_(1)];
 
 void *localise_data(void *src, size_t dsize) {
-  if (dsize <= capable->hw.cache_size) {
+  if (dsize <= capable->hw.l2_cache_size) {
     g_print("1m is %p\n", loc_data1M);
     if (dsize <= _MB_(1)) {
       if (src) lives_memcpy(loc_data1M, src, dsize);

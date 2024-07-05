@@ -927,59 +927,56 @@ void play_file(void) {
         if (!(mainw->preview && mainw->multitrack && mainw->multitrack->is_rendering))
           init_track_sources();
 
-        if (has_audio_buffers) {
-          IF_APLAYER_JACK
-          (
-            int i;
-            mainw->write_abuf = 0;
+        /* if (has_audio_buffers) { */
+        /*   IF_APLAYER_JACK */
+        /*   ( */
+        /*     int i; */
+        /*     mainw->write_abuf = 0; */
 
-            // fill our audio buffers now
-            // this will also get our effects state
+        /*     // fill our audio buffers now */
+        /*     // this will also get our effects state */
 
-            // reset because audio sync may have set it
-            if (mainw->multitrack) mainw->jackd->abufs[0]->arate = sfile->arate;
-            else mainw->jackd->abufs[0]->arate = mainw->jackd->sample_out_rate;
-              fill_abuffer_from(mainw->jackd->abufs[0], mainw->event_list, pb_start_event, exact_preview);
-            for (i = 1; i < prefs->num_rtaudiobufs; i++) {
-              // reset because audio sync may have set it
-              if (mainw->multitrack) mainw->jackd->abufs[i]->arate = sfile->arate;
-                else mainw->jackd->abufs[i]->arate = mainw->jackd->sample_out_rate;
-                fill_abuffer_from(mainw->jackd->abufs[i], mainw->event_list, NULL, FALSE);
-              }
+        /*     // reset because audio sync may have set it */
+        /*     //if (mainw->multitrack) mainw->jackd->abufs[0]->arate = sfile->arate; */
+        /*     /\* //else mainw->jackd->abufs[0]->arate = mainw->jackd->sample_out_rate; *\/ */
+        /*     /\*   fill_abuffer_from(mainw->jackd->abufs[0], mainw->event_list, pb_start_event, exact_preview); *\/ */
+        /*     /\* for (i = 1; i < prefs->num_rtaudiobufs; i++) { *\/ */
+        /*     /\*   // reset because audio sync may have set it *\/ */
+        /*     /\*   if (mainw->multitrack) mainw->jackd->abufs[i]->arate = sfile->arate; *\/ */
+        /*     /\*     else mainw->jackd->abufs[i]->arate = mainw->jackd->sample_out_rate; *\/ */
+        /*     /\*     fill_abuffer_from(mainw->jackd->abufs[i], mainw->event_list, NULL, FALSE); *\/ */
+        /*     /\*   } *\/ */
 
-          pthread_mutex_lock(&mainw->abuf_mutex);
-          mainw->jackd->read_abuf = 0;
-                                    mainw->abufs_to_fill = 0;
-                                    pthread_mutex_unlock(&mainw->abuf_mutex);
-                                    if (mainw->event_list) mainw->jackd->in_use = TRUE;)
+        /*   pthread_mutex_lock(&mainw->abuf_mutex); */
+        /*     mainw->abufs_to_fill = 0; */
+        /*     pthread_mutex_unlock(&mainw->abuf_mutex); */
+        /*     if (mainw->event_list) mainw->jackd->in_use = TRUE;) */
 
-            IF_APLAYER_PULSE
-            (
-              int i;
-              mainw->write_abuf = 0;
-              /// fill our audio buffers now
-              /// this will also get our effects state
+        /*     IF_APLAYER_PULSE */
+        /*     ( */
+        /*       int i; */
+        /*       mainw->write_abuf = 0; */
+        /*       /// fill our audio buffers now */
+        /*       /// this will also get our effects state */
 
-              /// this is the IN rate, everything is resampled to this rate and then to output rate
-              if (mainw->multitrack) mainw->pulsed->abufs[0]->arate = sfile->arate;
-              else mainw->pulsed->abufs[0]->arate = mainw->pulsed->out_arate;
+        /*   /\*     /// this is the IN rate, everything is resampled to this rate and then to output rate *\/ */
+        /*   /\*     if (mainw->multitrack) mainw->pulsed->abufs[0]->arate = sfile->arate; *\/ */
+        /*   /\*     else mainw->pulsed->abufs[0]->arate = mainw->pulsed->out_arate; *\/ */
 
-                /// need to set asamps, in case padding with silence is needed
-                mainw->pulsed->abufs[0]->out_asamps = mainw->pulsed->out_asamps;
+        /*   /\*       /// need to set asamps, in case padding with silence is needed *\/ */
+        /*   /\*       mainw->pulsed->abufs[0]->out_asamps = mainw->pulsed->out_asamps; *\/ */
 
-                fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview);
-              for (i = 1; i < prefs->num_rtaudiobufs; i++) {
-                if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = sfile->arate;
-                  else mainw->pulsed->abufs[i]->arate = mainw->pulsed->out_arate;
-                  mainw->pulsed->abufs[i]->out_asamps = mainw->pulsed->out_asamps;
-                  fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE);
-                }
+        /*   /\*       fill_abuffer_from(mainw->pulsed->abufs[0], mainw->event_list, pb_start_event, exact_preview); *\/ */
+        /*   /\*     for (i = 1; i < prefs->num_rtaudiobufs; i++) { *\/ */
+        /*       if (mainw->multitrack) mainw->pulsed->abufs[i]->arate = sfile->arate; */
+        /*         else mainw->pulsed->abufs[i]->arate = mainw->pulsed->out_arate; */
+        /*         mainw->pulsed->abufs[i]->out_asamps = mainw->pulsed->out_asamps; */
+        /*         fill_abuffer_from(mainw->pulsed->abufs[i], mainw->event_list, NULL, FALSE); */
+        /*       } */
 
-          pthread_mutex_lock(&mainw->abuf_mutex);
-          mainw->pulsed->read_abuf = 0;
-                                     mainw->abufs_to_fill = 0;
-                                     pthread_mutex_unlock(&mainw->abuf_mutex);)
-        }
+        /* pthread_mutex_lock(&mainw->abuf_mutex); */
+        /*     mainw->abufs_to_fill = 0; */
+        /*     pthread_mutex_unlock(&mainw->abuf_mutex);) */
       }
 
       //if (AUD_SRC_EXTERNAL) audio_analyser_start(AUDIO_SRC_EXT);
@@ -1001,7 +998,6 @@ void play_file(void) {
         (
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
-          mainw->jackd->read_abuf = -1;
           mainw->jackd->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         )
@@ -1009,7 +1005,6 @@ void play_file(void) {
         (
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
-          mainw->pulsed->read_abuf = -1;
           mainw->pulsed->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         )
@@ -1033,7 +1028,6 @@ void play_file(void) {
         (
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
-          mainw->jackd->read_abuf = -1;
           mainw->jackd->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);
         )
@@ -1041,7 +1035,6 @@ void play_file(void) {
         (
           // must do this before deinit fx
           pthread_mutex_lock(&mainw->abuf_mutex);
-          mainw->pulsed->read_abuf = -1;
           mainw->pulsed->in_use = FALSE;
           pthread_mutex_unlock(&mainw->abuf_mutex);)
 
@@ -1209,7 +1202,7 @@ void play_file(void) {
 
       // tell pulse client to close audio file
       if (mainw->pulsed) {
-        if (mainw->pulsed->playing_file > 0 || mainw->pulsed->fd > 0) {
+        if (mainw->pulsed->playing_file > 0) {
           ticks_t timeout = 0;
           if (mainw->cancelled != CANCEL_AUDIO_ERROR) {
             lives_alarm_t alarm_handle = lives_alarm_set(LIVES_DEFAULT_TIMEOUT);
@@ -1226,9 +1219,8 @@ void play_file(void) {
           if (timeout == 0)  {
             handle_audio_timeout();
             mainw->pulsed->playing_file = -1;
-            mainw->pulsed->fd = -1;
           } else {
-            lives_sleep_while_true((mainw->pulsed->playing_file > -1 || mainw->pulsed->fd > 0));
+            lives_sleep_while_true((mainw->pulsed->playing_file > -1));
           }
         }
         // MAKE SURE TO UNCORK THIS LATER

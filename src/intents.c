@@ -49,7 +49,6 @@ lives_objstore_t *bdef_store = NULL;
 
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *loi) {
-
   return loi ? weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL) : NULL;
 }
 
@@ -92,9 +91,9 @@ LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_create(uint64_t type, uint6
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *loi) {
   if (loi) {
-    weed_plant_t *attr_group = weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL);
+    lives_databook_t *attr_group = weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL);
     if (!attr_group) {
-      attr_group = lives_obj_instance_create(0, 0);
+      attr_group = LIVES_MAKE_INDEX(idx_type_attr_grp, WEED_SEED_PLANTPTR);
       lives_obj_instance_set_attr_group(loi, attr_group);
     }
     return attr_group;
@@ -179,12 +178,6 @@ LIVES_GLOBAL_INLINE void lives_thread_set_intentcap(const lives_intentcap_t *ica
 
 #define LIVES_ATTR_PREFIX "."
 
-char *make_attr_name(const char *name) {
-  if (lives_str_starts_with(name, LIVES_ATTR_PREFIX)) return lives_strdup(name);
-  return  lives_strdup_printf("%s%s", LIVES_ATTR_PREFIX, name);
-}
-
-
 weed_plant_t *lives_obj_attr_new(const char *name, weed_seed_t st) {
   weed_plant_t *attr = lives_obj_instance_create(0, 0);
   weed_set_string_value(attr, LIVES_LEAF_NAME, name);
@@ -193,10 +186,9 @@ weed_plant_t *lives_obj_attr_new(const char *name, weed_seed_t st) {
 }
 
 
-weed_plant_t *attr_grp_find_attr(weed_plant_t *attr_grp, const char *name) {
-  char *aname = make_attr_name(name);
-  weed_plant_t *attr = weed_get_plantptr_value(attr_grp, aname, NULL);
-  lives_free(aname);
+weed_plant_t *attr_grp_find_attr(lives_lookup_t *attr_grp, const char *name) {
+  weed_plant_t *attr = NULL;
+  lives_index_get_value(&attr, attr_grp, name);
   return attr;
 }
 
@@ -213,7 +205,10 @@ weed_plant_t *lives_obj_instance_get_attribute(lives_obj_instance_t *loi, const 
 
 
 LIVES_GLOBAL_INLINE weed_error_t lives_attr_unref(lives_obj_attr_t *attr) {
-  if (!weed_refcount_dec(attr)) weed_plant_free(attr);
+  if (!weed_refcount_dec(attr)) {
+    //lives_index_erase_value(attr_grp, name);
+    weed_plant_free(attr);
+  }
   return WEED_SUCCESS;
 }
 
@@ -267,9 +262,7 @@ LIVES_GLOBAL_INLINE int lives_attribute_get_param_type(lives_obj_instance_t *loi
 lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi,
     const char *name, weed_seed_t st) {
   if (!loi || !name || !*name) return NULL;
-  char *aname;
   weed_plant_t *attr_grp = lives_obj_instance_ensure_attr_group(loi);
-
   weed_plant_t *attr = attr_grp_find_attr(attr_grp, name);
   if (attr) {
     if (weed_get_int_value(attr, LIVES_LEAF_VALUE_TYPE, NULL) != st)
@@ -277,9 +270,9 @@ lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi
     return attr;
   }
   attr = lives_obj_attr_new(name, st);
-  aname = make_attr_name(name);
-  lives_add_subobj(attr_grp, aname, attr);
-  lives_free(aname);
+
+  lives_index_set_value(attr_grp, name, WEED_SEED_PLANTPTR, attr);
+
   return attr;
 }
 

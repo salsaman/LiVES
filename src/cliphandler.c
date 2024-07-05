@@ -837,13 +837,16 @@ static boolean recover_from_forensics(int fileno, lives_clip_t *loaded) {
 
 
 void dump_clip_binfmt(int which) {
-  static boolean recurse = FALSE;
-  char *fname = lives_build_filename(prefs->workdir, mainw->files[which]->handle,
-                                     "." TOTALSAVE_NAME, NULL);
+  RECURSE_GUARD_START;
+  lives_clip_t *sfile = RETURN_PHYSICAL_CLIP(which);
+  if (!sfile) return;
+
+  size_t binfmtsize = MY_OFFSET(sfile, binfmt_end);
+  char *fname = CLIP_FILE(which, "." TOTALSAVE_NAME);
   int fd = lives_create_buffered(fname, DEF_FILE_PERMS);
-  lives_write_buffered(fd, (const char *)mainw->files[which], sizeof(lives_clip_t), TRUE);
+  lives_write_buffered(fd, (const char *)mainw->files[which], binfmtsize, TRUE);
   lives_close_buffered(fd);
-  if (recurse) return;
+  RETURN_IF_RECURSED;
 
   if (check_for_executable(&capable->has_gzip, EXEC_GZIP)) {
     char *com = lives_strdup_printf("%s -f %s", EXEC_GZIP, fname), *gzname;
@@ -851,9 +854,9 @@ void dump_clip_binfmt(int which) {
     lives_free(com);
     if (THREADVAR(com_failed)) {
       THREADVAR(com_failed) = FALSE;
-      recurse = TRUE;
+      RECURSE_GUARD_ARM;
       dump_clip_binfmt(which);
-      recurse = FALSE;
+      RECURSE_GUARD_END;
       gzname = lives_strdup_printf("%s.%s", fname, LIVES_FILE_EXT_GZIP);
       if (lives_file_test(gzname, LIVES_FILE_TEST_EXISTS)) lives_rm(gzname);
       lives_free(gzname);
@@ -890,16 +893,16 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
     if (lives_file_test(fname, LIVES_FILE_TEST_EXISTS)) {
       ssize_t bytes;
       size_t cursize = sizeof(lives_clip_t);
-      size_t curdatasize = offsetof(lives_clip_t, binfmt_end);
+      size_t binfmtsize = (size_t)((char *)&sfile->binfmt_end - (char *)sfile) + sizeof(sfile->binfmt_end);
       size_t loadsize;
       size_t missing = 0, extra;
-      char *xloaded = (char *)lives_calloc(1, cursize);
+      char *xloaded = (char *)lives_calloc(1, binfmtsize);
       boolean badsize = FALSE;
       int fd = lives_open_buffered_rdonly(fname);
       size_t filesize = lives_buffered_orig_size(fd);
       lives_clip_t *loaded = (lives_clip_t *)xloaded;
-      if (filesize < cursize) {
-        missing = cursize - filesize;
+      if (filesize < binfmtsize) {
+        missing = binfmtsize - filesize;
       }
       bytes = lives_read_buffered(fd, xloaded, 8, TRUE);
       if (bytes < 8 || lives_memcmp(loaded->binfmt_check.chars, CLIP_BINFMT_CHECK, 8)) {
@@ -910,16 +913,16 @@ static lives_clip_t *_restore_binfmt(int clipno, boolean forensic, char *binfmtn
           badsize = TRUE;
         }
         loadsize = loaded->binfmt_bytes.num;
-        if (loadsize > curdatasize) {
+        if (loadsize > binfmtsize) {
           // anything from 'future LiVES' should end up in binfmt_reserved
           // and be preserved, provided it fits
-          extra = loadsize - curdatasize;
+          extra = loadsize - binfmtsize;
           if (extra > BINFMT_RSVD_BYTES) badsize = TRUE;
         }
-        if (loadsize + missing < curdatasize) {
+        if (loadsize + missing < binfmtsize) {
           badsize = TRUE;
         } else {
-          if (loadsize > cursize && loadsize < LOADSIZE_MAX) {
+          if (loadsize > binfmtsize && loadsize < LOADSIZE_MAX) {
             xloaded = lives_realloc(xloaded, loadsize);
             loaded = (lives_clip_t *)xloaded;
           } else loadsize = cursize;
@@ -2405,16 +2408,17 @@ void switch_to_file(int old_file, int new_file) {
     reset_clipmenu();
   }
 
-  lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
-  lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
-
-  set_sel_label(mainw->sel_label);
-
   if (mainw->eventbox5) lives_widget_show(mainw->eventbox5);
   lives_widget_show(mainw->hruler);
   lives_widget_show(mainw->vidbar);
   lives_widget_show(mainw->laudbar);
   lives_widget_show(mainw->raudbar);
+
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
+
+  set_sel_label(mainw->sel_label);
+  lives_menu_item_set_text(mainw->undo, cfile->undo_text, TRUE);
+  lives_menu_item_set_text(mainw->redo, cfile->redo_text, TRUE);
 
   if (cfile->achans < 2) lives_widget_set_opacity(mainw->raudbar, 0.);
   else lives_widget_set_opacity(mainw->raudbar, 1.);

@@ -227,7 +227,7 @@ LIVES_GLOBAL_INLINE boolean lives_unsetenv(const char *name) {
 }
 
 
-void _lives_abort(const char *file, int line, const char *func, const char *reason) {
+void _lives_abort(const char *file, int line, const char *reason) {
   // ignore sigint, sigterm, sigsegv, sigfpe
   ign_signal_handlers();
 

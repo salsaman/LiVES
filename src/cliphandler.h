@@ -68,12 +68,6 @@
 			    || (mainw->is_processing && cfile->is_loaded) || !mainw->cliplist \
 			    || !LIVES_IS_INTERACTIVE || is_transport_locked())
 
-typedef union _binval {
-  uint64_t num;
-  const char chars[8];
-  size_t size;
-} binval;
-
 #endif
 #endif
 
@@ -452,7 +446,13 @@ typedef enum {
   LIVES_DELIVERY_PUSH_PULL, // hybrid - player requests frame, src pushes when ready
 } lives_delivery_t;
 
-/// corresponds to one clip in the GUI
+typedef union _binval {
+  uint64_t num;
+  const char chars[8];
+  size_t size;
+} binval;
+
+//CLIP_BINFMT_CHECK == 'LiVESXXX'
 typedef struct _lives_clip_t {
   binval binfmt_check, binfmt_version, binfmt_bytes;
 
@@ -484,9 +484,9 @@ typedef struct _lives_clip_t {
   int arps; ///< audio physical sample rate (i.e the "normal" sample rate of the clip when played at 1,0 X velocity)
   int arate; ///< current audio playback rate (varies if the clip rate is changed)
   int achans; ///< number of audio channels (0, 1 or 2)
-  int asampsize; ///< audio sample size in bits (8 or 16)
+  int asampsize; ///< audio sample size in bits (8 or 16) (or with swresample: 24, 32, or (future)64. negative value means float)
   uint32_t signed_endian; ///< bitfield
-  float vol; ///< relative volume level / gain; sizeof array will be equal to achans
+  float vol; ///< relative volume level / gain;
 
   size_t afilesize;
   size_t f_size;
@@ -517,7 +517,7 @@ typedef struct _lives_clip_t {
   boolean deinterlace; ///< auto deinterlace
 
   int header_version;
-#define LIVES_CLIP_HEADER_VERSION 104
+#define LIVES_CLIP_HEADER_VERSION 105
 
   // uid of decoder plugin
   uint64_t decoder_uid, old_dec_uid;
@@ -568,14 +568,19 @@ typedef struct _lives_clip_t {
   // binfmt fields may be added here:
   ///
 
+  int64_t last_data_offset;
   ////
   //// end add section ^^^^^^^
 
-  /// binfmt is just a file dump of the struct up to the end of binfmt_end
-
-#define BINFMT_RSVD_BYTES 4096
+#define BINFMT_RSVD_BYTES 3960
   char binfmt_rsvd[BINFMT_RSVD_BYTES];
-  uint64_t binfmt_end; ///< marks the end of anything "interesring" we may want to save via binfmt extension
+
+  // guaranteed to always be zero
+#define BINFMT_GAP_BYTES 128
+  char binfmt_gap[BINFMT_GAP_BYTES];
+  uint64_t binfmt_end; ///< marks the end of anything "interesting" we may want to save via binfmt extension
+
+  //
 
   /// DO NOT remove or alter any fields before this ^^^^^
   ///////////////////////////////////////////////////////////////////////////
@@ -630,6 +635,7 @@ typedef struct _lives_clip_t {
   double fps_scale; // scale factor for transitory adjustments to pb_fps during playback (default is 1.0)
 
   lives_direction_t adirection; ///< audio play direction during playback, FORWARD or REVERSE.
+  double avelocity; ///< relative velocity of audio, eg. 0.5 playback at half speed; always positive, combines with adirection
 
   /// don't show preview/pause buttons on processing
   boolean nopreview;

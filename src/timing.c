@@ -47,7 +47,7 @@ double *get_proc_loads(boolean reset) {
       if (!cpu_stats) cpu_stats = &cpuvals;
       tabdata_update(cpuloadtab, cpuvals.loads);
       for (int i = capable->hw.ncpus; i--;) {
-	cpuvals.avgs[i] = cpuloadtab->avgs[i];
+        cpuvals.avgs[i] = cpuloadtab->avgs[i];
       }
     }
   }
@@ -213,11 +213,13 @@ LIVES_GLOBAL_INLINE int64_t lives_get_session_time_nsec(void) {
 
     clock_delta = nsec - last_nsec;
 
-    if (clock_delta > DELTA_THRESH || clock_delta < -0.0001) {
-      g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
-      if (clock_delta > 0) mainw->susp_time += clock_delta;
-      nsec -= clock_delta;
-      mainw->time_jump = clock_delta;
+    if (LIVES_IS_PLAYING) {
+      if (clock_delta > DELTA_THRESH || clock_delta < -0.01) {
+        g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
+        if (clock_delta > 0) mainw->susp_time += clock_delta;
+        nsec -= clock_delta;
+        mainw->time_jump = clock_delta;
+      }
     }
     last_nsec = nsec;
   }
@@ -366,7 +368,7 @@ void reset_playback_clock(void) {
 
 
 static void get_pbtimer_stats(double clock_delta) {
-  char *tmp, *tmp2;
+  //char *tmp, *tmp2;
   /* g_printerr("Stats for pbtimer:\n"); */
   /* g_printerr("After %lu calls, average cycle time is %s, current load is %.2f, " */
   /*            "current clock ratio is %.4f, drift is %s\n", */
@@ -391,11 +393,11 @@ static void get_pbtimer_stats(double clock_delta) {
   }
 }
 
-  /* (tmp = lives_format_timing_string(get_pbtimer_avcycle())), */
-  /*            get_pbtimer_load(), */
-  /*            get_pbtimer_clock_ratio(), */
-  /*            (tmp2 = lives_format_timing_string(get_pbtimer_drift()))); */
-  /* lives_free(tmp); lives_free(tmp2); */
+/* (tmp = lives_format_timing_string(get_pbtimer_avcycle())), */
+/*            get_pbtimer_load(), */
+/*            get_pbtimer_clock_ratio(), */
+/*            (tmp2 = lives_format_timing_string(get_pbtimer_drift()))); */
+/* lives_free(tmp); lives_free(tmp2); */
 
 /// synchronised timing
 // assume we have several time sources, each running at a slightly varying rate and with their own offsets
@@ -586,8 +588,8 @@ ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
       if (!owed_nsec) catchup = .1;
       allowed = tdiff * catchup;
       if (allowed > owed_nsec) {
-	allowed = owed_nsec;
-	catchup = (double)allowed / (double)tdiff;
+        allowed = owed_nsec;
+        catchup = (double)allowed / (double)tdiff;
       } else catchup *= 1.1;
       tdiff += allowed;
       owed_nsec -= allowed;
@@ -605,7 +607,7 @@ ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
 
   if (clock_delta && glob_timing->player.enabled)
     get_pbtimer_stats(clock_delta);
-  
+
   return NSEC_TO_TICKS(Itime);
 }
 
@@ -668,7 +670,7 @@ void update_effort(double impulse) {
   short pb_quality = prefs->pb_quality;
 
   double newvals[1];
-  
+
   if (LIVES_IS_RENDERING) {
     mainw->effort = -EFFORT_RANGE_MAX;
     prefs->pb_quality = PB_QUALITY_HIGH;
@@ -702,7 +704,7 @@ void update_effort(double impulse) {
   }
 
   if (mainw->effort < 0) {
-    if (struggling <= -EFFORT_LIMIT_MED && mainw->effort <= EFFORT_LIMIT_MED)
+    if (struggling <= -EFFORT_LIMIT_MED && mainw->effort <= -EFFORT_LIMIT_MED)
       pb_quality = PB_QUALITY_HIGH;
     else if (struggling > 0 && pb_quality == PB_QUALITY_LOW)
       pb_quality = PB_QUALITY_MED;

@@ -124,7 +124,14 @@ void dump_blueprint(uint64_t pltype);
 // given a "blueprint" for lives_plant_type bltype, we create all its leaves, setting the values from va_args
 #define PLANT_FROM_BLUEPRINT(bltype, ...) plant_from_blueprint(LIVES_PLANT_##bltype, ADD_DEF_LEAVES(NULL) __VA_OPT__(,) __VA_ARGS__, NULL)
 
-#define LIVES_DEF_BLUEPRINT WEED_LEAF_UNIQUE_ID, WEED_SEED_UINT64, BLU_FLAGS_NONE, LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE
+#define LIVES_DEF_BLUEPRINT WEED_LEAF_UNIQUE_ID, WEED_SEED_UINT64, BLU_FLAGS_NONE, \
+    LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE,	\
+    LIVES_LEAF_ADD_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
+    LIVES_LEAF_DEL_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
+    LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
+    LIVES_LEAF_FIND_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
+    LIVES_LEAF_GET_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL
+
 #define ADD_DEF_LEAVES(blptr) WEED_LEAF_UNIQUE_ID, gen_unique_id(), LIVES_LEAF_BLUEPRINT_PTR, blptr
 
 // defines LIVES_VALUE_DEF plant - a plant which defines a leaf in a plant
@@ -149,15 +156,22 @@ void _register_blueprint(uint64_t pltype, const char *regstr, ...);
 
 void register_blueprints(void);
 
+// all plants have a default add script LIVES_SCRIPT_RETURN(LIVES_RESULT_SUCCESS)
+// all plants have a default upate script LIVES_SCRIPT_RETURN(LIVES_RESULT_SUCCESS)
+// all plants have a default delete script LIVES_SCRIPT_RETURN(LIVES_RESULT_SUCCESS)
+// all plants have a default find script if has_item ret itemnm else ret emptystring
+// all plants have a default get script
+
+// "OP_RETURN 1"
+
 // LIVES_PLANT_INDEX
-// if itemtype is plantptr, and keyval is defined, items will be indexed by keyval leaf, stringified
-// if prefixed by #,
+// a plant which can store any type of leaves, name must be unique,
+// add, upd, del, ADD CONDITION calls find, if find returns name, no add
+//
 #define LIVES_INDEX_BLUEPRINT						\
   LIVES_DEF_BLUEPRINT, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, \
-    LIVES_SEED_CONST_CHARPTR, BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, \
-    LIVES_LEAF_ADD_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
-    LIVES_LEAF_DEL_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL, \
-    LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL
+    LIVES_SEED_CONST_CHARPTR, BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE
+
 
 typedef enum {
   idx_type_anon = -1,
@@ -167,11 +181,14 @@ typedef enum {
   idx_type_values,
   // datavook
   idx_type_data_book,
+  //
+  idx_type_attr_grp,
+  // lookup types are static and global
   /// preferences - keyed by name
   lookup_type_prefs,
   // bluepeint. indexed by pl type
   lookup_type_blueprints,
-
+  // functions - keyed by lives_funcptr_t (or funcname ?)
   lookup_type_funcs,
   idx_type_max,
 } index_type;
@@ -183,13 +200,15 @@ typedef index_type lookup_type;
 #define LIVES_LEAF_ITEM_TYPE "_data_type"
 #define LIVES_LEAF_ADD_COND "_add_cond"
 #define LIVES_LEAF_DEL_SCRIPT "_del_script"
+#define LIVES_LEAF_FIND_SCRIPT "_find_script"
+#define LIVES_LEAF_GET_SCRIPT "_get_script"
 #define LIVES_LEAF_UPDATE_SCRIPT "_update_script"
 
 typedef weed_plant_t lives_index_t;
 
 #define IDX_PREFIX "data_"
 
-#define LIVES_MAKE_INDEX(idxtype, itemtype)				\
+#define LIVES_MAKE_INDEX(idxtype, itemtype)					\
   PLANT_FROM_BLUEPRINT(INDEX, LIVES_LEAF_INDEX_TYPE, idxtype, LIVES_LEAF_PREFIX, IDX_PREFIX, LIVES_LEAF_ITEM_TYPE, itemtype)
 
 weed_plant_t *lives_index_new(index_type idxtype, const char *prefix, weed_seed_t itemtype);
@@ -218,18 +237,26 @@ weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean 
 // a lookup is an index with read only values, index vals are readonly,
 // autofree. We define a free func for the index vals.
 
+// we also gave  extra add condition
+// - defines the type of leaves that can be added
+// delete / update script may free the item data
+
+
 // we (will) have condiitons for add, update and delete
 // - check type is allvalues
 // - chek unqie nme
 //
-// update - blocked -r eadonly
+//
 
+// update - blocked -r eadonly
 // delete - auto free
 //
 // if we pass an allvalues with name and value, if the name is already used
 // the value is not stored. Otherwise the allvalues is set static (todo - refcount)
 // we can also store bound vars - like for the global databook, make th bound bvalues readonly
 // etc.
+//
+// we can also store plants of a specific type, eg. attr plant
 
 #define LIVES_LEAF_LOOKUP_TYPE LIVES_LEAF_INDEX_TYPE
 
@@ -252,7 +279,7 @@ boolean remove_from_lookup_table(lives_lookup_t *, const char *name);
 
 // LIVES_PLANT_DATA_BOOK
 
-// new style data book. A data book is an index plant with prefix "data_"
+// new style data book. A data book is a lokup plant with prefix "data_"
 // and type LIVES_SEED_ALLVALUES (a custom seed_type)
 //
 // when setting data, we first check if the value exists.
@@ -270,7 +297,8 @@ boolean remove_from_lookup_table(lives_lookup_t *, const char *name);
 //
 // - setting a value "static" makes in undeletable. When we clean the book, we actually call _weed_plant_free(),
 // (the original version). This will delete all items not flagged as undeleteable, and only return WEED_SUCCESS if all leaves were freed.
-
+//
+// databook has a "scope" as do each of the alllvalues. we can only "see" values with current scope, - (scope - 1) and scope 0
 
 #define LIVES_LEAF_SCOPE "dbook_scope"
 

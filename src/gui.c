@@ -4446,22 +4446,6 @@ static void _resize_play_window(void) {
         mainw->ignore_screen_size = FALSE;
       }
 
-      /* if (pmonitor == 0 || pmonitor == widget_opts.monitor + 1) { */
-      /*   if (mainw->vpp && mainw->vpp->fwidth > 0) { */
-      /*     lives_window_move(LIVES_WINDOW(mainw->play_window), (scr_width - mainw->vpp->fwidth) / 2, */
-      /*                       (scr_height - mainw->vpp->fheight) / 2); */
-      /*   } else lives_window_move(LIVES_WINDOW(mainw->play_window), 0, 0); */
-      /* } else { */
-      /*   lives_window_set_monitor(LIVES_WINDOW(mainw->play_window), pmonitor - 1); */
-      /*   if (mainw->vpp && mainw->vpp->fwidth > 0) { */
-      /*     lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x + */
-      /*                       (mainw->mgeom[pmonitor - 1].width - mainw->vpp->fwidth) / 2, */
-      /*                       mainw->mgeom[pmonitor - 1].y + (mainw->mgeom[pmonitor - 1].height - mainw->vpp->fheight) / 2); */
-      /*   } else lives_window_move(LIVES_WINDOW(mainw->play_window), mainw->mgeom[pmonitor - 1].x, */
-      /*                              mainw->mgeom[pmonitor - 1].y); */
-      /* 	lives_widget_queue_draw_and_update(mainw->play_window); */
-      /* } */
-
       // init the playback plugin, unless the player cannot resize and there is a possibility of
       // wrongly sized frames (i.e. during a preview), or we are previewing and it's a remote display
       if (mainw->vpp && (!mainw->preview || ((mainw->vpp->capabilities & VPP_LOCAL_DISPLAY) &&

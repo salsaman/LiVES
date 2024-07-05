@@ -7728,8 +7728,6 @@ procfunc1:
     tabdata_update(avers, newvals);
     weed_set_double_value(inst, "av_proc_time", avers->avgs[0]);
     max_arate = avers->avgs[1] / avers->avgs[0];
-    g_print("Proc: %f samps in %f secs = %f samps per sec per achan\n", avers->avgs[1], avers->avgs[0],
-            avers->avgs[1] / avers->avgs[0]);
 
     if (max_arate < weed_channel_get_audio_rate(achan)) {
       int nrate = max_arate;

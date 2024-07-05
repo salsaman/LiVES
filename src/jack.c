@@ -3292,7 +3292,7 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
         } else {
           // cached from files - multitrack mode
           if (jackd->read_abuf > -1 && !jackd->mute) {
-            sample_move_abuf_float(out_buffer, nch, nframes, jackd->sample_out_rate, vol);
+            ///sample_move_abuf_float(out_buffer, nch, nframes, jackd->sample_out_rate, vol);
 
             if (jackd->astream_fd != -1) {
               // audio streaming if enabled
@@ -4305,7 +4305,7 @@ boolean jack_audio_seek_frame_velocity(jack_driver_t *jackd, double frame, doubl
 }
 
 
-LIVES_GLOBAL_INLINE boolean jack_audio_seek_frame(jack_driver_t *jackd, double frame) {
+LIVES_GLOBAL_INLINE void jack_audio_seek_frame(jack_driver_t *jackd, int clip, frames_t frame) {
   return jack_audio_seek_frame_velocity(jackd, frame, 0.);
 }
 

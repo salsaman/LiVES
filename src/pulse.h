@@ -74,7 +74,6 @@ typedef struct {
 
   uint64_t num_calls; /**< count of process_audio() calls */
 
-  audio_buffer_t *aPlayPtr; ///< data read from file
   lives_audio_loop_t loop;
 
   uint16_t *sound_buffer; ///< transformed data
@@ -97,7 +96,6 @@ typedef struct {
 
   boolean is_paused;
 
-  int fd; /**< if >0 we are playing from a lives_clip_t */
   off_t seek_pos;
   volatile off_t real_seek_pos;
   off_t seek_end;
@@ -113,11 +111,9 @@ typedef struct {
 
   volatile int playing_file;
 
-  lives_audio_buf_t **abufs;
-
   double volume_linear; ///< TODO: use perchannel volume[]
 
-  volatile int read_abuf;
+  //volatile int read_abuf;
 
   volatile int astream_fd;
 
@@ -160,14 +156,13 @@ int64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 
 
 double lives_pulse_get_timing_ratio(pulse_driver_t *, int64_t current);
 
-double lives_pulse_get_pos(pulse_driver_t *);
 off_t lives_pulse_get_offset(pulse_driver_t *);
 
 size_t pulse_get_buffsize(pulse_driver_t *);
 
 //////////////////////
 
-boolean pulse_audio_seek_frame(pulse_driver_t *, double frame);  ///< seek to (video) frame
+void pulse_audio_seek_frame(pulse_driver_t *, int clip, frames_t frame);  ///< seek to (video) frame
 boolean pulse_audio_seek_frame_velocity(pulse_driver_t *, double frame, double vel);
 
 void pulse_set_avel(pulse_driver_t *, int clipno, double ratio);

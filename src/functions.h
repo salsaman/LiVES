@@ -19,6 +19,53 @@
 
 typedef struct _hstack_t lives_hook_stack_t;
 
+
+// recursion prevention:
+// - there are two types, global and thread specific
+//  -- a global recursion guard ensures that a segment of code is not called recursively, counting all threads
+//  -- thread specific prevents recursion by any single thread, buy the code can be run simultaneously
+//		by multiple threads. These macros are prefixed with T_
+
+// place RECURSE_GUARD_START / T_RECURSE_START  once at the start of the function
+
+// place RETURN_[VAL_]IF_RECURSED / T_.. at the start of any points where recursed threads
+// should return from the function. The version with VAL_ allows a value to be returned.
+// e.g RETURN_VAL_IF_RECURSED(FALSE); T_RETURN_VAL_IF_RECURSED(TRUE);
+
+// place RECURSE_GUARD_ARM / T_REC.. before any potentialy recursive function calls
+// place RECURSE_GUARD_END / T_REC.. after the function call
+
+// the requirements are: start MUST be placed once only before using any of the other macros
+// ARM / END must be paired, sandwiching function calls
+// RETURN* shall not be placed between ARM and END
+//
+// RECURSE_GUARD_START and T_RECURSE_GUARD_START are interchangeable, use only on or the other
+// The two versions exist only for readability.
+// These macros can be placed in a function to provide function scope or outside a function
+// to provide static scope.
+//
+// global arm / end / return may be intermixed with threaded versions. The rules apply separately to each.
+
+#define RECURSE_GUARD_START _RECURSE_GUARD_START_
+
+#define RETURN_IF_RECURSED RETURN_IF_RECURSED_WITH_DATA(NULL)
+#define RETURN_VAL_IF_RECURSED(val) RETURN_VAL_IF_RECURSED_WITH_DATA(val, NULL)
+
+#define RECURSE_GUARD_ARM RECURSE_GUARD_ARM_FOR_DATA(NULL)
+#define RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
+
+//
+
+#define T_RECURSE_GUARD_START _RECURSE_GUARD_START_
+
+#define T_RETURN_IF_RECURSED T_RETURN_IF_RECURSED_WITH_DATA(NULL)
+#define T_RETURN_VAL_IF_RECURSED(val) T_RETURN_VAL_IF_RECURSED_WITH_DATA(val,NULL)
+
+#define T_RECURSE_GUARD_ARM _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,NULL)
+#define T_RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
+
+//
+
 typedef struct {
   uint64_t token;
   const void *dataptr;
@@ -49,8 +96,6 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
 
 #define _RECURSE_GUARD_START_ static recursion_tokens RTOKENS=(recursion_tokens){.token=0, .list=NULL}
 
-// global
-
 #define _RECURSE_GUARD_ARM_FOR_DATA_(rtokens, xdataptr)			\
   _DW0(LIVES_CALLOC_TYPE(recursion_token,rectok,1);			\
        if(!rtokens.token){RTOKENS.token=gen_unique_id();		\
@@ -59,16 +104,6 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
        pthread_rwlock_wrlock(&rtokens.rwlock);				\
        rtokens.list=lives_list_prepend(rtokens.list,(void*)rectok);	\
        pthread_rwlock_unlock(&rtokens.rwlock);)
-
-//
-
-#define RECURSE_GUARD_START _RECURSE_GUARD_START_
-
-#define RETURN_IF_RECURSED RETURN_IF_RECURSED_WITH_DATA(NULL)
-#define RETURN_VAL_IF_RECURSED(val) RETURN_VAL_IF_RECURSED_WITH_DATA(val, NULL)
-
-#define RECURSE_GUARD_ARM RECURSE_GUARD_ARM_FOR_DATA(NULL)
-#define RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
 
 #define RETURN_IF_RECURSED_WITH_DATA(dataptr)				\
   _DW0(if(!RTOKENS.token){RTOKENS.token=gen_unique_id();		\
@@ -104,16 +139,6 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
 	 THREADVAR(trest_list)=lives_list_prepend(THREADVAR(trest_list),(void*)rectok); \
        pthread_rwlock_unlock(&rtokens.rwlock);)
 
-//
-
-#define T_RECURSE_GUARD_START _RECURSE_GUARD_START_
-
-#define T_RETURN_IF_RECURSED T_RETURN_IF_RECURSED_WITH_DATA(NULL)
-#define T_RETURN_VAL_IF_RECURSED(val) T_RETURN_VAL_IF_RECURSED_WITH_DATA(val,NULL)
-
-#define T_RECURSE_GUARD_ARM _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,NULL)
-#define T_RECURSE_GUARD_END RECURSE_GUARD_END_FOR_DATA(NULL)
-
 #define T_RETURN_IF_RECURSED_WITH_DATA(dataptr)				\
   _DW0(if(!RTOKENS.token){RTOKENS.token=gen_unique_id();		\
    pthread_rwlock_init(&RTOKENS.rwlock, NULL);}				\
@@ -133,10 +158,11 @@ static inline LIST_TYPE remove_recursion_token(LIST_TYPE xlist, uint64_t token, 
     pthread_rwlock_unlock(&RTOKENS.rwlock);})
 
 #define T_RECURSE_GUARD_ARM_FOR_DATA(dataptr) _T_RECURSE_GUARD_ARM_FOR_DATA_(RTOKENS,dataptr)
-#define T_RECURSE_GUARD_END_FOR_DATA(dataptr) _DW0(pthread_rwlock_wrlock(&RTOKENS.rwlock); \
-						   THREADVAR(trest_list) = remove_recursion_token(THREADVAR(trest_list), \
-												  RTOKENS.token,dataptr); \
-						   pthread_rwlock_unlock(&RTOKENS.rwlock);)
+#define T_RECURSE_GUARD_END_FOR_DATA(dataptr) _DW0	\
+  (pthread_rwlock_wrlock(&RTOKENS.rwlock);		\
+   THREADVAR(trest_list) = remove_recursion_token	\
+   (THREADVAR(trest_list), RTOKENS.token,dataptr);	\
+   pthread_rwlock_unlock(&RTOKENS.rwlock);)
 
 char *make_std_pname(int pn);
 
@@ -172,7 +198,6 @@ lives_result_t do_call(lives_funcinst_t *);
 
 #define LIVES_LEAF_FILE_REF "file_ref"
 #define LIVES_LEAF_LINE_REF "line_ref"
-#define LIVES_LEAF_FUNC_REF "func_ref"
 
 #ifdef __FILE__
 #define _FILE_REF_ __FILE__
@@ -187,14 +212,6 @@ lives_result_t do_call(lives_funcinst_t *);
 #else
 #define _LINE_REF_ 0
 #define _ORIG_LINE_REF_ 0
-#endif
-// this is only available for c++, it seems
-#ifdef __FUNC__
-#define _FUNC_REF_ __FUNC__
-#define _ORIG_FUNC_REF_ __FUNC__
-#else
-#define _FUNC_REF_ "??????"
-#define _ORIG_FUNC_REF_ "??????"
 #endif
 
 typedef enum {

@@ -32,6 +32,10 @@ typedef struct {
 
 /// utility macros /////////////////
 
+#define CLIP_FILE(clipno, ...) (lives_build_filename(prefs->workdir, mainw->files[clipno]->handle \
+						     __VA_OPT__(,) __VA_ARGS__, NULL))
+
+
 #define SET_DIR(set_name) (lives_build_path(prefs->workdir, (set_name), NULL))
 #define FUTURE_SET_DIR(set_name) (lives_build_path(future_prefs->workdir, (set_name), NULL))
 #define CURRENT_SET_DIR SET_DIR(mainw->set_name)

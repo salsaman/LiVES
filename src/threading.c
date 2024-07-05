@@ -2841,11 +2841,12 @@ boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
   // cancelled BEFORE being queued,
   // (this can be done even if the proc_thread is not explicitly 'cancellable',
   if (lives_proc_thread_should_cancel(lpt)) {
-    if (!lives_proc_thread_was_cancelled(lpt))
+    if (!lives_proc_thread_was_cancelled(lpt)) {
       lives_hook_stack_t **hook_stacks = lives_proc_thread_get_hook_stacks(lpt);
-    lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
-    if (!(lives_proc_thread_get_attrs(lpt) & LIVES_THRDATTR_NO_HOOKS))
-      lives_hook_trigger(hook_stacks, CANCELLED_HOOK);
+      lives_proc_thread_include_states(lpt, THRD_STATE_CANCELLED);
+      if (!(lives_proc_thread_get_attrs(lpt) & LIVES_THRDATTR_NO_HOOKS))
+        lives_hook_trigger(hook_stacks, CANCELLED_HOOK);
+    }
     state = lives_proc_thread_set_final_state(lpt);
     if (!(attrs & LIVES_THRDATTR_DONTCARE)) {
       // notify successful completion

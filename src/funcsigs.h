@@ -122,9 +122,10 @@ DEF_STRUCT(allvalues_t,
            //@TYPEDEF u weed_size_t
            //@TYPEDEF v LiVESList *
            //@UNION allval_t
-           // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
-           // or func name fpr fncinst
+
            uint64_t uid;
+           // text of value passed on creation, e.g. "2", "WEED_SEED_BOOLEAN"
+           // or func name for fncinst
            char *aname;
            weed_seed_t stype;
            weed_size_t ne; // num elements - always 1 if POINTER set
@@ -146,7 +147,7 @@ DEF_STRUCT(allvalues_t,
            // we can create readwrite values at scope 2 by setting scope to -2
            // at scope 2 then, these are like set once const
 
-           // reutnring to scope 1 all -1 scoped vars becoem scope 0, readwrite
+           // returning to scope 1 all -1 scoped vars becoem scope 0, readwrite
            // all -2 vars become 1 scope and become writable
            // at scopes > 1 we cannot promote
 

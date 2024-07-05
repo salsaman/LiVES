@@ -128,37 +128,47 @@ lives_result_t video_sync_ready(void) {
   if (mainw->foreign || !LIVES_IS_PLAYING || AUD_SRC_EXTERNAL || prefs->force_system_clock
       || (mainw->event_list && !(mainw->record || mainw->record_paused)) || prefs->audio_player == AUD_PLAYER_NONE
       || (CURRENT_CLIP_IS_VALID && cfile->play_paused)) {
-    mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+    mainw->video_seek_ready = -1;
+    //    mainw->audio_seek_ready = TRUE;
     mainw->avsync_time = 0.;
-    return LIVES_RESULT_SUCCESS;
+    return LIVES_RESULT_FAIL;
   }
 
   IF_APLAYER_JACK
   (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->jackd->is_paused)) {
-  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-  return LIVES_RESULT_SUCCESS;
+  mainw->video_seek_ready = -1;
+  //mainw->audio_seek_ready = TRUE;
+  return LIVES_RESULT_FAIL;
 })
 
   IF_APLAYER_PULSE
   (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->pulsed->is_paused)) {
-  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  mainw->video_seek_ready = -1;
+  //mainw->audio_seek_ready = TRUE;
   mainw->avsync_time = 0.;
-  return LIVES_RESULT_SUCCESS;
+  return LIVES_RESULT_FAIL;
 })
 
-  if (mainw->audio_seek_ready) {
-    mainw->video_seek_ready = TRUE;
+  if (mainw->audio_seek_ready == not_seeking) {
+    mainw->video_seek_ready = 0;
     mainw->avsync_time = 0.;
-    return LIVES_RESULT_SUCCESS;
+    return LIVES_RESULT_FAIL;
   }
 
-  xtime = (lives_get_session_time() - mainw->avsync_time);
-  if (xtime > AV_SYNC_LIMIT) {
-    mainw->sync_err = xtime;
-    return LIVES_RESULT_TIMEDOUT;
+  if (mainw->audio_seek_ready == seek_active ||
+      (mainw->video_seek_ready && mainw->audio_seek_ready == seek_notarget)) {
+    xtime = (lives_get_session_time() - mainw->avsync_time);
+    if (xtime > AV_SYNC_LIMIT) {
+      mainw->sync_err = xtime;
+      return LIVES_RESULT_TIMEDOUT;
+    }
   }
+
+  if (mainw->audio_seek_ready == seek_approximate)
+    return LIVES_RESULT_SUCCESS;
+
   return LIVES_RESULT_FAIL;
 }
 
@@ -666,22 +676,22 @@ static lives_result_t prepare_frames(frames_t frame) {
           // otherwise, we may use it
           // we may have up to 4 frame numbers: last frame played, current frame, pred_frame, cached frame, requested frame
           // (example for forwards playback)
-	  // this is easiest to show with a picture:
+          // this is easiest to show with a picture:
 
-	  //  -------last_frame-------current_frame-----| (range lim) ------[cached_frame]
-	  // now we get pred_frame
+          //  -------last_frame-------current_frame-----| (range lim) ------[cached_frame]
+          // now we get pred_frame
 
-	  // ---pred--last_ => discard
-	  //
-	  // ---- last_frame -- pred -- current ----- => play pred frame
-	  //
-	  // ---- last_frame -- pred -- current ----- => play pred frame
-	  //
-	  // ---- last_frame -- current -----pred.....  pred | (range limit)  ==> play pred
-	  //
-	  // ---- last_frame -- current -----pred..... (range limit)  ==> play pred
-	  
-	  
+          // ---pred--last_ => discard
+          //
+          // ---- last_frame -- pred -- current ----- => play pred frame
+          //
+          // ---- last_frame -- pred -- current ----- => play pred frame
+          //
+          // ---- last_frame -- current -----pred.....  pred | (range limit)  ==> play pred
+          //
+          // ---- last_frame -- current -----pred..... (range limit)  ==> play pred
+
+
 
           // close == between min jmp and max
           frames_t ccframe = 0, lframe = sfile->last_frameno, rframe = sfile->last_req_frame, pframe = 0;
@@ -752,7 +762,7 @@ no_precache:
             weed_layer_copy(mainw->layers[0], mainw->cached_frame);
             mainw->frame_layer = mainw->layers[0];
             frame = ccframe;
-	    evict_cache = TRUE;
+            evict_cache = TRUE;
           }
 
           if (evict_cache) weed_layer_unref(STEAL_POINTER(mainw->cached_frame));
@@ -807,8 +817,11 @@ skip_precache:
 
     if (!mainw->frame_layer) {
       if (mainw->plan_cycle) mainw->plan_cycle->frame_idx[0] = frame;
+      lives_layer_set_frame(mainw->frame_layer, frame);
     }
   }
+
+  lives_layer_set_frame(mainw->frame_layer, frame);
 
   if ((!cfile->next_event && mainw->is_rendering && !mainw->clip_switched &&
        (!mainw->multitrack || (!mainw->multitrack->is_rendering && !mainw->is_generating))) ||
@@ -1191,15 +1204,20 @@ frames_t load_frame_image(frames_t frame) {
 
     if (mainw->layers && mainw->layers[0]) mainw->frame_layer = mainw->layers[0];
 
-    if (prefs->audio_src == AUDIO_SRC_INT && !mainw->audio_seek_ready) {
-      lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
-      pthread_mutex_lock(&mainw->avseek_mutex);
-      mainw->video_seek_ready = TRUE;
-      mainw->mark_time = TRUE;
-      lives_proc_thread_sync_with(aplayer, SYNCIDX_AVSYNC, MM_IGNORE);
-      pthread_mutex_unlock(&mainw->avseek_mutex);
-      lives_microsleep_while_false(mainw->audio_seek_ready);
-      mainw->mark_time = FALSE;
+    if (prefs->audio_src == AUDIO_SRC_INT && mainw->audio_seek_ready == seek_notarget)
+      mainw->video_seek_ready = frame;
+
+    if (prefs->audio_src == AUDIO_SRC_INT && mainw->audio_seek_ready != not_seeking) {
+      if (video_sync_ready() == LIVES_RESULT_SUCCESS) {
+        lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+        pthread_mutex_lock(&mainw->avseek_mutex);
+        mainw->video_seek_ready = frame;
+        mainw->mark_time = TRUE;
+        lives_proc_thread_sync_with(aplayer, SYNCIDX_AVSYNC, MM_IGNORE);
+        pthread_mutex_unlock(&mainw->avseek_mutex);
+        lives_microsleep_while_false(mainw->audio_seek_ready != not_seeking);
+        mainw->mark_time = FALSE;
+      }
     }
 
     if (mainw->refresh_model) {
@@ -1823,7 +1841,7 @@ static boolean check_audio_limits(int clipno, frames_t nframe) {
     }
 
     if (mainw->scratch == SCRATCH_JUMP) {
-      resync_audio(clipno, (double)nframe);
+      resync_audio(clipno, nframe);
       retval = TRUE;
     }
   }
@@ -2867,7 +2885,7 @@ close_clip:
   }
 
   if (mainw->scratch == SCRATCH_JUMP) {
-    resync_audio(mainw->playing_file, (double)sfile->last_frameno + dir);
+    avsync_force();
     mainw->scratch = SCRATCH_JUMP_NORESYNC;
   }
 
@@ -2979,7 +2997,7 @@ close_clip:
       // paused
       if (LIVES_UNLIKELY(sfile->play_paused)) {
         mainw->startticks = mainw->currticks;
-        if (!mainw->video_seek_ready || !mainw->audio_seek_ready) video_sync_ready();
+        if (mainw->audio_seek_ready != not_seeking) video_sync_ready();
       }
 
       if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
@@ -3192,10 +3210,8 @@ update_effort:
         last_eff_upd_time = now;
         mainw->inst_fps = get_inst_fps(FALSE);
         if (mainw->inst_fps) {
-          g_print("play aa3332\n");
           IGN_RET(avcy = get_cycle_avg_time(dets));
           if (dets[1]) {
-            g_print("play a43433a2\n");
             // current target fps, adjusted for sc ratio
             double crat = glob_timing->player.enabled ? glob_timing->player.timer_clock_ratio : 1.;
             if (!crat) crat = 1.;
@@ -3205,7 +3221,6 @@ update_effort:
             // averages over (default 5 seconds)
             newvals[0] = mainw->inst_fps;
             newvals[1] = dets[1];
-	    g_print("odoo with %f and %f\n", newvals[0], newvals[1]);
             tabdata_update(avers, newvals);
 
             // multiplying inst_fps by avg cycle time indicates how "busy" the player is
@@ -3349,12 +3364,12 @@ update_effort:
 #endif
 
       if (cpu_load_thresh) {
-	if (cpuloadval > cpu_load_thresh) cpu_load_thresh += 2.;
-	else if (cpuloadval < cpu_load_thresh) cpu_load_thresh -= .1;
+        if (cpuloadval > cpu_load_thresh) cpu_load_thresh += 2.;
+        else if (cpuloadval < cpu_load_thresh) cpu_load_thresh -= .1;
       }
 
       if (glob_timing->player.enabled) glob_timing->player.cpu_load_thresh = cpu_load_thresh;
-      
+
       if (!cpu_load_thresh || cpuloadval <= cpu_load_thresh || mainw->force_show
 #ifdef ENABLE_PRECACHE
           || (mainw->pred_frame && is_layer_ready(mainw->frame_layer_preload) == LIVES_RESULT_SUCCESS)
@@ -3864,7 +3879,7 @@ boolean begin_playback(void) {
     if (!record_setup(lives_get_current_playback_ticks(NULL))) return FALSE;
   }
 
-  if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_ready = TRUE;
+  if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_ready = -1;
   if (mainw->event_list || !CLIP_HAS_AUDIO(mainw->playing_file)) mainw->audio_seek_ready = TRUE;
 
   cfile->last_frameno = cfile->frameno = mainw->play_start;
@@ -3902,7 +3917,10 @@ boolean begin_playback(void) {
   // must call reset_timebase first, since we set playback ticks
   if (!mainw->foreign && !mainw->multitrack) {
     avsync_force();
-  } else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+  } else {
+    mainw->video_seek_ready = -1;
+    //mainw->audio_seek_ready = TRUE;
+  }
 
   process_one();
 
@@ -3970,6 +3988,11 @@ lives_obj_instance_t *lives_player_inst_create(uint64_t subtype) {
   lives_attribute_set_param_type(inst, ATTR_AUDIO_FLOAT, _("Is float"), WEED_PARAM_SWITCH);
   lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_INTERLEAVED, WEED_SEED_BOOLEAN);
   lives_attribute_set_param_type(inst, ATTR_AUDIO_INTERLEAVED, _("Interleaved"), WEED_PARAM_SWITCH);
+
+  lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_VELOCITY, WEED_SEED_DOUBLE);
+  lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_SEEK, WEED_SEED_DOUBLE);
+  lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_DIRECTION, WEED_SEED_INT);
+  lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_POSITION, WEED_SEED_INT64);
 
   // length in samples per channel
   lives_obj_instance_declare_attribute(inst, ATTR_AUDIO_DATA_LENGTH, WEED_SEED_INT);

@@ -658,25 +658,26 @@ void dump_fn_notes(void) {
 
 void _func_entry(lives_funcptr_t func, const char *funcname, int category, const char *rettype,
                  const char *args_fmt, char *file_ref, int line_ref, uint64_t flags) {
-  // try to guess ret_type, if it is eg. "I"
-
-
-  ///////////// lookup functions //////
-
+  lives_funcdef_t *fdef = NULL;
   weed_seed_t rtype = WEED_SEED_NONE;
-  if (rettype && *rettype) rtype = get_seedtype(*rettype);
-  lives_funcdef_t *fdef = get_from_hash_store_i(fn_looker, (uint64_t)func);
+  if (!fn_looker) fn_looker = lives_make_lookup(lookup_type_funcs);
+  char *namei = LSPF("%p", func);
 
+  if (rettype && *rettype) rtype = get_seedtype(*rettype);
+  allvalues_t *avp = find_in_lookup_table(fn_looker, namei);
+  if (avp) fdef = (lives_funcdef_t *)avp->values.V[0];
   if (!fdef) {
     fdef = create_funcdef(funcname, func, rtype, args_fmt, file_ref, line_ref, flags);
-    add_to_hash_store_i(fn_looker, (uint64_t)func, fdef);
+    add_to_lookup_table(fn_looker, WEED_SEED_VOIDPTR, namei, fdef);
   }
-  //THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), allvp);
+  lives_free(namei);
+  THREADVAR(func_stack) = lives_sync_list_push(THREADVAR(func_stack), fdef);
 }
 
 
 void _func_exit(char *file_ref, int line_ref, const char *valname, ...) {
   //
+  lives_sync_list_pop(&THREADVAR(func_stack));
 }
 
 ///////////////////////////

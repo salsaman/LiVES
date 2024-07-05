@@ -40,6 +40,12 @@ LIVES_LOCAL_INLINE char *mini_popen(const char *cmd);
 
 #if IS_X86_64
 
+#define CPUID_MAX_LEVEL 0x00000000
+#define CPUID_FEATURES 0x00000001
+#define CPUID_EXTENDED_FEATURES 0x00000007
+#define AMD_CACHE_INFO 0x8000001D
+#define INTEL_CACHE_INFO 0x00000004
+
 #define LIVES_REG_RBX  "rbx"
 #define LIVES_REG_RSI  "rsi"
 #define LIVES_REG_EAX  regs[0]
@@ -68,33 +74,71 @@ LIVES_LOCAL_INLINE char *mini_popen(const char *cmd);
 #include <mmintrin.h>
 #endif
 
-#define cpuid(index, regs)						\
-  __asm__ volatile (							\
-		    "mov    %%"LIVES_REG_RBX", %%"LIVES_REG_RSI" \n\t"	\
-		    "cpuid                       \n\t"			\
-		    "xchg   %%"LIVES_REG_RBX", %%"LIVES_REG_RSI		\
-		    : "=a" (LIVES_REG_EAX), "=S" (LIVES_REG_EBX), "=c" (LIVES_REG_ECX), "=d" (LIVES_REG_EDX) \
-		    : "0" (index), "2"(0))
+// Assuming cpuid is a function that fills an array of 4 uint32_t with the results of the CPUID instruction
+// and capable is a struct that holds the detected CPU information
+
+static void cpuid(uint32_t function_id, uint32_t regs[4]) {
+  __asm__ __volatile__("cpuid"
+                       : "=a"(regs[0]), "=b"(regs[1]), "=c"(regs[2]), "=d"(regs[3])
+                       : "a"(function_id), "c"(0));
+}
+
+
+static void get_l2_cache_size(void) {
+  uint32_t regs[4] = {0};
+  if (strcmp(capable->hw.cpu_vendor, "GenuineIntel") == 0) {
+    // For Intel, query leaf 0x00000004 for cache information
+    cpuid(INTEL_CACHE_INFO, regs);
+    // Parse the ECX register to find the cache level (start at 0)
+    for (int cache_level = 0; cache_level <= regs[0]; ++cache_level) {
+      cpuid(INTEL_CACHE_INFO + cache_level, regs);
+      int cache_type = regs[0] & 0x1F;
+      int cache_level = (regs[0] >> 5) & 0x7;
+      if (cache_type != 0 && cache_level == 2) { // Check for L2 cache
+        // Calculate the size: Ways * Partitions * Line Size * Sets
+        int ways = ((regs[1] >> 22) & 0x3FF) + 1;
+        int partitions = ((regs[1] >> 12) & 0x3FF) + 1;
+        int line_size = (regs[1] & 0xFFF) + 1;
+        int sets = regs[2] + 1;
+        capable->hw.l2_cache_size = ways * partitions * line_size * sets;
+        break;
+      }
+    }
+  } else if (strcmp(capable->hw.cpu_vendor, "AuthenticAMD") == 0) {
+    // For AMD, query leaf 0x80000006 for L2 cache information
+    cpuid(AMD_CACHE_INFO, regs);
+    // The size is directly available in ECX[31:16], in KB
+    capable->hw.l2_cache_size = (regs[2] >> 16) * 1024; // Convert KB to bytes
+  }
+}
 
 static void get_cpuinfo(void) {
   union {uint i[4]; char c[16];} vendor;
   uint regs[4]; // eax, ebx, ecx, edx
   char *vendstr;
+  lives_memset(regs, 0, 16);
+  vendor.i[0] =
+    0; // stop gcc from complaining
+  cpuid(CPUID_MAX_LEVEL, vendor.i); // max_level, vendor0, vendor2, vendor1
 
-  vendor.i[0] = 0; // stop gcc from complaining
-  cpuid(0x00000000, vendor.i); // max_level, vendor0, vendor2, vendor1
-  capable->hw.cpu_maxlvl = vendor.i[0];
-
+  capable->hw.cpu_maxlvl = LIVES_REG_EAX;
   if (!capable->hw.cpu_maxlvl) return;
 
-  capable->hw.cpu_vendor = lives_strdup_printf("%.4s%.4s%.4s", &vendor.c[4], &vendor.c[12], &vendor.c[8]);
+  // Check for specific features
+
+  memcpy(vendor.c, &LIVES_REG_EBX, 4); // EBX
+  memcpy(vendor.c + 4, &LIVES_REG_EDX, 4); // EDX
+  memcpy(vendor.c + 8, &LIVES_REG_ECX, 4); // ECX
+  vendor.c[12] = '\0';
+
   vendstr = lives_string_tolower(capable->hw.cpu_vendor);
+
   if (strstr(vendstr, CPU_VENDOR_INTEL)) capable->hw.cpu_type = CPU_TYPE_INTEL;
   else if (strstr(vendstr, CPU_VENDOR_AMD)) capable->hw.cpu_type = CPU_TYPE_AMD;
   else capable->hw.cpu_type = CPU_TYPE_OTHER;
   lives_free(vendstr);
 
-  cpuid(0x00000001, regs);
+  cpuid(CPUID_FEATURES, regs);
   capable->hw.cacheline_size = ((LIVES_REG_EBX >> 8) & 0xFF) << 3;
 
   if (LIVES_REG_ECX & (1 << 27)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE;
@@ -105,12 +149,24 @@ static void get_cpuinfo(void) {
   if (LIVES_REG_ECX & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX2;
   if (LIVES_REG_ECX & (1 << 28) && LIVES_REG_ECX & (1 << 27) && LIVES_REG_ECX & (1 << 26))
     capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512;
+  if (LIVES_REG_ECX & (1 << 19)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE41;
+  if (LIVES_REG_ECX & (1 << 20)) capable->hw.cpu_features |= CPU_FEATURE_HAS_SSE42;
 
-  LIVES_REG_EAX = 4;
-  if (capable->hw.cpu_type == CPU_TYPE_AMD) cpuid(0x8000001D, regs);
-  else cpuid(0x00000000, regs);
-  capable->hw.cache_size = (get_bits32(LIVES_REG_EBX, 31, 22) + 1) * (get_bits32(LIVES_REG_EBX, 21, 12) + 1)
-                           * (get_bits32(LIVES_REG_EBX, 11, 0) + 1) * (LIVES_REG_ECX + 1);
+  // Check for AVX512 features
+  if (capable->hw.cpu_maxlvl >= CPUID_EXTENDED_FEATURES) {
+    cpuid(CPUID_EXTENDED_FEATURES, regs);
+    if (LIVES_REG_EBX & (1 << 16)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512F;
+    if (LIVES_REG_EBX & (1 << 17)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512DQ;
+    if ((LIVES_REG_EBX & (1 << 16)) && (LIVES_REG_EBX & (1 << 17)) && (LIVES_REG_EBX & (1 << 18)))
+      capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512;
+    if (LIVES_REG_EBX & (1 << 21)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512IFMA;
+    if (LIVES_REG_EBX & (1 << 26)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512PF;
+    if (LIVES_REG_EBX & (1 << 27)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512ER;
+    if (LIVES_REG_EBX & (1 << 28)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512CD;
+    if (LIVES_REG_EBX & (1 << 30)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512BW;
+    if (LIVES_REG_EBX & (1 << 31)) capable->hw.cpu_features |= CPU_FEATURE_HAS_AVX512VL;
+  }
+  get_l2_cache_size();
 }
 
 #else

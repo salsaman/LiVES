@@ -261,6 +261,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       THREAD_INTENTION = OBJ_INTENTION_NOTHING;
       ____FUNC_EXIT_VAL____(FALSE);
     } else {
+      // need an object instance
       lives_obj_attr_t *attr1, *attr2;
       attr1 = lives_obj_instance_declare_attribute(NULL, ATTR_AUDIO_RATE, WEED_SEED_INT);
       lives_obj_instance_set_attr_val(NULL, ATTR_AUDIO_RATE, cfile->arate);
@@ -277,6 +278,7 @@ boolean transcode_clip(int start, int end, boolean internal, char *def_pname) {
       vpp = mainw->vpp;
 
       if (!(pname = transcode_get_params(pname))) {
+        // unref(inst, name)
         lives_attr_unref(attr1);
         lives_attr_unref(attr2);
         lives_thread_set_intentcap(ICAP(IDLE));

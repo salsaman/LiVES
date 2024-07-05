@@ -255,7 +255,7 @@ ticks_t lives_jack_get_time(jack_driver_t *); ///< get time from jack, in 10^-8 
 
 double lives_jack_get_timing_ratio(jack_driver_t *);
 
-boolean jack_audio_seek_frame(jack_driver_t *, double frame);  ///< seek to (video) frame
+void jack_audio_seek_frame(jack_driver_t *, int clip, frames_t frame);  ///< seek to (video) frame
 boolean jack_audio_seek_frame_velocity(jack_driver_t *jackd, double frame, double vel);
 
 int64_t jack_audio_seek_bytes(jack_driver_t *, int64_t bytes, lives_clip_t *sfile);  ///< seek to byte position

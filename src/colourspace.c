@@ -9915,6 +9915,36 @@ static void *convert_swap3prealpha_frame_thread(void *data) {
 }
 
 
+/* #include <emmintrin.h> // SSE2 instructions */
+/* #include <stdint.h> */
+
+/* void convert_rgb_to_rgba_sse2(const uint8_t* rgb, uint8_t* rgba, size_t pixelCount) { */
+/*     size_t i; */
+/*     __m128i alphaMask = _mm_set1_epi32(0xFF000000); // Alpha value set to 255 */
+
+/*     for (i = 0; i + 4 <= pixelCount; i += 4) { */
+/*         // Load 16 bytes (represents 5+1/3 pixels, but we only use 4 pixels for clean processing) */
+/*         __m128i rgb1 = _mm_loadu_si128((__m128i*)(rgb + i * 3)); */
+
+/*         // Shuffle RGB bytes to start forming RGBA */
+/*         __m128i rgba1 = _mm_shuffle_epi8(rgb1, _mm_setr_epi8(0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1)); */
+
+/*         // Insert alpha values */
+/*         rgba1 = _mm_or_si128(rgba1, alphaMask); */
+
+/*         // Store the first 4 RGBA pixels */
+/*         _mm_storeu_si128((__m128i*)(rgba + i * 4), rgba1); */
+/*     } */
+
+/*     // Process remaining pixels that don't fit into the SIMD processing loop */
+/*     for (size_t j = i * 3; j < pixelCount * 3; j += 3) { */
+/*         rgba[j * 4 / 3] = rgb[j]; */
+/*         rgba[j * 4 / 3 + 1] = rgb[j + 1]; */
+/*         rgba[j * 4 / 3 + 2] = rgb[j + 2]; */
+/*         rgba[j * 4 / 3 + 3] = 255; // Alpha */
+/*     } */
+/* } */
+
 static void convert_addpost_frame(uint8_t *LIVES_RESTRICT src, int width, int height, int irowstride, int orowstride,
                                   uint8_t *LIVES_RESTRICT dest, uint8_t *LIVES_RESTRICT gamma_lut8, int thread_id) {
   // add post alpha

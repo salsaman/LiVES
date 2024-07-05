@@ -782,6 +782,15 @@ typedef struct {
 /// mainw->msg bytesize
 #define MAINW_MSG_SIZE 8192
 
+typedef enum {
+  not_seeking,
+  seek_notarget,
+  seek_active,
+  seek_converging,
+  seek_approximate,
+  seek_ready,
+} seek_phase;
+
 typedef struct {
   // processing / busy dialog (TODO - move into dialogs.h / or prog_dialogs.h)
   LiVESWidget *processing;
@@ -1056,8 +1065,8 @@ typedef struct {
   // a/v seek synchronisation
   pthread_cond_t avseek_cond;
   pthread_mutex_t avseek_mutex;
-  volatile boolean video_seek_ready;
-  volatile boolean audio_seek_ready;
+  volatile frames_t  video_seek_ready;
+  volatile seek_phase audio_seek_ready;
   double avsync_time;
   double sync_err;
 

@@ -1270,18 +1270,22 @@ NIRVA_ENUM(_ICAP_IDLE = 0, _ICAP_DOWNLOAD, _ICAP_LOAD, N_STD_ICAPS)
 #define ATTR_UI_TEMPLATE 				ATTR_NAME("UI", "TEMPLATE")
 #define ATTR_UI_TEMPLATE_TYPE 				STRING, NULL
 
-// audio (TODO)
+// audio (TODO)  // attr_group audio
 #define ATTR_AUDIO_SOURCE				"audio_source"
-#define ATTR_AUDIO_RATE 				"audio_rate"
+#define ATTR_AUDIO_RATE 				"audio_rate" // int, 4, no flags
 #define ATTR_AUDIO_CHANNELS				"audio_channels"
 #define ATTR_AUDIO_SAMPSIZE				"audio_sampsize"
 #define ATTR_AUDIO_SIGNED				"audio_signed"
 #define ATTR_AUDIO_ENDIAN				"audio_endian"
 #define ATTR_AUDIO_FLOAT				"audio_is_float"
-#define ATTR_AUDIO_STATUS 				"current_status"
+#define ATTR_AUDIO_STATUS 				"audio_status"
 #define ATTR_AUDIO_INTERLEAVED 				"audio_interleaf"
-#define ATTR_AUDIO_DATA					"audio_data"
+#define ATTR_AUDIO_DATA					"audio_data" // pointer, array
 #define ATTR_AUDIO_DATA_LENGTH				"audio_data_length"
+#define ATTR_AUDIO_VELOCITY				"audio_velocity"
+#define ATTR_AUDIO_DIRECTION				"audio_direction"
+#define ATTR_AUDIO_SEEK					"audio_seek"
+#define ATTR_AUDIO_POSITION				"audio_position"
 
 ///// domain VIDEO (incomplete)
 #define ATTR_VIDEO_FRAME_RATE	       			STRAND_NAME(VIDEO, FRAME_RATE)

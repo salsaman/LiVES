@@ -405,10 +405,10 @@ typedef struct {
   /// NOT resync when FPS is reset
 #define AUDIO_OPTS_NO_RESYNC_FPS	(1 << 2) // on (0) by default
 
-  /// NOT resync when video pos changes
+  /// NOT resync when video pos jumps
 #define AUDIO_OPTS_NO_RESYNC_VPOS	(1 << 3) // on (0) by default
 
-  /// resync when audio directions inverts
+  /// resync when audio direction inverts
 #define AUDIO_OPTS_RESYNC_ADIR		(1 << 4) // off (0) by default
 
   /// resync when audio clip switches

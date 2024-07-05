@@ -36,6 +36,7 @@ typedef struct {
 } arec_details;
 
 typedef struct {
+  int arps;
   int rate;
   int chans;
   int sampsz;
@@ -43,6 +44,8 @@ typedef struct {
   boolean interleaved;
   boolean asigned;
   int endian;
+  float vol;
+  double vel;
   size_t dlen;
   void **data;
 } audio_dtls;
@@ -54,8 +57,6 @@ typedef struct {
 
 lives_obj_instance_t *get_aplayer_instance(int source);
 
-int64_t lives_aplayer_get_status(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, int64_t status);
 int lives_aplayer_get_source(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source);
 int lives_aplayer_get_arate(lives_obj_t *aplayer);
@@ -70,10 +71,23 @@ int lives_aplayer_get_endian(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_endian(lives_obj_t *aplayer, int aendian);
 boolean lives_aplayer_get_float(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float);
-int lives_aplayer_get_data_len(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int alength);
 boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter);
+//
+int64_t lives_aplayer_get_status(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, int64_t status);
+//
+double lives_aplayer_get_velocity(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_velocity(lives_obj_t *aplayer, double velocity);
+lives_direction_t lives_aplayer_get_direction(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_direction(lives_obj_t *aplayer, lives_direction_t dir);
+weed_error_t lives_aplayer_set_seek(lives_obj_t *aplayer, double seektime);
+double lives_aplayer_get_seek(lives_obj_t *aplayer);
+int64_t lives_aplayer_get_pos(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_pos(lives_obj_t *aplayer, int64_t pos);
+
+int lives_aplayer_get_data_len(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int alength);
 void **lives_aplayer_get_data(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 
@@ -392,7 +406,7 @@ int get_aplay_clipno(void);
 int get_aplay_rate(void);
 off_t get_aplay_offset(void);
 
-boolean resync_audio(int clipno, double frameno);
+boolean resync_audio(int clip, frames_t target);
 boolean avsync_force(void);
 
 void audio_sync_ready(void);

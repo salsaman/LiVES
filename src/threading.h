@@ -101,7 +101,7 @@ typedef struct {
   // built in timer (per thread)
   lives_timer_t var_xtimer;
 
-  weed_plant_t *gcol; // per thread garbage collector
+  weed_plant_t *var_gcol; // per thread garbage collector
 
   // hooks
   volatile boolean var_fg_service;
@@ -865,7 +865,8 @@ weed_plant_t *lives_proc_thread_share_book(lives_proc_thread_t dst,
 
 lives_proc_thread_t lives_proc_thread_get_dispatcher(lives_proc_thread_t);
 
-#define WAS_DISPATCHED_HERE(lpt) (!lives_strcmp(lives_proc_thread_get_active_funcinst(lpt)->funcdef->funcname, _FUNC_REF_))
+#define WAS_DISPATCHED_HERE(lpt) (!lives_strcmp(lives_proc_thread_get_active_funcinst(lpt)->funcdef->funcname, \
+						((lives_funcdef_t *)lives_sync_list_peek(THREADVAR(func_stack)))->funcname))
 
 // test if lpt is queued for execution
 boolean lives_proc_thread_is_queued(lives_proc_thread_t);

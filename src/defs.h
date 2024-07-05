@@ -370,6 +370,8 @@ static const int32_t testint = 0x12345678;
 #define LIVES_LITTLE_ENDIAN 		0
 #define LIVES_BIG_ENDIAN 		1
 
+#define MY_OFFSET(xstruct, field) ((size_t)((char *)&(xstruct)->field-(char *)(xstruct)))
+
 typedef int64_t ticks_t;
 typedef int frames_t; // nb. will change to int64_t at some future point
 typedef int64_t frames64_t; // will become the new standard
@@ -470,6 +472,9 @@ typedef enum {
 #define LIVES_DIRECTION_IN		LIVES_DIRECTION_BACKWARD
 
 #define LIVES_DIRECTION_STOPPED	     	LIVES_DIRECTION_NONE
+
+#define LIVES_NO_DIRECTION		LIVES_DIRECTION_NONE
+
 
 #define LIVES_DIRECTION_DECREASING	LIVES_DIRECTION_BACKWARD
 #define LIVES_DIRECTION_INCREASING	LIVES_DIRECTION_FORWARD
@@ -598,34 +603,6 @@ typedef enum {
 #endif
 #endif
 
-// recursion prevention:
-// - there are two types, global and thread specific
-//  -- a global recursion guard ensures that a segment of code is only executed on by al threads
-//  -- thread specific adds a recursion token to the the thread's rec_tokens list
-//      - if the token is already in its list, then it will return. Once the thread has passed any
-//        critical section, the token is removed for that thread
-
-// place RECURSE_GUARD_START / T_RECURSE_START  once at the start of the function
-
-// place RETURN_[VAL_]IF_RECURSED / T_.. an the start of any points where recursed threads
-// should returnfrom the function
-
-// place RECURSE_GUAR_ARM / T_REC.. before an ptentialy recursive function calls
-
-// place RECURSE_GUARD_END / T_REC after the function call
-
-// the requirements are: start MUST be placed once only before using any of the other macros
-// if ARM maybe placed any number of times, but there MUST be at least one END called following
-// this and before exiting the function
-// RETURN* shall not be placed after one or more ARMS and before an END
-//
-// aside from start, the other macros may be placed any number of times and in any order,
-// notwithstanding the rule about END following ARM and RETURN not being placed between
-// ARM and END
-//
-// placing a RETURN* after an ARM and bfore the following END will cause even non recursed threads
-// to return
-
 /// global (shared) definitions
 
 #define LIVES_LEAF_THREAD_PARAM "thrd_param"
@@ -651,18 +628,17 @@ typedef enum {
 #define USE_REC_RS 1
 #endif
 
-#define BILLIONS(n) (n##000000000l)
+#define BILLIONS(n) ((int64_t)(n) * 1000000000)
 #define ONE_BILLION BILLIONS(1)
-#define MILLIONS(n) (n##000000l)
+#define MILLIONS(n) ((int64_t)(n) * 1000000)
 #define ONE_MILLION MILLIONS(1)
 
-#define BILLIONS_DBL(n) ((double)n##000000000.)
-#define ONE_BILLION_DBL BILLIONS_DBL(1)
-#define MILLIONS_DBL(n) ((double)n##000000.)
-#define ONE_MILLION_DBL MILLIONS_DBL(1)
+#define BILLIONS_DBL(n) ((double)(n) * 1000000000.)
+#define ONE_BILLION_DBL BILLIONS_DBL(1.)
+#define MILLIONS_DBL(n) ((double)(n) * 1000000.)
+#define ONE_MILLION_DBL MILLIONS_DBL(1.)
 
 #define _LIVES_ASSERT(cond, fmt, ...) _DW0(if(!(cond))lives_assert_failed(#cond, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__);)
-
 #define LIVES_ASSERT(cond, ...) _LIVES_ASSERT(cond __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #define APPLY_BIT_TRANSFORMS(from, to, input, output) APPLY_BIT_X_##from##_##to(input, output)

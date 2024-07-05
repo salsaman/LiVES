@@ -30,6 +30,17 @@
 #define CPU_FEATURE_HAS_AVX2		(1ull << 4)
 #define CPU_FEATURE_HAS_AVX512		(1ull << 5)
 #define CPU_FEATURE_HAS_F16C		(1ull << 6)
+#define CPU_FEATURE_HAS_SSE41		(1ull << 7)
+#define CPU_FEATURE_HAS_SSE42		(1ull << 8)
+
+#define CPU_FEATURE_HAS_AVX512F		(1ull << 24)
+#define CPU_FEATURE_HAS_AVX512DQ       	(1ull << 25)
+#define CPU_FEATURE_HAS_AVX512IFMA	(1ull << 26)
+#define CPU_FEATURE_HAS_AVX512PF	(1ull << 27)
+#define CPU_FEATURE_HAS_AVX512ER	(1ull << 28)
+#define CPU_FEATURE_HAS_AVX512CD	(1ull << 29)
+#define CPU_FEATURE_HAS_AVX512BW	(1ull << 30)
+#define CPU_FEATURE_HAS_AVX512VL	(1ull << 31)
 
 typedef struct {
   int byte_order;
@@ -41,7 +52,7 @@ typedef struct {
   int cpu_type;
   uint64_t cpu_features;
   int cacheline_size;
-  size_t cache_size;
+  size_t l2_cache_size;
   size_t pagesize;
   //
   int mem_status;

@@ -5320,6 +5320,8 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)
       && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
           || (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET))) {
+
+
     mainw->scratch = SCRATCH_JUMP;
   } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 

@@ -1048,6 +1048,22 @@ LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_quanta(int fd, size_t quan
 }
 
 
+LIVES_GLOBAL_INLINE lives_direction_t lives_buffered_rdonly_get_direction(int fd) {
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_buffered_rdonly_get_direction");
+  if (!fbuff) return LIVES_NO_DIRECTION;
+  return fbuff->flags & FB_FLAG_REVERSE ? LIVES_DIRECTION_REVERSE : LIVES_DIRECTION_FORWARD;
+}
+
+
+LIVES_GLOBAL_INLINE lives_direction_t lives_buffered_rdonly_toggle_direction(int fd) {
+  lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_buffered_rdonly_toggle_direction");
+  if (!fbuff) return FALSE;
+  if (fbuff->flags & FB_FLAG_REVERSE) lives_buffered_rdonly_set_reversed(fd, FALSE);
+  else lives_buffered_rdonly_set_reversed(fd, TRUE);
+  return lives_buffered_rdonly_get_direction(fd);
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_buffered_rdonly_set_reversed(int fd, boolean val) {
   lives_file_buffer_t *fbuff = check_fbuff(fd, FB_CHECK_READONLY, "lives_buffered_rdonly_set_reversed");
   if (!fbuff) return FALSE;

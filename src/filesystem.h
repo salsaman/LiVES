@@ -178,6 +178,12 @@ typedef struct {
   volatile uint64_t flags;
 } lives_file_buffer_t;
 
+typedef enum {
+  edge_stop,
+  edge_rollover,
+  edge_bounce
+} lives_edge_behaviour_t;
+
 lives_file_buffer_t *find_in_file_buffers(int fd);
 lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname);
 
@@ -198,8 +204,14 @@ uint8_t *lives_buffered_get_data(int fd);
 off_t lives_buffered_offset(int fd);
 size_t lives_buffered_orig_size(int fd);
 boolean lives_read_buffered_eof(int fd);
-boolean lives_buffered_rdonly_set_quanta(int fd, size_t quanta);
 boolean lives_buffered_rdonly_set_reversed(int fd, boolean val);
+boolean lives_buffered_rdonly_set_quanta(int fd, size_t quanta);
+lives_direction_t lives_buffered_rdonly_toggle_direction(int fd);
+
+/* lives_direction_t lives_buffered_rdonly_set_edge_behavior(int fd, lives_edge_behaviour_t); */
+/* lives_direction_t lives_buffered_rdonly_set_direction(int fd, lives_direction_t); */
+
+lives_direction_t lives_buffered_rdonly_get_direction(int fd);
 boolean lives_buffered_set_ringmode(int fd, int nrings);
 ssize_t lives_write_buffered_set_custom_size(int fd, size_t count);
 ssize_t lives_write_buffered(int fd, const char *buf, ssize_t count, boolean allow_fail);

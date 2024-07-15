@@ -2109,6 +2109,8 @@ static LiVESResponseType _dialog_run(LiVESDialog * dialog) {
   _lives_widget_show_all(LIVES_WIDGET(dialog));
 
   if (ATT_MESSAGE(dialog)) pop_to_front(LIVES_WIDGET(dialog), NULL);
+  else if (prefs->present && prefs->show_gui)
+    lives_window_present(LIVES_WINDOW(dialog));
 
   modalw = NULL;
   lives_window_set_modal(LIVES_WINDOW(dialog), TRUE);

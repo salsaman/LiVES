@@ -545,8 +545,10 @@ LiVESWidget *create_message_dialog(lives_dialog_t diat, const char *text, uint64
         (!widget_opts.non_modal && !(prefs->focus_steal & (FOCUS_STEAL_BLOCKED
                                      | FOCUS_STEAL_MSG))))
       gtk_window_set_focus_on_map(LIVES_WINDOW(dialog), FALSE);
-    gtk_window_present(LIVES_WINDOW(dialog));
   }
+
+  if (prefs->present && prefs->show_gui)
+    lives_window_present(LIVES_WINDOW(dialog));
 
   if (okbutton && mainw && mainw->iochan) {
     lives_button_grab_default_special(okbutton);
@@ -1648,8 +1650,8 @@ boolean do_progress_dialog(boolean visiblex, boolean cancellable, const char *te
 
   // must call reset_timebase first, since we set playback ticks
   if (!mainw->foreign && !mainw->multitrack) {
-    avsync_force();
-  } else mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
+    avsync_force(mainw->pulsed->inst);
+  }
 
   //try to open info file - or if internal_messaging is TRUE, we get mainw->msg
   // from the mainw->progress_fn function

@@ -177,6 +177,7 @@ extern int gamma_idx[];
 
 #define GAMMA_CONSTS_WEED_GAMMA_SRGB 12.92, 0.04045, 2.4
 #define GAMMA_CONSTS_WEED_GAMMA_BT709 4.5, 0.018, 1. / .45
+#define GAMMA_CONSTS_WEED_GAMMA_BT2020 0.0, 1.0, 2.4
 
 //#define GAMMA_CONSTS_MYGAMMA lin, thresh, pf
 // (offs will be derived as the point at which val_lin(x) ~= val_pf(x)
@@ -184,14 +185,12 @@ extern int gamma_idx[];
 enum {
   WEED_GAMMA_SRGB_IDX,
   WEED_GAMMA_BT709_IDX,
-  // MYGAMMA_IDX,
   N_GAMMA_TYPES,
 };
 
 static inline void init_gamma_tx(void) {
   INIT_GAMMA(WEED_GAMMA_SRGB);
   INIT_GAMMA(WEED_GAMMA_BT709);
-  //INIT_GAMMA(MYGAMMA);
 }
 
 //////////////////////////////////////////////////
@@ -270,6 +269,8 @@ typedef struct {
 #ifdef USE_SWSCALE
 #include <libswscale/swscale.h>
 #endif
+
+extern double srgb_to_xyz[3][3];
 
 struct XYZ {double x, y, z;};
 

@@ -782,15 +782,6 @@ typedef struct {
 /// mainw->msg bytesize
 #define MAINW_MSG_SIZE 8192
 
-typedef enum {
-  not_seeking,
-  seek_notarget,
-  seek_active,
-  seek_converging,
-  seek_approximate,
-  seek_ready,
-} seek_phase;
-
 typedef struct {
   // processing / busy dialog (TODO - move into dialogs.h / or prog_dialogs.h)
   LiVESWidget *processing;
@@ -1063,10 +1054,11 @@ typedef struct {
   boolean jack_can_stop, jack_can_start, lives_can_stop, jack_master;
 
   // a/v seek synchronisation
+  // check if all needed
   pthread_cond_t avseek_cond;
   pthread_mutex_t avseek_mutex;
-  volatile frames_t  video_seek_ready;
-  volatile seek_phase audio_seek_ready;
+
+  volatile frames_t  video_seek_beacon;
   double avsync_time;
   double sync_err;
 
@@ -1731,7 +1723,7 @@ typedef struct {
 
   int aud_rec_fd; ///< fd of file we are recording audio to
   double rec_end_time;
-  int64_t rec_samples;
+  int rec_samples;
   double rec_fps;
   frames_t rec_vid_frames;
 
@@ -1831,7 +1823,7 @@ typedef struct {
   // stuff specific to audio gens
   volatile int agen_key; ///< which fx key is generating audio [1 based] (or 0 for none)
   volatile boolean agen_needs_reinit;
-  uint64_t agen_samps_count; ///< count of samples since init
+  int agen_samps_count; ///< count of samples since init
 
   boolean aplayer_broken;
 
@@ -1878,12 +1870,8 @@ typedef struct {
 
   boolean gen_started_play;
 
-  lives_audio_buf_t *afbuffer; ///< used for buffering / feeding audio to video generators
-
-  volatile lives_audio_buf_t *audio_frame_buffer_aux; ///< used for buffering / feeding to loopback
-  lives_audio_buf_t *afb_aux[2]; ///< used for buffering / feeding audio to loopback
-  int afbuffer_aux_clients; /// # of registered clients for the aux audio frame buffer
-  int afbuffer_aux_clients_read; /// current read count. When this reaches abuffer_clients_aux, we swap the read / write buffers
+  lives_audio_buf_t *afbuffer; ///< used for buffering / feeding audio to video generators (from player)
+  lives_audio_buf_t *aux_afbuffer; ///< used for buffering / feeding audio to video generators (from reader)
 
   pthread_t *libthread;  /// GUI thread for liblives
 

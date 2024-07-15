@@ -965,7 +965,6 @@ void reset_mainwin_size(void) {
   GdkWindow *xwin = lives_widget_get_xwindow(LIVES_MAIN_WINDOW_WIDGET);
   if (xwin) {
     RECURSE_GUARD_ARM;
-    //if (!LIVES_IS_PLAYING) set_gui_loop_tight(TRUE);
 
     lives_window_unmaximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
     lives_widget_queue_resize(LIVES_MAIN_WINDOW_WIDGET);
@@ -979,7 +978,7 @@ void reset_mainwin_size(void) {
       lives_window_set_default_size(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), ww, hh);
       lives_widget_set_maximum_size(LIVES_MAIN_WINDOW_WIDGET, ww, hh);
 
-      mainw->calibrated = 1;
+      mainw->calibrated = TRUE;
     }
 
     lives_window_maximize(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
@@ -987,7 +986,6 @@ void reset_mainwin_size(void) {
     lives_widget_show_now(LIVES_MAIN_WINDOW_WIDGET);
     lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 
-    //if (!LIVES_IS_PLAYING) set_gui_loop_tight(FALSE);
     RECURSE_GUARD_END;
   }
 }

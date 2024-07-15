@@ -7,10 +7,7 @@
 #ifndef HAS_LIVES_AUDIO_H
 #define HAS_LIVES_AUDIO_H
 
-#define USEC_WAIT_FOR_SYNC 50000 // 50 msec
-
-typedef uint64_t size64_t;
-typedef int64_t ssize64_t;
+#define SEEK_READY_HOOK INTERNAL_HOOK_1
 
 #define AUDIO_SIGNED	1
 #define AUDIO_UNSIGNED	(!(AUDIO_SIGNED))
@@ -31,7 +28,7 @@ typedef int64_t ssize64_t;
 typedef struct {
   int clipno;
   int fd;
-  ssize_t rec_samples;
+  int rec_samples;
   char *bad_aud_file;
 } arec_details;
 
@@ -50,13 +47,33 @@ typedef struct {
   void **data;
 } audio_dtls;
 
-#define LIVES_LEAF_AUDIO_SOURCE "audio_source"
-#define LIVES_LEAF_AUDIO_INTERLEAVED "audio_inter"
-#define LIVES_LEAF_AUDIO_SAMPS "audio_samps"
-#define LIVES_LEAF_OFFSET "offset"
+typedef enum {
+  not_seeking,
+  seek_needstarget,
+  seek_active,
+  seek_converging,
+  seek_approximate,
+  seek_ready,
+} seek_phase;
+
+#define LIVES_LEAF_AUDIO_SOURCE 	"audio_source"
+#define LIVES_LEAF_AUDIO_INTERLEAVED 	"audio_inter"
+#define LIVES_LEAF_AUDIO_SAMPS 		"audio_samps"
+#define LIVES_LEAF_OFFSET 		"offset"
+#define LIVES_LEAF_AUDIO_DIRECTION 	"adirection"
+#define LIVES_LEAF_AUDIO_VEL	 	"avelocity"
+#define LIVES_LEAF_AUDIO_SRC 		"_aud_src"
+#define LIVES_LEAF_AUDIO_POS 		"_aud_pos"
+
+#define LIVES_LEAF_SEEK_TIME		"_aseek_time"
+#define LIVES_LEAF_SEEK_CLIP		"_aseek_clip"
+#define LIVES_LEAF_SEEK_DIR		"_aseek_dir"
+#define LIVES_LEAF_SEEK_VEL		"_aseek_vel"
 
 lives_obj_instance_t *get_aplayer_instance(int source);
-
+weed_error_t lives_aplayer_set_limit_behavior(lives_obj_t *aplayer,
+					      limit_behaviour_t low,
+					      limit_behaviour_t high);
 int lives_aplayer_get_source(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source);
 int lives_aplayer_get_arate(lives_obj_t *aplayer);
@@ -74,17 +91,39 @@ weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float);
 boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter);
 //
-int64_t lives_aplayer_get_status(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, int64_t status);
+uint64_t lives_aplayer_get_status(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, uint64_t status);
 //
+void lives_aplayer_get_ready(int clip);
+
+int lives_aplayer_get_seek_clip(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_seek_clip(lives_obj_t *aplayer, int clip);
+
+lives_direction_t lives_aplayer_get_seek_direction(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_seek_direction(lives_obj_t *aplayer, lives_direction_t dir);
+
+weed_error_t lives_aplayer_set_seek_velocity(lives_obj_t *aplayer, double vel);
+weed_error_t lives_aplayer_get_seek_velocity(lives_obj_t *aplayer);
+
 double lives_aplayer_get_velocity(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_velocity(lives_obj_t *aplayer, double velocity);
+
 lives_direction_t lives_aplayer_get_direction(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_direction(lives_obj_t *aplayer, lives_direction_t dir);
-weed_error_t lives_aplayer_set_seek(lives_obj_t *aplayer, double seektime);
-double lives_aplayer_get_seek(lives_obj_t *aplayer);
+
+weed_error_t lives_aplayer_set_seek_state(lives_obj_t *aplayer, seek_phase state);
+seek_phase lives_aplayer_get_seek_state(lives_obj_t *aplayer);
+
+weed_error_t lives_aplayer_set_seek_time(lives_obj_t *aplayer, double xtime);
+double lives_aplayer_get_seek_time(lives_obj_t *aplayer);
+
 int64_t lives_aplayer_get_pos(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_pos(lives_obj_t *aplayer, int64_t pos);
+
+void lives_aplayer_set_seek_vals(lives_obj_t *aplayer, int clip, double xtime,
+				 lives_direction_t dir, double vel);
+
+int lives_aplayer_get_clip(lives_obj_t *aplayer);
 
 int lives_aplayer_get_data_len(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int alength);
@@ -263,15 +302,15 @@ typedef struct {
   /* boolean s32_signed; */
 
   // ring buffer
-  volatile size_t samples_filled; ///< number of samples filled (readonly client)
-  size_t start_sample; ///< used for reading (readonly server)
-  size_t samp_space;
+  volatile int samples_filled; ///< number of samples filled (readonly client)
+  int start_sample; ///< used for reading (readonly server)
+  int samp_space;
 
 
   // private fields (used by server)
   uint8_t *_filebuffer; ///< raw data to/from file - can be cast to int16_t
   ssize_t _cbytesize; ///< current _filebuffer bytesize; if this changes we need to realloc _filebuffer
-  size_t _csamp_space; ///< current sample buffer size in single channel samples
+  int _csamp_space; ///< current sample buffer size in single channel samples
   int _fd; ///< file descriptor
   int _cfileno; ///< current fileno
   int _cseek;  ///< current seek pos
@@ -288,11 +327,7 @@ typedef struct {
 
 //////////////////////////////////////////
 
-typedef enum lives_audio_loop {
-  AUDIO_LOOP_NONE,
-  AUDIO_LOOP_FORWARD,
-  AUDIO_LOOP_PINGPONG
-} lives_audio_loop_t;
+void lives_aplayer_update_loop_mode(lives_obj_t *aplayer);
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) GNU_HOT;
 float audiofile_get_maxvol(int fnum, double start, double end, float thresh);
@@ -300,47 +335,45 @@ double audiofile_get_silent(int fnum, double start, double end, int dir, float t
 
 boolean normalise_audio(int fnum, double start, double end, float thresh);
 
-void sample_silence_dS(float *dst, size64_t nsamples);
+void sample_silence_dS(float *dst, int nsamples);
 
-void sample_silence_stream(int nchans, int64_t nsamples);
+void sample_silence_stream(int nchans, int nsamples);
 
 boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_size, int asamps, int aunsigned,
                        boolean big_endian);
 
-float **convert_to_float(lives_obj_t *aplayer, size_t nsamples, boolean alock_mixer);
+int sample_move_float_float(float *dst, float *src, int in_samples, double scale, int dst_skip,
+                                 float vol, int out_samples) GNU_HOT;
 
-size64_t sample_move_float_float(float *dst, float *src, size64_t in_samples, double scale, int dst_skip,
-                                 float vol, size64_t out_samples) GNU_HOT;
-
-float sample_move_d16_float(float *dst, short *src, size_t nsamples, size_t src_skip, int is_unsigned, boolean rev_endian,
+float sample_move_d16_float(float *dst, short *src, int nsamples, size_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) GNU_HOT;
 
 ///
 
-int64_t sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
+int sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
                               int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns samples output
 
 void sample_move_float_d16(int16_t *dst, float *src,
-                           size64_t nsamples, size_t tbytes, double scale, int nDstChannels,
+                           int nsamples, size_t tbytes, double scale, int nDstChannels,
                            int nSrcChannels, int swap_endian, int swap_sign);
 
 void sample_move_d16_d16(short *dst, short *src,
-                         size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_endian,
+                         int nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_endian,
                          int swap_sign) GNU_HOT;
 
 void sample_move_d8_d16(short *dst, uint8_t *src,
-                        size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+                        int nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 void sample_move_d16_d8(uint8_t *dst, short *src,
-                        size64_t nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
+                        int nsamples, size_t tbytes, double scale, int nDstChannels, int nSrcChannels, int swap_sign) GNU_HOT;
 
 //
 
-int64_t sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
-int64_t sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
+int sample_move_abuf_float(float **obuf, int nchans, int nsamps, int out_arate, float vol) GNU_HOT;
+int sample_move_abuf_int16(short *obuf, int nchans, int nsamps, int out_arate) GNU_HOT;
 
-float float_deinterleave(float *dst, float *src, size64_t in_samples, double scale, int in_chans, float vol) GNU_HOT;
-size64_t float_interleave(float *out, float **in, size64_t nsamps, double scale, int nchans, float vol) GNU_HOT;
+float float_deinterleave(float *dst, float *src, int in_samples, double scale, int in_chans, float vol) GNU_HOT;
+int float_interleave(float *out, float **in, int nsamps, double scale, int nchans, float vol) GNU_HOT;
 
 int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *avels, double *fromtime, ticks_t tc_start,
                              ticks_t tc_end, double *chvol, double opvol_start, double opvol_end, lives_audio_buf_t *obuf);
@@ -379,8 +412,8 @@ typedef enum {
 #define APLAYER_STATUS_DISCONNECTED	(1ull << 33)
 #define APLAYER_STATUS_BLOCKED		(1ull << 34)
 
-void audio_analyser_start(int source);
-void audio_analyser_end(int source);
+/* void audio_analyser_start(int source); */
+/* void audio_analyser_end(int source); */
 
 #ifdef ENABLE_JACK
 void jack_rec_audio_to_clip(int fileno, int oldfileno,
@@ -406,10 +439,12 @@ int get_aplay_clipno(void);
 int get_aplay_rate(void);
 off_t get_aplay_offset(void);
 
-boolean resync_audio(int clip, frames_t target);
-boolean avsync_force(void);
+lives_result_t lives_aplayer_seek_to(int clip, double xtime,
+				     lives_direction_t dir, double vel, boolean block);
 
-void audio_sync_ready(void);
+boolean avsync_force(lives_obj_instance_t *aplayer);
+
+lives_result_t audio_sync_ready(lives_obj_instance_t *aplayer);
 
 void freeze_unfreeze_audio(boolean is_frozen);
 
@@ -424,6 +459,9 @@ void free_jack_audio_buffers(void);
 
 void init_pulse_audio_buffers(int achans, int arate, boolean exact);
 void free_pulse_audio_buffers(void);
+
+int lives_aplayer_get_clip(lives_obj_t *aplayer);
+void lives_aplayer_set_clip(lives_obj_t *aplayer, int clipno);
 
 void audio_free_fnames(void);
 
@@ -441,11 +479,12 @@ lives_audio_buf_t *audio_cache_get_buffer(void);
 
 boolean apply_rte_audio_init(void);
 void apply_rte_audio_end(boolean del);
-boolean apply_rte_audio(int64_t nsamples);
+boolean apply_rte_audio(int nsamples);
 
 lives_audio_buf_t *init_audio_frame_buffers(lives_obj_instance_t *aplayer);
 
-void update_audio_cbs(lives_obj_instance_t *aplayer);
+void update_audio_cbs(lives_obj_instance_t *aplayer, boolean is_aux);
+void block_unlbock_aux_cbs(boolean block);
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);
 

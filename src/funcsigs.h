@@ -204,22 +204,24 @@ typedef struct {const char *fmt; va_list va;} va_surprise;
        else FOR_ALL_SEED_TYPES2(st, (avp)->values., =, weed_get_,	\
 				_array_counted, (plant), (key), &(ne));})
 
+weed_error_t my_weed_leaf_set(weed_plant_t *pl, const char *key, weed_seed_t stype, int ne, ...);
+
 #define LEAF_FROM_ALLV(plant, key, allv)				\
-       weed_leaf_set(plant, key, allv->stype, allv->ne,			\
-		     (allv->stype == WEED_SEED_INT ? (void *)allv->values.i \
-		      : allv->stype == WEED_SEED_UINT ? (void *)allv->values.u \
-		      : allv->stype == WEED_SEED_BOOLEAN ? (void *)allv->values.b \
-		      : allv->stype == WEED_SEED_INT64 ? (void *)allv->values.I \
-		      : allv->stype == WEED_SEED_UINT64 ? (void *)allv->values.U \
-		      : allv->stype == WEED_SEED_DOUBLE ? (void *)allv->values.d \
-		      : allv->stype == WEED_SEED_FLOAT ? (void *)allv->values.f \
-		      : allv->stype == WEED_SEED_STRING ? (void *)allv->values.s \
-		      : allv->stype == LIVES_SEED_CONST_CHARPTR ? (void *)allv->values.C \
-		      : (allv->stype == WEED_SEED_VOIDPTR || WEED_SEED_IS_CUSTOM(allv->stype)) \
-		      ? (void *)allv->values.V				\
-		      : allv->stype == WEED_SEED_FUNCPTR ? (void *)allv->values.F \
-		      : allv->stype == WEED_SEED_PLANTPTR ? (void *)allv->values.P \
-		      : allv->stype == LIVES_SEED_FUNCINST ? (void *)allv->funcinst : NULL))
+  my_weed_leaf_set(plant, key, allv->stype, allv->flags & ALLV_FLAG_POINTER ? -1 : allv->ne, \
+		   (allv->stype == WEED_SEED_INT ? (void *)allv->values.i \
+		    : allv->stype == WEED_SEED_UINT ? (void *)allv->values.u \
+		    : allv->stype == WEED_SEED_BOOLEAN ? (void *)allv->values.b \
+		    : allv->stype == WEED_SEED_INT64 ? (void *)allv->values.I \
+		    : allv->stype == WEED_SEED_UINT64 ? (void *)allv->values.U \
+		    : allv->stype == WEED_SEED_DOUBLE ? (void *)allv->values.d \
+		    : allv->stype == WEED_SEED_FLOAT ? (void *)allv->values.f \
+		    : allv->stype == WEED_SEED_STRING ? (void *)allv->values.s \
+		    : allv->stype == LIVES_SEED_CONST_CHARPTR ? (void *)allv->values.C \
+		    : (allv->stype == WEED_SEED_VOIDPTR || WEED_SEED_IS_CUSTOM(allv->stype)) \
+		    ? (void *)allv->values.V				\
+		    : allv->stype == WEED_SEED_FUNCPTR ? (void *)allv->values.F \
+		    : allv->stype == WEED_SEED_PLANTPTR ? (void *)allv->values.P \
+		    : allv->stype == LIVES_SEED_FUNCINST ? (void *)allv->funcinst : NULL))
 
 // since the codification of a param type only requires 4 bits, in theory we could go up to 16 parameters
 // however 8 is probably sufficient and looks neater

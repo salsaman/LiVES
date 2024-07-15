@@ -32,19 +32,17 @@
 #define LIVES_PLANT_PROC_THREAD 4
 #define LIVES_PLANT_PREFERENCE 5
 
-#define LIVES_PLANT_BLUEPRINT 32
-#define LIVES_PLANT_VALUE_DEF 33
-
 #define LIVES_PLANT_TMP 64
 
+#define LIVES_PLANT_BLUEPRINT 32
+#define LIVES_PLANT_VALUE_DEF 33
+#define LIVES_PLANT_DEF 100
 #define LIVES_PLANT_INDEX 128
 #define LIVES_PLANT_DATA_BOOK 129
 #define LIVES_PLANT_LOOKUP 130
-
-#define LIVES_PLANT_BAG_OF_HOLDING 256 // generic - cant think of a better name right now
-
-#define LIVES_PLANT_DEF 313
-
+#define LIVES_PLANT_ATTRIBUTE 140
+#define LIVES_PLANT_OBJ_INSTANCE 200
+  
 #define LIVES_PLANT_ALLVALUES 400
 
 #define LIVES_PLANT_FUNCPARAMS 512
@@ -52,6 +50,8 @@
 #define LIVES_PLANT_HASH_STORE 513
 #define LIVES_PLANT_CLEANER 515
 #define LIVES_PLANT_STRUCT_MIRROR 516
+
+#define LIVES_PLANT_BAG_OF_HOLDING 600 // generic - cant think of a better name right now
 
 // used for debugging purposes
 #define LIVES_PLANT_AUDIT 1024
@@ -82,14 +82,17 @@ int64_t lives_plant_get_subtype(weed_plant_t *);
 
 #define BLU_FLAGS_NONE 0
 #define BLU_FLAG_READWRITE	(1ull << 1)
-#define BLU_FLAG_AUTODELETE	(1ull << 2)
+#define BLU_FLAG_AUTOUNREF	(1ull << 2)
 
 // check if !exist, is optional ?
 #define BLU_FLAG_OPTIONAL	(1ull << 3)
 #define BLU_FLAG_OPTREM		(1ull << 4)
 
+// default value follows flags
+#define BLU_FLAG_HAS_DEFAULT	(1ull << 16)
+
 #define BLU_FLAG_ARRAY		(1ull << 31)
-#define BLU_FLAG_HAS_SIZE	(1ull << 32)
+//#define BLU_FLAG_HAS_SIZE	(1ull << 32)
 
 // add undel host, simlar to  rdonlyhost; applies unless..
 #define BLU_FLAGS_REMOVABLE	(BLU_FLAG_OPTIONAL | BLU_FLAG_OPTREM)
@@ -111,9 +114,13 @@ typedef struct {
 ///////////////////////
 
 typedef weed_plant_t lives_blueprint_t;
-typedef weed_plant_t val_def_t;
+typedef weed_plant_t lives_valdef_t;
+
+lives_result_t lives_plant_include_sub(weed_plant_t *parent, const char *name, weed_plant_t *sub);
 
 weed_plant_t *plant_from_blueprint(int pltype, ...);
+
+boolean lives_leaf_mandatory(lives_blueprint_t *, const char *name);
 
 #define LIVES_LEAF_BLUEPRINT_IDX "_blueprint_idx"
 #define LIVES_LEAF_BLUEPRINT_PTR "_blueprint_ptr"
@@ -126,8 +133,7 @@ void dump_blueprint(uint64_t pltype);
 
 #define LIVES_DEF_BLUEPRINT WEED_LEAF_UNIQUE_ID, WEED_SEED_UINT64, BLU_FLAGS_NONE, \
     LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE,	\
-    LIVES_LEAF_ADD_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
-    LIVES_LEAF_DEL_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
+    LIVES_LEAF_UPDATE_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
     LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
     LIVES_LEAF_FIND_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
     LIVES_LEAF_GET_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL
@@ -137,8 +143,9 @@ void dump_blueprint(uint64_t pltype);
 // defines LIVES_VALUE_DEF plant - a plant which defines a leaf in a plant
 #define LIVES_VALUE_DEF_BLUEPRINT					\
   LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE, WEED_LEAF_NAME, LIVES_SEED_CONST_CHARPTR, \
-    BLU_FLAGS_NONE, LIVES_LEAF_SEED_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, \
-    WEED_LEAF_FLAGS, WEED_SEED_UINT64, BLU_FLAGS_NONE
+    BLU_FLAGS_NONE, LIVES_LEAF_VALUE_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, \
+    WEED_LEAF_FLAGS, WEED_SEED_UINT64, BLU_FLAGS_NONE, WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, \
+    BLU_FLAG_OPTIONAL
 
 // defines LIVES_BLUEPRINT plant which is a blueprint for itself and other lives_plants
 // leaves for target are held in an index keyed by name, so we can immediately find them from the leaf name
@@ -147,8 +154,8 @@ void dump_blueprint(uint64_t pltype);
     INCLUDES_SUB(INDEX, LIVES_LEAF_VALUE_DEFS)
 
 #define EXTENDS_PLANT(plant) "@EXTENDS", LIVES_##plant##_BLUEPRINT
-#define INCLUDES_SUB(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_AUTODELETE
-#define INCLUDES_SUB_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY | BLU_FLAG_AUTODELETE
+#define INCLUDES_SUB(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_AUTOUNREF
+#define INCLUDES_SUB_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY | BLU_FLAG_AUTOUNREF
 #define ADD_REF(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, 0
 #define ADD_REF_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY
 
@@ -166,8 +173,11 @@ void register_blueprints(void);
 
 // LIVES_PLANT_INDEX
 // a plant which can store any type of leaves, name must be unique,
-// add, upd, del, ADD CONDITION calls find, if find returns name, no add
+// add, upd, del, upd CONDITION
+// item type will be replaced with update condition, which can define the types that can be stored
 //
+// this type is well suited for "collections", eg attr_grp is an index for attributes
+// "hook_stacks" is / will be a collection of hook stacks for a specific plant
 #define LIVES_INDEX_BLUEPRINT						\
   LIVES_DEF_BLUEPRINT, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, LIVES_LEAF_PREFIX, \
     LIVES_SEED_CONST_CHARPTR, BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE
@@ -181,6 +191,8 @@ typedef enum {
   idx_type_values,
   // datavook
   idx_type_data_book,
+  //
+  idx_type_hook_stacks,
   //
   idx_type_attr_grp,
   // lookup types are static and global
@@ -198,11 +210,18 @@ typedef index_type lookup_type;
 #define LIVES_LEAF_INDEX_TYPE "_index_type"
 #define LIVES_LEAF_PREFIX "_prefix"
 #define LIVES_LEAF_ITEM_TYPE "_data_type"
-#define LIVES_LEAF_ADD_COND "_add_cond"
-#define LIVES_LEAF_DEL_SCRIPT "_del_script"
-#define LIVES_LEAF_FIND_SCRIPT "_find_script"
-#define LIVES_LEAF_GET_SCRIPT "_get_script"
+
+/// update will allow (pass) or deny a change in value of $target_item
+#define LIVES_LEAF_UPDATE_COND "_upd_cond"
+////
+/// update script will be called before and after the value of $target_item is changed
 #define LIVES_LEAF_UPDATE_SCRIPT "_update_script"
+//
+// find script will return the real target_item for key $target_item
+#define LIVES_LEAF_FIND_SCRIPT "_find_script"
+
+// get_script will retrun the value of $target_item 
+#define LIVES_LEAF_GET_SCRIPT "_get_script"
 
 typedef weed_plant_t lives_index_t;
 
@@ -220,6 +239,7 @@ weed_seed_t lives_index_get_itemtype(lives_index_t *);
 lives_result_t lives_index_set_value(lives_index_t *, const char *key, weed_seed_t stype, ...);
 weed_error_t lives_index_get_value(void *retloc, lives_index_t *, const char *key);
 
+/// (auto unref)
 #define is_autofree(plant, key) (plant ? !!(weed_leaf_get_flags(plant, key) & LIVES_FLAG_FREE_ON_DELETE) : FALSE)
 
 // TRUE if existed / erased
@@ -228,36 +248,23 @@ boolean lives_index_erase_value(lives_index_t *, const char *key);
 // defined type
 boolean lives_index_contains_item(lives_index_t *, const char *key);
 
-// contained and an has value
+// contained and has value
 boolean lives_index_has_value(lives_index_t *, const char *key);
 
 weed_error_t lives_index_set_autofree(lives_index_t *, const char *key, boolean set);
 
 // LIVES PLANT LOOKUP
-// a lookup is an index with read only values, index vals are readonly,
-// autofree. We define a free func for the index vals.
-
-// we also gave  extra add condition
-// - defines the type of leaves that can be added
-// delete / update script may free the item data
-
-
-// we (will) have condiitons for add, update and delete
-// - check type is allvalues
-// - chek unqie nme
+// a lookup is a specialised index
+// - key values cannot be overwritten
+// the type of the value is always allvalues_t
 //
+// stored values are set static but will be unrefed on delete
+// we can also store bound vars - like for the global databook,
 //
-
-// update - blocked -r eadonly
-// delete - auto free
+// flags in allvalues can make the value readonly, bound, array, funcinst, external type...
+// update script may free the item data with no new_val
 //
-// if we pass an allvalues with name and value, if the name is already used
-// the value is not stored. Otherwise the allvalues is set static (todo - refcount)
-// we can also store bound vars - like for the global databook, make th bound bvalues readonly
-// etc.
-//
-// we can also store plants of a specific type, eg. attr plant
-
+// this type is well suited for global lookup tables
 #define LIVES_LEAF_LOOKUP_TYPE LIVES_LEAF_INDEX_TYPE
 
 #define LOOKUP_PREFIX "ref_"
@@ -278,27 +285,11 @@ boolean remove_from_lookup_table(lives_lookup_t *, const char *name);
 //allvalues_t *find_in_lookup_table(lives_lookup_t *, const char *name);
 
 // LIVES_PLANT_DATA_BOOK
-
-// new style data book. A data book is a lokup plant with prefix "data_"
-// and type LIVES_SEED_ALLVALUES (a custom seed_type)
 //
-// when setting data, we first check if the value exists.
-// if so we get back allvalues_t *, and we check if the st type matches the data being set
-//
-// if the value does not exist we create the allvalues_t *, set seed_type
-//
-// then we set data.
-// in this way we can easily include "bound" values in a data book. This means the value points to
-// an actual variable, so when setting the value, we actually update the underlying variable, and
-// when reading we get the value of the underlying var.
-//
+// databook is lookup, but with and added leaf - "scope"
+// - this is used with allvalues_t scope and oldval to define visibility
+//   and access
 // - we can also set the type without setting data yet
-// - Items can be made readonly (though any underlying variable can still change independently)
-//
-// - setting a value "static" makes in undeletable. When we clean the book, we actually call _weed_plant_free(),
-// (the original version). This will delete all items not flagged as undeleteable, and only return WEED_SUCCESS if all leaves were freed.
-//
-// databook has a "scope" as do each of the alllvalues. we can only "see" values with current scope, - (scope - 1) and scope 0
 
 #define LIVES_LEAF_SCOPE "dbook_scope"
 
@@ -326,7 +317,7 @@ lives_result_t lives_databook_set_array(lives_databook_t *, const char *name, we
 lives_result_t lives_databook_copy_value(void *retloc, lives_databook_t *book, const char *name);
 
 lives_result_t lives_databook_get_value(void *retloc, lives_databook_t *book, const char *name);
-lives_result_t lives_databook_get_array_by_ref(void *array, lives_databook_t *book, const char *name, int *ne);
+lives_result_t lives_databook_get_array_by_ref(void **array, lives_databook_t *book, const char *name, int *ne);
 
 lives_result_t lives_databook_erase_value(lives_databook_t *, const char *name);
 
@@ -356,7 +347,7 @@ void show_databook_contents(lives_databook_t *);
     for (int _i = 0; _leaves[_i]; _i++) {				\
       if (!lives_strncmp(_leaves[_i], _pfx, _pfxlen)) {		\
 	key = _leaves[_i] + _pfxlen; lives_index_get_value(&value, idx, key);	\
-	__VA_ARGS__} _ext_free(_leaves[_i]); _IDX_++;} _ext_free(_leaves);})
+	__VA_ARGS__;} _ext_free(_leaves[_i]); _IDX_++;} _ext_free(_leaves);})
 
 #define SET_BOOK_DATATYPE(book, name, itype) _DW0(lives_data_book_set_datatype((book), (name), (itype));)
 #define GET_BOOK_DATATYPE(book, name) lives_databook_get_datatype((book), (name))
@@ -370,7 +361,7 @@ void show_databook_contents(lives_databook_t *);
 #define COPY_BOOK_VALUE(retloc, book, name) lives_databook_copy_value(val, book, name)
 
 #define GET_BOOK_VALUE(val, book, name) lives_databook_get_value(&val, book, name)
-#define GET_BOOK_ARRAY(array, book, name, nvalsp) lives_databook_get_array_by_ref(array, book, name, nvalsp)
+#define GET_BOOK_ARRAY(array, book, name, nvalsp) lives_databook_get_array_by_ref((void **)&(array), book, name, nvalsp)
 
 #define DEL_BOOK_VALUE(book, name) lives_databook_erase_value((book), (name))
 
@@ -402,7 +393,7 @@ extern lives_index_t *indices[idx_type_max];
 //// related, generic leaves
 
 #define LIVES_LEAF_SERIAL_NUMBER "_serial_num"
-#define LIVES_LEAF_SEED_TYPE "_seed_type"
+#define LIVES_LEAF_VALUE_TYPE "_value_type"
 #define LIVES_LEAF_NUM_ELEMS "_num_elems"
 #define LIVES_LEAF_SIZE "_sizeval"
 #define LIVES_LEAF_OLDVAL "_oldvalue"
@@ -412,5 +403,11 @@ extern lives_index_t *indices[idx_type_max];
 #define LIVES_LEAF_FUNCINST "_funcinst"
 #define LIVES_LEAF_CONTINGENCIES "_contingencies"
 #define LIVES_LEAF_PRIV_DATA "_priv_data"
+#define LIVES_LEAF_ATTR_GRP "_attr_grp"
+#define LIVES_LEAF_NAME "name"
+#define LIVES_LEAF_VALUE WEED_LEAF_VALUE
+#define LIVES_LEAF_PARENT "parent"
+#define LIVES_LEAF_OBJ_TYPE "obj_type"
+#define LIVES_LEAF_OBJ_SUBTYPE "obj_subtype"
 
 #endif

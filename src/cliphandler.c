@@ -2489,136 +2489,111 @@ boolean switch_audio_clip(int new_file, boolean activate) {
   }
 
   astat = lives_aplayer_get_status(mainw->aplayer);
-
+  
   IF_APLAYER_JACK
-  (if (!activate) mainw->jackd->in_use = FALSE;
+    (if (!activate) mainw->jackd->in_use = FALSE;
 
-  if (new_file != aplay_file) {
-    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-        mainw->cancelled = handle_audio_timeout();
-        return FALSE;
-      }
-      if (mainw->jackd->playing_file > 0) {
-        if (!CLIP_HAS_AUDIO(new_file)) {
-          jack_get_rec_avals(mainw->jackd);
-          mainw->rec_avel = 0.;
-        }
-        jack_message.command = ASERVER_CMD_FILE_CLOSE;
-        jack_message.data = NULL;
-        jack_message.next = NULL;
-        mainw->jackd->msgq = &jack_message;
+     if (new_file != aplay_file) {
+       if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	 mainw->cancelled = handle_audio_timeout();
+	 return FALSE;
+       }
+       if (mainw->jackd->playing_file > 0) {
+	 if (!CLIP_HAS_AUDIO(new_file)) {
+	   jack_get_rec_avals(mainw->jackd);
+	   mainw->rec_avel = 0.;
+	 }
+	 jack_message.command = ASERVER_CMD_FILE_CLOSE;
+	 jack_message.data = NULL;
+	 jack_message.next = NULL;
+	 mainw->jackd->msgq = &jack_message;
+       
+	 if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	   mainw->cancelled = handle_audio_timeout();
+	   return FALSE;
+	 }
+       }
 
-        if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-          mainw->cancelled = handle_audio_timeout();
-          return FALSE;
-        }
-      }
-    }
 
-  if (!IS_VALID_CLIP(new_file)) {
-  mainw->jackd->in_use = FALSE;
-  return FALSE;
-}
+       if (!IS_VALID_CLIP(new_file)) {
+	 mainw->jackd->in_use = FALSE;
+	 return FALSE;
+       }
 
-if (new_file == aplay_file) return TRUE;
+       if (new_file == aplay_file) return TRUE;
+     
+       if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+	 // tell jack server to open audio file and start playing it
 
-  if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-    // tell jack server to open audio file and start playing it
+	 jack_message.command = ASERVER_CMD_FILE_OPEN;
 
-    jack_message.command = ASERVER_CMD_FILE_OPEN;
+	 jack_message.data = lives_strdup_printf("%d", new_file);
 
-    jack_message.data = lives_strdup_printf("%d", new_file);
+	 jack_message2.command = ASERVER_CMD_FILE_SEEK;
 
-      jack_message2.command = ASERVER_CMD_FILE_SEEK;
+	 jack_message.next = &jack_message2;
+	 jack_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
+	 jack_message2.next = NULL;
 
-      jack_message.next = &jack_message2;
-      jack_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
-      jack_message2.next = NULL;
+	 mainw->jackd->msgq = &jack_message;
+	 mainw->jackd->in_use = TRUE;
 
-      mainw->jackd->msgq = &jack_message;
-      mainw->jackd->in_use = TRUE;
+	 if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	   mainw->cancelled = handle_audio_timeout();
+	   return FALSE;
+	 }
 
-      if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-        mainw->cancelled = handle_audio_timeout();
-        return FALSE;
-      }
+	 //jack_time_reset(mainw->jackd, 0);
 
-      //jack_time_reset(mainw->jackd, 0);
+	 mainw->jackd->is_paused = sfile->play_paused;
+	 mainw->jackd->is_silent = FALSE;
+       }})
+     
+    IF_APLAYER_PULSE
+    (if (!activate) mainw->pulsed->in_use = FALSE;
+    
+     if (new_file != aplay_file) {
+       if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	 mainw->cancelled = handle_audio_timeout();
+	 return FALSE;
+       }
 
-      mainw->jackd->is_paused = sfile->play_paused;
-      mainw->jackd->is_silent = FALSE;
-    } else {
-      mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-    })
+       if (IS_PHYSICAL_CLIP(aplay_file)) {
+	 lives_clip_t *afile = mainw->files[aplay_file];
+	 if (!CLIP_HAS_AUDIO(new_file)) {
+	   pulse_get_rec_avals(mainw->pulsed);
+	   mainw->rec_avel = 0.;
+	 }
+	 pulse_message.command = ASERVER_CMD_FILE_CLOSE;
+	 pulse_message.data = NULL;
+	 pulse_message.next = NULL;
+	 mainw->pulsed->msgq = &pulse_message;
 
-  IF_APLAYER_PULSE
-  (if (!activate) mainw->pulsed->in_use = FALSE;
+	 if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
+	   mainw->cancelled = handle_audio_timeout();
+	   return FALSE;
+	 }
 
-  if (new_file != aplay_file) {
-    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-        mainw->cancelled = handle_audio_timeout();
-        return FALSE;
-      }
+	 afile->sync_delta = lives_pulse_get_time(mainw->pulsed) - mainw->startticks;
+	 afile->aseek_pos = mainw->pulsed->seek_pos;
+       }
 
-      if (IS_PHYSICAL_CLIP(aplay_file)) {
-        lives_clip_t *afile = mainw->files[aplay_file];
-        if (!CLIP_HAS_AUDIO(new_file)) {
-          pulse_get_rec_avals(mainw->pulsed);
-          mainw->rec_avel = 0.;
-        }
-        pulse_message.command = ASERVER_CMD_FILE_CLOSE;
-        pulse_message.data = NULL;
-        pulse_message.next = NULL;
-        mainw->pulsed->msgq = &pulse_message;
+       if (!IS_VALID_CLIP(new_file)) {
+	 mainw->pulsed->in_use = FALSE;
+	 return FALSE;
+       }
 
-        if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) {
-          mainw->cancelled = handle_audio_timeout();
-          return FALSE;
-        }
+       if (new_file == aplay_file) return TRUE;
 
-        afile->sync_delta = lives_pulse_get_time(mainw->pulsed) - mainw->startticks;
-        afile->aseek_pos = mainw->pulsed->seek_pos;
-      }
-
-      if (!IS_VALID_CLIP(new_file)) {
-        mainw->pulsed->in_use = FALSE;
-        return FALSE;
-      }
-
-      if (new_file == aplay_file) return TRUE;
-
-      if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
-        // tell pulse server to open audio file and start playing it
-
-        mainw->video_seek_ready = FALSE;
-
-        // have to set this, else the msgs are not acted on
-        pulse_driver_uncork(mainw->pulsed);
-
-        pulse_message.command = ASERVER_CMD_FILE_OPEN;
-        pulse_message.data = lives_strdup_printf("%d", new_file);
-
-        pulse_message2.command = ASERVER_CMD_FILE_SEEK;
-        /* if (LIVES_IS_PLAYING && !mainw->preview) { */
-        /*   pulse_message2.tc = cticks; */
-        /*   pulse_message2.command = ASERVER_CMD_FILE_SEEK_ADJUST; */
-        /* } */
-        pulse_message.next = &pulse_message2;
-        pulse_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos);
-        pulse_message2.next = NULL;
-
-        mainw->pulsed->msgq = &pulse_message;
-        mainw->pulsed->is_paused = sfile->play_paused;
-
-        if (mainw->pulsed->is_paused) astat |= APLAYER_STATUS_PAUSED;
-        else astat &= ~APLAYER_STATUS_PAUSED;
-        //pa_time_reset(mainw->pulsed, 0);
-      } else {
-        mainw->video_seek_ready = TRUE;
-        video_sync_ready();
-      }
-    })
-  lives_aplayer_set_status(mainw->aplayer, astat);
+       if (CLIP_HAS_AUDIO(new_file) && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+	 // tell pulse server to open audio file and start playing it
+	 lives_aplayer_set_seek_vals(mainw->aplayer, new_file, -1, LIVES_DIRECTION_NONE, 0.);
+       } else {
+	 mainw->video_seek_beacon = -1;
+	 video_sync_ready();
+       }
+     })
+    lives_aplayer_set_status(mainw->aplayer, astat);
 
 #if 0
   if (prefs->audio_player == AUD_PLAYER_NONE) {
@@ -2630,7 +2605,7 @@ if (new_file == aplay_file) return TRUE;
     nullaudio_clip_set(new_file);
     if (activate && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
       if (!sfile->play_paused)
-        nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
+	nullaudio_arate_set(sfile->arate * sfile->pb_fps / sfile->fps);
       else nullaudio_arate_set(sfile->arate * sfile->freeze_fps / sfile->fps);
     } else nullaudio_arate_set(sfile->arate);
     nullaudio_seek_set(sfile->aseek_pos);
@@ -2701,21 +2676,21 @@ void do_quick_switch(int new_file) {
     sfile = RETURN_VALID_CLIP(old_file);
     if (sfile && get_primary_src_type(sfile) == LIVES_SRC_TYPE_GENERATOR) {
       if (new_file != mainw->blend_file) {
-        // switched from generator to another clip, end the generator
-        // if we dont do this here, then this would happen on the next call to map_sources_to_tracks
-        // ie when nodemodel is rebuilt
-        remove_primary_src(old_file, LIVES_SRC_TYPE_GENERATOR);
+	// switched from generator to another clip, end the generator
+	// if we dont do this here, then this would happen on the next call to map_sources_to_tracks
+	// ie when nodemodel is rebuilt
+	remove_primary_src(old_file, LIVES_SRC_TYPE_GENERATOR);
       } else {
-        // swap fg / bg gen keys/modes
-        rte_swap_fg_bg();
+	// swap fg / bg gen keys/modes
+	rte_swap_fg_bg();
       }
     }
     if (new_file == mainw->blend_file) {
       sfile = RETURN_VALID_CLIP(mainw->blend_file);
       if (sfile && get_primary_src_type(mainw->files[mainw->blend_file])
-          == LIVES_SRC_TYPE_GENERATOR)
-        // swap fg / bg gen keys/modes
-        rte_swap_fg_bg();
+	  == LIVES_SRC_TYPE_GENERATOR)
+	// swap fg / bg gen keys/modes
+	rte_swap_fg_bg();
     }
   }
 
@@ -2746,8 +2721,8 @@ void do_quick_switch(int new_file) {
   // switch audio clip
   if (AUD_SRC_INTERNAL && (!mainw->event_list || mainw->record)) {
     if (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-        && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
-        && !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
+	&& (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS)
+	&& !mainw->is_rendering && (mainw->preview || !(mainw->agen_key != 0 || mainw->agen_needs_reinit))) {
       switch_audio_clip(new_file, TRUE);
     }
   }
@@ -2778,8 +2753,8 @@ void do_quick_switch(int new_file) {
 #if GTK_CHECK_VERSION(3, 0, 0)
   if (LIVES_IS_PLAYING && !mainw->play_window
       && (!CURRENT_CLIP_IS_VALID
-          || (sfile && (cfile->hsize != sfile->hsize
-                        || cfile->vsize != sfile->vsize)))) {
+	  || (sfile && (cfile->hsize != sfile->hsize
+			|| cfile->vsize != sfile->vsize)))) {
 
     set_drawing_area_from_pixbuf(LIVES_DRAWING_AREA(mainw->play_image), NULL);
   }
@@ -2789,7 +2764,7 @@ void do_quick_switch(int new_file) {
     if (!mainw->fs && !mainw->faded) {
       set_start_end_spins(mainw->current_file);
       if (!mainw->play_window && mainw->double_size) {
-        resize(2.);
+	resize(2.);
       } else resize(1);
     }
   } else resize(1);
@@ -2814,6 +2789,7 @@ void do_quick_switch(int new_file) {
 }
 
 
+
 void switch_clip(int type, int newclip, boolean force) {
   // generic switch clip callback
 
@@ -2833,7 +2809,7 @@ void switch_clip(int type, int newclip, boolean force) {
   if (type == SCREEN_AREA_BACKGROUND || (mainw->active_sa_clips == SCREEN_AREA_BACKGROUND && mainw->playing_file > 0
                                          && type != SCREEN_AREA_FOREGROUND
                                          && !(mainw->blend_file != -1 && !IS_NORMAL_CLIP(mainw->blend_file)
-                                             && mainw->blend_file != mainw->playing_file))) {
+					      && mainw->blend_file != mainw->playing_file))) {
     if (mainw->num_tr_applied < 1 || (newclip == mainw->blend_file && !prefs->tr_self)) return;
 
     // switch bg clip
@@ -2904,7 +2880,7 @@ static lives_clipsrc_group_t *_get_srcgrp(lives_clip_t *sfile, int track, int pu
         int xpurpose = sfile->src_groups[i]->purpose;
         if ((purpose == SRC_PURPOSE_ANY || xpurpose == purpose
              || (purpose == SRC_PURPOSE_TRACK_OR_PRIMARY && (xpurpose == SRC_PURPOSE_PRIMARY
-                 || xpurpose == SRC_PURPOSE_PRIMARY)))
+							     || xpurpose == SRC_PURPOSE_PRIMARY)))
             && (track == -1 || sfile->src_groups[i]->track == track)) {
           return sfile->src_groups[i];
         }
@@ -2984,8 +2960,8 @@ static void _clip_src_insert(lives_clipsrc_group_t *srcgrp, lives_clip_src_t *my
 
 
 static lives_clip_src_t *_add_src_to_group(lives_clip_t *sfile, lives_clipsrc_group_t *srcgrp, void *actor,
-    void *actor_inst, int src_type, uint64_t actor_uid,
-    fingerprint_t *chksum, const char *ext_URI) {
+					   void *actor_inst, int src_type, uint64_t actor_uid,
+					   fingerprint_t *chksum, const char *ext_URI) {
   lives_clip_src_t *mysrc = (lives_clip_src_t *)lives_calloc(1, sizeof(lives_clip_src_t));
 
   mysrc->uid = gen_unique_id();

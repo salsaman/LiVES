@@ -2534,25 +2534,14 @@ retry:
                                          dplug->cdata->YUV_clamping,
                                          dplug->cdata->YUV_sampling,
                                          dplug->cdata->YUV_subspace);
-              if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
-                if (layer_gamma != WEED_GAMMA_BT709) {
-                  lives_clip_src_t *mysrc = NULL;
-                  layer_gamma = WEED_GAMMA_BT709;
-                  weed_layer_set_gamma(layer, layer_gamma);
-                  mysrc = get_clip_src(NULL, clip, dec_uid, LIVES_SRC_TYPE_DECODER, NULL, NULL);
-                  weed_layer_set_yuv_subspace(layer, WEED_YUV_SUBSPACE_BT709);
-                  if (mysrc) {
-                    mysrc->gamma_type = layer_gamma;
-                    update_gamma_in_all_srcgrps(clip, mysrc);
-                  }
-                }
-                if (weed_layer_get_yuv_subspace(layer) == WEED_YUV_SUBSPACE_BT709) {
+
+	      if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
+		if (weed_layer_get_yuv_subspace(layer) == WEED_YUV_SUBSPACE_BT709) {
                   if (layer_gamma != WEED_GAMMA_BT709) {
                     lives_clip_src_t *mysrc = NULL;
                     layer_gamma = WEED_GAMMA_BT709;
                     weed_layer_set_gamma(layer, layer_gamma);
                     mysrc = get_clip_src(NULL, clip, dec_uid, LIVES_SRC_TYPE_DECODER, NULL, NULL);
-                    weed_layer_set_yuv_subspace(layer, WEED_YUV_SUBSPACE_BT709);
                     if (mysrc) {
                       mysrc->gamma_type = layer_gamma;
                       update_gamma_in_all_srcgrps(clip, mysrc);

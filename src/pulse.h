@@ -74,8 +74,6 @@ typedef struct {
 
   uint64_t num_calls; /**< count of process_audio() calls */
 
-  lives_audio_loop_t loop;
-
   uint16_t *sound_buffer; ///< transformed data
 
   pa_cvolume volume;
@@ -92,7 +90,7 @@ typedef struct {
   /**< linked list of messages we are sending to the callback process */
   volatile aserver_message_t   *msgq;
 
-  volatile uint64_t samples_written;
+  volatile int samples_written;
 
   boolean is_paused;
 
@@ -162,8 +160,13 @@ size_t pulse_get_buffsize(pulse_driver_t *);
 
 //////////////////////
 
-void pulse_audio_seek_frame(pulse_driver_t *, int clip, frames_t frame);  ///< seek to (video) frame
-boolean pulse_audio_seek_frame_velocity(pulse_driver_t *, double frame, double vel);
+int64_t lives_pulse_get_read_offset(pulse_driver_t *);
+
+lives_result_t lives_pulse_seek_to(pulse_driver_t *, int clip, double xtime,
+				   lives_direction_t dir, double vel, boolean block);
+
+/* void pulse_audio_seek_frame(pulse_driver_t *, int clip, frames_t frame);  ///< seek to (video) frame */
+/* boolean pulse_audio_seek_frame_velocity(pulse_driver_t *, double frame, double vel); */
 
 void pulse_set_avel(pulse_driver_t *, int clipno, double ratio);
 

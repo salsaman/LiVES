@@ -53,20 +53,50 @@ weed_plant_t *get_allprefs(void) {return allprefs;}
 #define define_pref(idx, prefnm, vtype, flags, pdef)			\
   _define_pref(PREF_PREFIX #idx, PREF_##idx, MAKE_ALLVALUE_BOUND(vtype, &prefs->prefnm), flags, pdef)
 
-//static weed_plant_t *_define_pref(const char *pref_idx, void *pref_ptr, weed_seed_t vtype, void *pdef, uint32_t flags) {
+/* #define define_pref(idx, prefnm, vtype, flags, pdef, ...)			\ */
+/*   _define_pref(PREF_PREFIX #idx, PREF_##idx, MAKE_ALLVALUE_BOUND(vtype, &prefs->prefnm), flags, pdef, __VA_ARGS__) */
+
+
 static weed_plant_t *_define_pref(const char *idxnm, const char *keyname, allvalues_t *allvp, uint32_t flags, ...) {
+
+  /*static weed_plant_t *_define_pref(const char *pref_idx, void *pref_ptr, weed_seed_t vtype, void *pdef, uint32_t flags) {*/
+  //static lives_preference_t *_define_pref(const char *idxnm, const char *keyname, allvalues_t *allvp, uint32_t flags, ...) {
   // VALUE is now an allvalues_t *, bound to pref->whatever
+  //char *desc;
+
   va_list va;
+  //lives_preference_t *prefplant;
+
   weed_plant_t *prefplant = lives_plant_new(LIVES_PLANT_PREFERENCE);
+
   weed_seed_t vtype = allvp->stype;
   va_start(va, flags);
-  weed_leaf_from_varg(prefplant, WEED_LEAF_DEFAULT, vtype, 1, va);
+  weed_leaf_from_varg(prefplant, WEED_LEAF_DEFAULT, vtype, -1, va);
+  /* desc = va_arg(va, char *); */
   va_end(va);
+
   weed_set_const_string_value(prefplant, LIVES_LEAF_KEYNAME, keyname);
   weed_set_voidptr_value(prefplant, WEED_LEAF_VALUE, (void *)allvp);
+  
+  /* weed_set_const_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx); */
+  /* weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr); */
+  /* weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef); */
+
   weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_UNSET);
   weed_set_int_value(prefplant, WEED_LEAF_FLAGS, flags);
+  
+  /* prefplant = PLANT_FROM_BLUEPRINT(PREFERENCE, LIVES_LEAF_KEYNAME, keyname,  */
+  /* 				   WEED_LEAF_VALUE, (void *)allvp, */
+  /* 				   LIVES_LEAF_STATUS, PREFSTATUS_UNSET, */
+  /* 				   WEED_LEAF_FLAGS, flags); */ 
+
+
+  //allprefs = lives_list_append(allprefs, prefplant);
+
+  //if (desc) weed_set_const_string_value(prefplant, WEED_LEAF_DESCRIPTION, desc); 
+
   weed_set_plantptr_value(allprefs, idxnm, prefplant);
+
   return prefplant;
 }
 
@@ -107,6 +137,8 @@ void init_prefs(void) {
 
   DEFINE_PREF_BOOL(REPL_NULLFRAMES, repl_missing_frames, TRUE, PREF_FLAG_UNDOCUMENTED);
 
+  DEFINE_PREF_BOOL(PRESENT, present, TRUE, PREF_FLAG_INCOMPLETE);//y, _("Push new windows to the front"));
+
   DEFINE_PREF_INT(FOCUS_STEAL, focus_steal, FOCUS_STEAL_DEF, PREF_FLAG_INCOMPLETE);
 
   DEFINE_PREF_BOOL(PB_HIDE_GUI, pb_hide_gui, FALSE, PREF_FLAG_EXPERIMENTAL);
@@ -114,8 +146,10 @@ void init_prefs(void) {
   //DEFINE_PREF_BOOL(GENQ_MODE, genq_mode, FALSE);
   DEFINE_PREF_INT(DLOAD_MATMET, dload_matmet, LIVES_MATCH_CHOICE, PREF_FLAGS_NONE);
   DEFINE_PREF_INT(WEBCAM_MATMET, webcam_matmet, LIVES_MATCH_AT_MOST, PREF_FLAGS_NONE);
+
   DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", PREF_FLAGS_NONE);
 
+  
   DEFINE_PREF_FLOAT(MAX_CLIP_VOL, max_clip_vol, 2., PREF_FLAGS_NONE);
 }
 
@@ -136,7 +170,7 @@ static void remove_pref(const char *pref_idx) {
 
 
 void load_pref(const char *pref_idx) {
-  weed_plant_t *prefplant = find_pref(pref_idx);
+  lives_preference_t *prefplant = find_pref(pref_idx);
   if (!prefplant) return;
   else {
     //void *ppref = weed_get_voidptr_value(prefplant, LIVES_LEAF_VARPTR, NULL);
@@ -1042,11 +1076,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         goto fail;
       } else {
         // success
-        if (mainw->loop_cont) {
-          if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-            mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-          else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
-        }
+	lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+	lives_aplayer_update_loop_mode(aplayer);
         update_all_host_info(); // let fx plugins know about the change
         goto success;
       }
@@ -1080,11 +1111,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           goto fail;
         } else {
           // success
-          if (mainw->loop_cont) {
-            if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-              mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-            else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-          }
+	  lives_aplayer_update_loop_mode(mainw->pulsed->inst);
           update_all_host_info(); // let fx plugins know about the change
           goto success;
         }

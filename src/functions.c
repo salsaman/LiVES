@@ -19,6 +19,9 @@ MK_ALL_FUNCS
 
 static hook_stack_descriptor_t hs_desc[N_HOOK_POINTS];
 
+/* static int n_normal_stacks = N_HOOK_POINTS; */
+/* static int n__stacks = N_HOOK_POINTS; */
+
 static boolean hs_inited = FALSE;
 static boolean hsn_inited = FALSE;
 
@@ -126,30 +129,131 @@ void get_val_from_allvals(void *valp, allvalues_t *allvp) {
 }
 
 
-void get_array_byref_from_allvals(void *array, allvalues_t *allvp, int *ne) {
+void get_array_byref_from_allvals(void **array, allvalues_t *allvp, int *ne) {
   // gte array by ref
   // or bound value, like an array with 1 element
   if (ne) *ne = allvp->ne;
   switch (allvp->stype) {
-  case WEED_SEED_INT: {array = (void *)allvp->values.i; break;}
-  case WEED_SEED_UINT: {array = (void *)allvp->values.u; break;}
-  case WEED_SEED_BOOLEAN: {array = (void *)allvp->values.b; break;}
-  case WEED_SEED_INT64: {array = (void *)allvp->values.I; break;}
-  case WEED_SEED_UINT64: {array = (void *)allvp->values.U; break;}
-  case WEED_SEED_DOUBLE: {array = (void *)allvp->values.d; break;}
-  case WEED_SEED_FLOAT: {array = (void *)allvp->values.f; break;}
-  case WEED_SEED_STRING: {array = (void *)allvp->values.s; break;}
-  case WEED_SEED_VOIDPTR: {array = (void *)allvp->values.V; break;}
-  case WEED_SEED_FUNCPTR: {array = (void *)allvp->values.F; break;}
-  case WEED_SEED_PLANTPTR: {array = (void *)allvp->values.P; break;}
-  case LIVES_SEED_CONST_CHARPTR: {array = (void *)allvp->values.C; break;}
+  case WEED_SEED_INT: {*array = (void *)allvp->values.i; break;}
+  case WEED_SEED_UINT: {*array = (void *)allvp->values.u; break;}
+  case WEED_SEED_BOOLEAN: {*array = (void *)allvp->values.b; break;}
+  case WEED_SEED_INT64: {*array = (void *)allvp->values.I; break;}
+  case WEED_SEED_UINT64: {*array = (void *)allvp->values.U; break;}
+  case WEED_SEED_DOUBLE: {*array = (void *)allvp->values.d; break;}
+  case WEED_SEED_FLOAT: {*array = (void *)allvp->values.f; break;}
+  case WEED_SEED_STRING: {*array = (void *)allvp->values.s; break;}
+  case WEED_SEED_VOIDPTR: {*array = (void *)allvp->values.V; break;}
+  case WEED_SEED_FUNCPTR: {*array = (void *)allvp->values.F; break;}
+  case WEED_SEED_PLANTPTR: {*array = (void *)allvp->values.P; break;}
+  case LIVES_SEED_CONST_CHARPTR: {*array = (void *)allvp->values.C; break;}
   default: break;
   }
 }
 
 
-allvalues_t *_make_allval_va(allvalues_t *avp,
-                             weed_seed_t stype, weed_size_t ne, int flags, va_list va) {
+allvalues_t *_make_allval_va(allvalues_t *avp, weed_seed_t stype,
+			     int flags, va_list va) {
+  uint64_t xflags = 0;
+  if (!avp) {
+    avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
+    avp->uid = gen_unique_id();
+  } else {
+    if (stype != avp->stype) {
+      avp->flags |= ALLV_ERR_WRONG_STYPE;
+      return avp;
+    }
+    xflags = avp->flags;
+    if (xflags & ALLV_FLAG_RDONLY) {
+      avp->flags |= ALLV_ERR_RDONLY;
+      //  BREAK_ME("ALLV RDONLY");
+      return avp;
+    }
+    // clear old vals
+    avp->values.V = NULL;
+    if (avp->funcinst) {
+      lives_funcinst_free(avp->funcinst);
+      avp->funcinst = NULL;
+    }
+  }
+
+  if (flags & ALLV_FLAG_RWLOCK) {
+    avp->rwlock = (pthread_rwlock_t *)lives_malloc(sizeof(pthread_rwlock_t));
+    pthread_rwlock_init(avp->rwlock, NULL);
+  }
+  avp->stype = stype;
+  avp->ne = 1;
+
+  if (flags & PARAM_FLAG_BOUND) {
+    // args will be a pointer to var, cast to void *
+    // e.g. void *voidpval = (void *)((int *)&intval)
+    // now we can just cast this to a (void **) and set avp->values.V = (void **)voidpval
+    // (because .V is normally an array of void *)
+    // since values is a union, we now read avp->values.i - this is the same location but the type is (int *)
+    // now we can read or write to *avp->values.i, and this is the same as reading or writing to / from intval
+    // this trick works because in C, there is no distincion between pointer used as array of type and
+    // pointer used as pointer to type. avp->flags tells us how to interpret the pointer value
+    // the only caveat is that we can only point to a scalar and not to an array
+    void *voidval = va_arg(va, void *);
+    avp->values.V = (void **)voidval;
+    xflags |= ALLV_FLAG_POINTER;
+  } else {
+    if (stype == LIVES_SEED_FUNCINST) {
+      avp->values.V = NULL;
+      avp->funcinst = va_arg(va, lives_funcinst_t *);
+    } else {
+      //      if (stype == WEED_SEED_FLOAT) BREAK_ME("shduh");
+      weed_plant_t *tmp = lives_plant_new(LIVES_PLANT_TMP);
+      weed_leaf_from_varg(tmp, WEED_LEAF_VALUE, stype, -1, va);
+      avp = allvalues_from_leaf(avp, tmp, WEED_LEAF_VALUE);
+      weed_plant_free(tmp);
+      //
+      avp->stype = stype;
+    }
+    xflags &= ~ALLV_FLAG_POINTER;
+  }
+  avp->ne = 1;
+  avp->flags = xflags;
+  return avp;
+}
+
+
+allvalues_t *_make_allval(allvalues_t *avp, weed_seed_t stype,
+			  int flags, const char *valname, ...) {
+  if (!avp) {
+    avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
+    avp->uid = gen_unique_id();
+    if (stype == WEED_SEED_INVALID) {
+      avp->flags = ALLV_ERR_INVALID_STYPE;
+      return avp;
+    }
+    avp->stype = stype;
+  } else {
+    if (stype == WEED_SEED_INVALID) {
+      avp->flags = ALLV_ERR_INVALID_STYPE;
+      return avp;
+    }
+    if (stype != avp->stype) {
+      avp->flags |= ALLV_ERR_WRONG_STYPE;
+      return avp;
+    }
+    if (avp->flags & ALLV_FLAG_RDONLY) {
+      avp->flags |= ALLV_ERR_RDONLY;
+      //  BREAK_ME("ALLV3 RDONLY");
+      return avp;
+    }
+  }
+
+  avp->aname = lives_strdup(valname);
+  va_list args;
+  va_start(args, valname);
+  _make_allval_va(avp, stype, flags, args);
+  va_end(args);
+  return avp;
+}
+
+
+allvalues_t *_make_allval_array_va(allvalues_t *avp, weed_seed_t stype,
+				   weed_size_t ne, int flags, va_list va) {
   uint64_t xflags = 0;
   if (!avp) {
     avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
@@ -217,8 +321,8 @@ allvalues_t *_make_allval_va(allvalues_t *avp,
 }
 
 
-allvalues_t *_make_allval(allvalues_t *avp,
-                          weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...) {
+allvalues_t *_make_allval_array(allvalues_t *avp, weed_seed_t stype, weed_size_t ne,
+				int flags, const char *valname, ...) {
   if (!avp) {
     avp = LIVES_CALLOC_SIZEOF(allvalues_t, 1);
     avp->uid = gen_unique_id();
@@ -246,21 +350,10 @@ allvalues_t *_make_allval(allvalues_t *avp,
   avp->aname = lives_strdup(valname);
   va_list args;
   va_start(args, valname);
-  _make_allval_va(avp, stype, ne, flags, args);
+  _make_allval_array_va(avp, stype, ne, flags, args);
   va_end(args);
   return avp;
 }
-
-
-/* lives_result_t value_from_allvalues(void *retloc, allvalues_t *avp) { */
-/*   if (!avp) return LIVES_RESULT_INVALID; */
-/*   weed_plant_t *tmpplant = lives_plant_new(LIVES_PLANT_TMP); */
-/*   LEAF_FROM_ALLV(tmpplant, WEED_LEAF_VALUE, avp); */
-/*   weed_error_t err = weed_leaf_get(tmpplant, WEED_LEAF_VALUE, 0, retloc); */
-/*   weed_plant_free(tmpplant); */
-/*   if (err == WEED_SUCCESS) return LIVES_RESULT_SUCCESS; */
-/*   return LIVES_RESULT_ERROR; */
-/* } */
 
 
 // retloc must be large enough to hold a value or array os the relevant type
@@ -442,6 +535,9 @@ static void init_hook_stacks(void) {
 }
 
 
+//lives_result_t lives_hook_register(int hstype, 
+
+
 const hook_stack_descriptor_t *get_hs_desc(int hstype) {
   if (!hs_inited || !hsn_inited) init_hook_stacks();
   return &hs_desc[hstype];
@@ -454,24 +550,11 @@ const hook_stack_descriptor_t *get_hs_desc(int hstype) {
 
 const lookup_tab crossrefs[] = XREFS_TAB;
 
-/* #define _SET_LEAF_FROM_VARG(plant, pkey, type, ctype, cptrtype, ne, args) \ */
-/*   (ne == 1 ? weed_set_##type##_value((plant), (pkey), va_arg((args), ctype)) \ */
-/*    : weed_set_##type##_array((plant), (pkey), (ne), va_arg((args), cptrtype))) */
 
-/* #define _SET_CUSTOM_LEAF_FROM_VARG(plant, pkey, type, ne, args)		\ */
-/*   (ne == 1 ? weed_set_custom_value((plant), (pkey), (type), va_arg((args), void *)) \ */
-/*    : weed_set_custom_array((plant), (pkey), (type), (ne), va_arg((args), void **))) */
+weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, weed_seed_t type, int32_t ne, va_list xargs) {
+  if (!ne) return weed_leaf_set(plant, key, type, 0, NULL);
 
-/* #define SET_LEAF_FROM_VARG(plant, pkey, type, ne, args) _SET_LEAF_FROM_VARG((plant), (pkey), type, \ */
-/* 									    CTYPE(type), CPTRTYPE(type), (ne), (args)) */
-/* #define SET_XLEAF_FROM_VARG(plant, pkey, type, fktype, ne, args) _SET_LEAF_FROM_VARG((plant), (pkey), type, \ */
-/* 										     CTYPE(fktype), CPTRTYPE(type), \ */
-/* 										     (ne), (args)) */
-
-/* #define SET_CUSTOM_LEAF_FROM_VARG(plant, pkey, type, ne, args) _SET_CUSTOM_LEAF_FROM_VARG((plant), (pkey), type, (ne), (args)) */
-
-weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, weed_seed_t type, weed_size_t ne, va_list xargs) {
-  if (ne == 1) {
+  if (ne == -1) {
     switch (type) {
     case WEED_SEED_INT:		return weed_set_int_value(plant, key, va_arg(xargs, int));
     case WEED_SEED_DOUBLE: 	return weed_set_double_value(plant, key, va_arg(xargs, double));
@@ -540,6 +623,13 @@ weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, weed_seed
 }
 
 
+weed_error_t my_weed_leaf_set(weed_plant_t *pl, const char *key, weed_seed_t stype, int ne, ...) {
+  va_list va;
+  va_start(va, ne);
+  weed_error_t err = weed_leaf_from_varg(pl, key, stype, ne, va);
+  va_end(va);
+  return err;
+}
 
 
 LIVES_GLOBAL_INLINE const char get_typeletter(uint8_t val) {
@@ -684,8 +774,12 @@ void _func_exit(char *file_ref, int line_ref, const char *valname, ...) {
 
 char *make_std_pname(int pn) {return lives_strdup_printf("%s%d", LIVES_LEAF_THREAD_PARAM, pn);}
 
+
 static boolean is_child_of(LiVESWidget *w, LiVESContainer *C);
+
 static boolean fn_match_child(lives_funcinst_t *finst1, lives_funcinst_t *finst2);
+
+
 static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const char *args_fmt, \
     make_key_f param_name_func, int *start, int np, va_list xargs) {
 
@@ -712,7 +806,7 @@ static lives_result_t weed_plant_params_from_valist(weed_plant_t *plant, const c
     }
 
     char *pkey = (*param_name_func)(pstart++);
-    weed_error_t err = weed_leaf_from_varg(plant, pkey, st, 1, xargs);
+    weed_error_t err = weed_leaf_from_varg(plant, pkey, st, -1, xargs);
     lives_free(pkey);
     if (err != WEED_SUCCESS) return LIVES_RESULT_ERROR;
     if (np && !--np) break;
@@ -1400,7 +1494,7 @@ void remove_from_hstack(lives_hook_stack_t *hstack, LiVESList * list) {
   hstack->stack = (volatile LiVESList *)lives_list_remove_node
                   ((LiVESList *)hstack->stack, list, FALSE);
   expire_all_rcpts(finst);
-  CL_DATA(finst, hstacks) = NULL;
+  CL_DATA(finst, hstack) = NULL;
   lives_funcinst_free(finst);
   //g_print("REM %p / %p from %p\n", list, finst, hstack);
 }
@@ -1412,15 +1506,25 @@ LIVES_GLOBAL_INLINE boolean has_hook_cbs(lives_hook_stack_t **hstacks, int hstyp
 }
 
 
-LIVES_GLOBAL_INLINE void lives_hook_stack_clear(lives_hook_stack_t **hstacks, int hstype) {
-  if (hstacks) {
-    lives_hook_stack_t *hstack = hstacks[hstype];
+LIVES_GLOBAL_INLINE boolean lives_obj_instance_has_hook_cbs(lives_obj_instance_t *obj, int hstype) {
+  if (obj) {
+    lives_hook_stack_t *hstack = lives_obj_instance_find_hook_stack(obj, hstype);
+    return hstack && hstack->stack;
+  }
+  return FALSE;
+}
+
+
+LIVES_GLOBAL_INLINE void lives_hook_stack_clear(lives_hook_stack_t *hstack) {
+  if (hstack) {
     pthread_mutex_t *hmutex = &(hstack->mutex);
     LiVESList *cblist, *cb_next;
 
     if (hstack->stack) {
       if (hstack->flags & HS_FLAG_TRIGGERING) {
-        if (hstack->owner_act_src_type == ACTION_SOURCE_LPT) {
+        if (hstack->owner_act_src_type == ACTION_SOURCE_LPT
+	    || hstack->owner_act_src_type == ACTION_SOURCE_OBJ) {
+	  int hstype = hstack->type;
           uint64_t hs_op_flags = get_hs_op_flags(hstype);
           if ((hs_op_flags & HOOKSTACK_ASYNC)
               && (hs_op_flags & HOOKSTACK_PARALLEL)) {
@@ -1452,12 +1556,25 @@ LIVES_GLOBAL_INLINE void lives_hook_stacks_clear_all(lives_hook_stack_t **hstack
   if (hstacks)
     for (int i = 0; i < ntypes; i++) {
       if (hstacks[i]) {
-        lives_hook_stack_clear(hstacks, i);
+        lives_hook_stack_clear(hstacks[i]);
         pthread_mutex_destroy(&hstacks[i]->mutex);
         lives_free(hstacks[i]);
         hstacks[i] = NULL;
       }
     }
+}
+
+
+LIVES_GLOBAL_INLINE void lives_obj_instance_clear_all_hook_stacks(lives_obj_instance_t *obj) {
+  if (obj) {
+    lives_index_t *idx = lives_obj_instance_get_hook_stacks(obj);
+    if (idx) {
+      char *key;
+      lives_hook_stack_t *hstack;
+      LIVES_INDEX_FOREACH(idx, key, hstack,
+			  lives_hook_stack_clear(hstack));
+    }
+  }
 }
 
 
@@ -1855,12 +1972,11 @@ success:
 }
 
 
-void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst_t *finst,
-                        uint64_t cbflags, uint64_t addmode, ...) {
+void *lives_hook_cb_add_funcinst_full(lives_hook_stack_t *hstack, lives_funcinst_t *finst,
+				      uint64_t cbflags, uint64_t addmode, ...) {
   if (!finst) return NULL;
 
   lives_funcinst_t *ret_finst = NULL;
-  lives_hook_stack_t *hstack;
   pthread_mutex_t *hmutex;
   void *receipt = NULL;
   LiVESList *cblist, *cblistnext;
@@ -1892,26 +2008,14 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
     } else pthread_rwlock_unlock(&finst->dispolock);
   }
 
-  if (!finst || !hstacks || hstype < 0 || hstype >= N_HOOK_POINTS) {
+  if (!finst || !hstack) {
     if (receipt) lives_cb_receipt_set_reply(receipt, LIVES_REPLY_INVALID);
     if (finst) finst->flags |= FINST_FLAG_REJECTED;
     if (temp_module) finst_disposition_pop(finst);
     return receipt;
   }
 
-  if (!no_add) {
-    CL_DATA(finst, hstacks) = hstacks;
-    CL_DATA(finst, hstype) = hstype;
-  }
-
-  if (!hstacks) {
-    if (receipt) lives_funcinst_send_replies(finst, LIVES_REPLY_INVALID);
-    if (finst) finst->flags |= FINST_FLAG_REJECTED;
-    if (temp_module) finst_disposition_pop(finst);
-    return receipt;
-  }
-
-  hstack = hstacks[hstype];
+  if (!no_add) CL_DATA(finst, hstack) = hstack;
 
   if (!hstack) {
     if (receipt) lives_funcinst_send_replies(finst, LIVES_REPLY_INVALID);
@@ -1932,7 +2036,7 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
 
   if (receipt) lives_funcinst_add_receipt(finst, receipt);
 
-  hs_op_flags = get_hs_op_flags(hstype);
+  hs_op_flags = get_hs_op_flags(hstack->type);
 
   if (hstack->owner_act_src_type == ACTION_SOURCE_LPT && hstack->owner.lpt == self)
     is_self_stack = TRUE;
@@ -2085,15 +2189,16 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
 
 
   if (addmode == ADDMODE_NORMAL) {
-    if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT)
-      SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_TARGET_OBJECT, hstacks[hstype]->owner.lpt);
+    if (hstack->owner_act_src_type == ACTION_SOURCE_LPT
+	|| hstack->owner_act_src_type == ACTION_SOURCE_OBJ)
+      SET_SELF_VALUE(WEED_SEED_PLANTPTR, LDB_TARGET_OBJECT, hstack->owner.lpt);
 
     va_list va;
     va_start(va, addmode);
     va_surprise *magic = va_arg(va, va_surprise *);
     va_end(va);
     if (magic) {
-      const hook_stack_descriptor_t *hsdesc = get_hs_desc(hstype);
+      const hook_stack_descriptor_t *hsdesc = get_hs_desc(hstack->type);
       lives_condition C = NULL;
       int pcount = 0;
       char *tmp;
@@ -2114,9 +2219,10 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
           if (receipt) lives_funcinst_send_replies(finst, LIVES_REPLY_INVALID);
           if (finst) finst->flags |= FINST_FLAG_MISSING_CONST | FINST_FLAG_REJECTED;
           g_print("Error adding %s to hook stack %d in lpt %p\n"
-                  "%s not defined !\n", get_func_call(finst), hstype,
-                  hstacks[hstype]->owner.lpt, desc_bookval(datasrc[0], datasrc + 2));
+                  "%s not defined !\n", get_func_call(finst), hstack->type,
+                  hstack->owner.lpt, desc_bookval(datasrc[0], datasrc + 2));
           if (temp_module) finst_disposition_pop(finst);
+	  if (!have_lock) PTMUH;
           return receipt;
         } else {
           weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM,
@@ -2132,10 +2238,6 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
       if (args_fmt) {
         for (int i = 0; args_fmt[i]; i++) {
           weed_plant_params_from_valist(finst->params, args_fmt + i, make_std_pname, &pcount, 1, magic->va);
-          //va_copy(vc, va);
-          /* st =; */
-          /* SET_SELF_VALUE_VA(st, item, vc); */
-          //va_end(vc);
           if (has_ffuncs) {
             lives_funcinst_t *free_finst = va_arg(magic->va, lives_funcinst_t *);
             if (free_finst) {
@@ -2157,12 +2259,13 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
 
   if (is_append) {
     if (!ret_finst) hstack->stack = lives_list_append((LiVESList *)hstack->stack, finst);
-  } else hstacks[hstype]->stack = lives_list_prepend((LiVESList *)hstack->stack, finst);
+  } else hstack->stack = lives_list_prepend((LiVESList *)hstack->stack, finst);
 
   if (self) CL_DATA(finst, orig_adder) = self;
 
   if (addmode == ADDMODE_NORMAL) {
-    if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT)
+    if (hstack->owner_act_src_type == ACTION_SOURCE_LPT
+		|| hstack->owner_act_src_type == ACTION_SOURCE_OBJ)
       DEL_BOOK_VALUE(lives_local_databook(), LDB_TARGET_OBJECT);
   }
 
@@ -2176,8 +2279,8 @@ void *lives_hook_cb_add(lives_hook_stack_t **hstacks, int hstype, lives_funcinst
 }
 
 
-static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t **hstacks, int hstype,
-    lives_funcinst_t *finst, uint64_t cbflags, va_surprise * wand) {
+static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t *hstack, lives_funcinst_t *finst,
+					   uint64_t cbflags, va_surprise * wand) {
   // funcinst may be blocked from adding for a variety of reasons
   // if superceded by another funcinst, we return the receipt, if not replaced, we return NULL
   // and in both cases, FINST_FLAG_REJECTED is set
@@ -2186,11 +2289,9 @@ static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t **hstacks, int hst
 
   // block funcinst from being called until we set in cb_added_list
 
-  void *receipt = lives_hook_cb_add(hstacks, hstype, finst,
-                                    cbflags | HOOK_STATUS_NOTREADY,
-                                    ADDMODE_NORMAL, wand);
+  void *receipt = lives_hook_cb_add_funcinst_full(hstack, finst, cbflags | HOOK_STATUS_NOTREADY,
+						  ADDMODE_NORMAL, wand);
   int reply = lives_cb_receipt_get_req_reply(receipt);
-
   if (reply == LIVES_REPLY_YES) {
     // reply can be YES even if func inst was rejected
     // in this case finst was blocked, but receipt has been attached to blocker
@@ -2212,15 +2313,14 @@ static void *lives_hook_cb_add_funcinst_va(lives_hook_stack_t **hstacks, int hst
 }
 
 
-void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int hstype,
-                                 lives_funcinst_t *finst, uint64_t cbflags) {
-  return lives_hook_cb_add_funcinst_va(hstacks, hstype, finst, cbflags, NULL);
+void *lives_hook_cb_add_funcinst(lives_hook_stack_t *hstack, lives_funcinst_t *finst, uint64_t cbflags) {
+  return lives_hook_cb_add_funcinst_va(hstack, finst, cbflags, NULL);
 }
 
 
 // returns receipt. or NULL if add condition failed, or it was toggled out
 // calls hook_cb_add_funci
-void *_lives_hook_cb_add_full(lives_hook_stack_t **hstacks, int hstype, uint64_t cbflags, lives_funcptr_t func,
+void *_lives_hook_cb_add_full(lives_hook_stack_t *hstack, uint64_t cbflags, lives_funcptr_t func,
                               const char *fname, int return_type, const char **anames, ...) {
   // create funcinst, no params
   void *rcpt = NULL;
@@ -2238,7 +2338,7 @@ void *_lives_hook_cb_add_full(lives_hook_stack_t **hstacks, int hstype, uint64_t
   }
 
   if (has_af || has_cond) va_wand = &va_magic;
-  rcpt = lives_hook_cb_add_funcinst_va(hstacks, hstype, finst, cbflags, va_wand);
+  rcpt = lives_hook_cb_add_funcinst_va(hstack, finst, cbflags, va_wand);
 
   if (va_wand) va_end(va_magic.va);
   return rcpt;
@@ -2288,7 +2388,7 @@ static lives_proc_thread_t update_linked_stacks(lives_funcinst_t *finst) {
     lives_hook_stack_t **mystacks = self_hook_stacks(LIVES_GUI_HOOK);
     lives_microsleep_until_zero(pthread_mutex_lock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex));
     if (!(mainw->global_hook_stacks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING))
-      lives_hook_cb_add(mainw->global_hook_stacks, LIVES_GUI_HOOK, finst, cbflags, dflags);
+      lives_hook_cb_add_funcinst_full(mainw->global_hook_stacks[LIVES_GUI_HOOK], finst, cbflags, dflags);
     pthread_mutex_unlock(&mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
     for (LiVESList *links = mainw->all_hstacks; links; links = links->next) {
       lives_hook_stack_t **xhs = (lives_hook_stack_t **)links->data;
@@ -2298,7 +2398,7 @@ static lives_proc_thread_t update_linked_stacks(lives_funcinst_t *finst) {
         pthread_mutex_unlock(&xhs[LIVES_GUI_HOOK]->mutex);
         continue;
       }
-      lives_hook_cb_add(xhs, LIVES_GUI_HOOK, finst, cbflags, dflags);
+      lives_hook_cb_add_funcinst_full(xhs[LIVES_GUI_HOOK], finst, cbflags, dflags);
       pthread_mutex_unlock(&xhs[LIVES_GUI_HOOK]->mutex);
     }
   } else {
@@ -2309,7 +2409,7 @@ static lives_proc_thread_t update_linked_stacks(lives_funcinst_t *finst) {
         pthread_mutex_unlock(&xhs[LIVES_GUI_HOOK]->mutex);
         continue;
       }
-      lives_hook_cb_add(xhs, LIVES_GUI_HOOK, finst, cbflags, dflags);
+      lives_hook_cb_add_funcinst_full(xhs[LIVES_GUI_HOOK], finst, cbflags, dflags);
       pthread_mutex_unlock(&xhs[LIVES_GUI_HOOK]->mutex);
     }
   }
@@ -2318,9 +2418,8 @@ static lives_proc_thread_t update_linked_stacks(lives_funcinst_t *finst) {
 }
 
 
-static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int hstype, const char *args_fmt, va_list va) {
+static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t *hstack, const char *args_fmt, va_list va) {
   static pthread_mutex_t recheck_mutex = PTHREAD_MUTEX_INITIALIZER;
-  lives_hook_stack_t *hstack;
   lives_databook_t *lbook;
   LiVESList *list, *listnext;
   pthread_mutex_t *hmutex;
@@ -2335,8 +2434,11 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
   int np;
   //if (hstype == SYNC_ANNOUNCE_HOOK) dump_hook_stack(hstacks, hstype);
 
-  hstack = hstacks[hstype];
+  if (!hstack) return LIVES_RESULT_ERROR;
+  
   if (hstack->flags & HS_FLAG_INVALID) return LIVES_RESULT_INVALID;
+
+  int hstype = hstack->type;
 
   // hs_op_flags come from the hook stack descriptor, and define the
   // operational details of the stack
@@ -2473,8 +2575,8 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
         cbflags |= hstack->req_target_set_flags;
         CL_DATA(finst, cb_flags) = cbflags;
         //lives_proc_thread_show_func_call(closure->proc_thread);
-        lives_hook_cb_add(hstack->req_target_stacks, hstack->req_target_type,
-                          finst, cbflags, ADDMODE_TRANSFER);
+        lives_hook_cb_add_funcinst_full(hstack->req_target_stacks[hstack->req_target_type],
+					finst, cbflags, ADDMODE_TRANSFER);
         // 3 results - cb accepted, cb rejected, rcpt transferred, cb rejected, rcpt not transferred
         // action: remove but no free; free finst, leave rcpt; rem cb frm cb_add list free finst
         if (finst->flags & FINST_FLAG_REJECTED) {
@@ -2557,9 +2659,7 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
         np = get_funcinst_nparams(finst);
         va_copy(vc, va);
         for (int i = 0; args_fmt[i]; i++) {
-          weed_seed_t st = get_seedtype(args_fmt[i]);
-          char *pkey = make_std_pname(np + i);
-          weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
+          char *pkey = make_std_pname(np + i);          
           weed_leaf_set_distinguished(finst->params, pkey, TRUE);
           weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
           lives_free(pkey);
@@ -2635,13 +2735,13 @@ static lives_result_t _lives_hook_trigger_va(lives_hook_stack_t **hstacks, int h
       }
     }
 
-    if (!list) list = (LiVESList *)hstacks[hstype]->stack;
+    if (!list) list = (LiVESList *)hstack->stack;
 
     if (!list) {
       if (!is_fg_thread() && hstype == LIVES_GUI_HOOK) {
         lives_microsleep_until_zero(pthread_mutex_trylock(&mainw->all_hstacks_mutex));
         mainw->all_hstacks =
-          lives_list_remove_data(mainw->all_hstacks, hstacks, FALSE);
+          lives_list_remove_data(mainw->all_hstacks, hstack, FALSE);
         pthread_mutex_unlock(&mainw->all_hstacks_mutex);
       }
     }
@@ -2658,14 +2758,15 @@ trigdone:
 
   if (hstype != FATAL_HOOK && hmulocked) PTMUH;
 
-  hstacks[hstype]->flags &= ~HS_FLAG_TRIGGERING;
+  hstack->flags &= ~HS_FLAG_TRIGGERING;
 
   if (have_recheck_mutex) pthread_mutex_unlock(&recheck_mutex);
 
   cleanup_self_receipts();
 
   if (emitted) {
-    if (hstacks[hstype]->owner_act_src_type == ACTION_SOURCE_LPT) {
+    if (hstack->owner_act_src_type == ACTION_SOURCE_LPT
+	|| hstack->owner_act_src_type == ACTION_SOURCE_OBJ) {
       lbook = lives_local_databook();
       LIVES_ASSERT(lbook);
       lives_databook_end_emmission(lbook, self);
@@ -2678,28 +2779,25 @@ trigdone:
 
 
 // when triggering a hook, there may be a def_args_fmt ftrom the stack descript
-lives_result_t _lives_hook_trigger(lives_hook_stack_t **hstacks, int hstype, const char *args_fmt, ...) {
+lives_result_t _lives_hook_trigger(lives_hook_stack_t *hstack, const char *args_fmt, ...) {
   lives_result_t res;
   va_list va;
   va_start(va, args_fmt);
-  res = _lives_hook_trigger_va(hstacks, hstype, args_fmt, va);
+  res = _lives_hook_trigger_va(hstack, args_fmt, va);
   va_end(va);
   return res;
 }
 
 
-int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const char *args_fmt, ...) {
+int _lives_hook_trigger_async_va(lives_hook_stack_t *hstack, lives_proc_thread_t **xlpts, const char *args_fmt, va_list va) {
   LiVESList *list, *listnext;
   pthread_mutex_t *hmutex;
-  lives_hook_stack_t *hstack;
   uint64_t hs_op_flags, cbflags;
   int ncount = 0;
   lives_proc_thread_t *lpts = NULL, lpt;
-  va_list va, vc;
-
+  va_list vc;
+  
   if (xlpts) *xlpts = NULL;
-
-  hstack = self_hook_stacks(hstype)[hstype];
   hmutex = &(hstack->mutex);
   PTMLH;
 
@@ -2707,6 +2805,8 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
     PTMUH;
     return ncount;
   }
+
+  int hstype = hstack->type;
 
   hs_op_flags = get_hs_op_flags(hstype);
 
@@ -2736,8 +2836,6 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
 
   list = (LiVESList *)hstack->stack;
 
-  va_start(va, args_fmt);
-
   for (; list; list = listnext) {
     int np;
     lives_funcinst_t *finst = (lives_funcinst_t *)list->data;
@@ -2762,7 +2860,7 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
       for (int i = 0; args_fmt[i]; i++) {
         weed_seed_t st = get_seedtype(args_fmt[i]);
         char *pkey = make_std_pname(np + i);
-        weed_leaf_from_varg(finst->params, pkey, st, 1, vc);
+        weed_leaf_from_varg(finst->params, pkey, st, -1, vc);
         weed_leaf_set_distinguished(finst->params, pkey, TRUE);
         //g_print("set p %d D, np is %d\n", np + i, np + i + 1);
         weed_set_int_value(finst->params, LIVES_LEAF_MAXPARAM, np + i + 1);
@@ -2792,8 +2890,6 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
   }
   PTMUH;
 
-  va_end(va);
-
   if (!ncount) hstack->flags &= ~HS_FLAG_TRIGGERING;
 
   if (xlpts) *xlpts = lpts;
@@ -2801,11 +2897,45 @@ int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const cha
 }
 
 
+// when triggering a hook, there may be a def_args_fmt ftrom the stack descript
+lives_result_t _lives_hook_trigger_async(lives_hook_stack_t *hstack, lives_proc_thread_t **xlpts, const char *args_fmt, ...) {
+  lives_result_t res;
+  va_list va;
+  va_start(va, args_fmt);
+  res = _lives_hook_trigger_async_va(hstack, xlpts, args_fmt, va);
+  va_end(va);
+  return res;
+}
+
+
 lives_result_t _lives_proc_thread_trigger_hook(int hstype, const char *args_fmt, ...) {
   lives_result_t res;
   va_list va;
   va_start(va, args_fmt);
-  res = _lives_hook_trigger_va(self_hook_stacks(hstype), hstype, args_fmt, va);
+  res = _lives_hook_trigger_va(self_hook_stacks(hstype)[hstype], args_fmt, va);
+  va_end(va);
+  return res;
+}
+
+
+lives_result_t _lives_obj_instance_trigger_hook(lives_obj_instance_t *obj, int hstype, const char *args_fmt, ...) {
+  lives_result_t res;
+  va_list va;
+  va_start(va, args_fmt);
+  res = _lives_hook_trigger_va(lives_obj_instance_find_hook_stack(obj, hstype),
+			       args_fmt, va);
+  va_end(va);
+  return res;
+}
+
+
+lives_result_t _lives_obj_instance_trigger_hook_async(lives_obj_instance_t *obj, int hstype,
+						      lives_proc_thread_t **xlpts, const char *args_fmt, ...) {
+  lives_result_t res;
+  va_list va;
+  va_start(va, args_fmt);
+  res = _lives_hook_trigger_async_va(lives_obj_instance_find_hook_stack(obj, hstype),
+				     xlpts, args_fmt, va);
   va_end(va);
   return res;
 }
@@ -2848,17 +2978,17 @@ lives_result_t lives_hook_cb_unblock(lives_funcinst_t *finst) {
 }
 
 
-static boolean _lives_hook_async_join(int hstype, boolean cancel) {
+static boolean _lives_hook_async_join(lives_hook_stack_t *hstack, boolean cancel) {
   pthread_mutex_t *hmutex;
   LiVESList *cblist, *cblist_next;
   uint64_t hs_op_flags, cbflags;
-  lives_hook_stack_t *hstack = self_hook_stacks(hstype)[hstype];
 
   if (!(hstack->flags & HS_FLAG_TRIGGERING)) return TRUE;
 
   hmutex = &(hstack->mutex);
   PTMLH;
 
+  int hstype = hstack->type;
   hs_op_flags = get_hs_op_flags(hstype);
 
   if (!(hs_op_flags & HOOKSTACK_ASYNC)) {
@@ -2959,12 +3089,26 @@ static boolean _lives_hook_async_join(int hstype, boolean cancel) {
 
 
 boolean lives_hook_async_join(int hstype) {
-  return _lives_hook_async_join(hstype, FALSE);
+  lives_hook_stack_t *hstack = self_hook_stacks(hstype)[hstype];
+  return hstack ?  _lives_hook_async_join(hstack, FALSE) : FALSE;
 }
 
 
 void lives_hook_async_cancel(int hstype) {
-  _lives_hook_async_join(hstype, TRUE);
+  lives_hook_stack_t *hstack = self_hook_stacks(hstype)[hstype];
+  if (hstack) _lives_hook_async_join(hstack, TRUE);
+}
+
+
+boolean lives_obj_instance_async_join(lives_obj_instance_t *obj, int hstype) {
+  lives_hook_stack_t *hstack = lives_obj_instance_find_hook_stack(obj, hstype);
+  return hstack ?  _lives_hook_async_join(hstack, FALSE) : FALSE;
+}
+
+
+void lives_obj_instance_async_cancel(lives_obj_instance_t *obj, int hstype) {
+  lives_hook_stack_t *hstack = lives_obj_instance_find_hook_stack(obj, hstype);
+  if (hstack) _lives_hook_async_join(hstack, TRUE);
 }
 
 
@@ -3126,6 +3270,8 @@ LIVES_GLOBAL_INLINE void lives_funcinst_free(lives_funcinst_t *finst) {
       return;
     }
 
+    //if (finst == mainw->debug_ptr) abort();
+    
     pthread_rwlock_rdlock(&finst->dispolock);
     if (finst->disposition == DISPOSITION_STACKED) {
       // before we can free a funcinst with disposition stacked
@@ -3133,7 +3279,7 @@ LIVES_GLOBAL_INLINE void lives_funcinst_free(lives_funcinst_t *finst) {
       // - send an INVALID reply so any param data can be freed / blockers unblocked
       // if there is a sendt_reply callback, adder can
       pthread_rwlock_unlock(&finst->dispolock);
-      if (CL_DATA(finst, hstacks)) return;
+      if (CL_DATA(finst, hstack)) return;
       if (CL_DATA(finst, receipts)) {
         lives_funcinst_send_replies(finst, LIVES_REPLY_INVALID);
         if (CL_DATA(finst, receipts)) {

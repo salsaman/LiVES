@@ -343,6 +343,9 @@ typedef struct {
   // last node will either be a sink_inst or a sink_node
   int flags;
 
+  // measured inst_fps achieved by model plans
+  double inst_fps;
+  
   // tracker of construction phases
   int phase;
 
@@ -976,6 +979,10 @@ lives_proc_thread_t execute_plan(exec_plan_t *cycle, boolean async);
 void exec_plan_free(exec_plan_t *);
 
 void plan_cycle_trigger(exec_plan_t *cycle);
+
+int planrunner_trylock(void);
+int planrunner_lock(void);
+int planrunner_unlock(void);
 
 void display_plan(exec_plan_t *);
 

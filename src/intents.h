@@ -82,6 +82,7 @@ typedef struct _object_transform_t lives_object_transform_t;
 typedef weed_param_t lives_tx_param_t;
 typedef weed_plant_t lives_obj_attr_t;
 typedef weed_plant_t lives_contract_t;
+typedef weed_plant_t lives_attrgrp_t;
 
 #define LIVES_PLANT_BUNDLE 21212
 
@@ -224,16 +225,6 @@ int lives_object_instance_ref(lives_obj_instance_t *);
 
 #define LIVES_LEAF_OWNER "owner_uid"
 
-#define LIVES_LEAF_VALUE_TYPE "value_type"
-#define LIVES_LEAF_NAME "name"
-#define LIVES_LEAF_ATTR_GRP "attr_group"
-#define LIVES_LEAF_VALUE WEED_LEAF_VALUE
-#define LIVES_LEAF_NAME "name"
-#define LIVES_LEAF_PARENT "parent"
-#define LIVES_LEAF_OBJ_TYPE "obj_type"
-#define LIVES_LEAF_OBJ_SUBTYPE "obj_subtype"
-
-#define LIVES_PLANT_OBJECT 31338
 // placeholder values
 #define OBJ_TYPE_PROC_THREAD   	1
 #define OBJ_TYPE_PLAYER		2
@@ -260,6 +251,9 @@ uint64_t lives_attribute_get_value_uint64(lives_obj_attr_t *);
 char *lives_attribute_get_value_string(lives_obj_attr_t *);
 char *lives_attr_get_value_string(lives_obj_t *, lives_obj_attr_t *);
 
+int *lives_attribute_get_array_int(lives_obj_attr_t *);
+
+
 lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi,
     const char *name, weed_seed_t st);
 
@@ -285,6 +279,13 @@ weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *);
 weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t st, weed_size_t ne, ...);
 weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, uint32_t st, weed_funcptr_t func);
 
+lives_hook_stack_t *lives_obj_instance_find_hook_stack(lives_obj_instance_t *, int hstype);
+lives_result_t lives_obj_instance_add_hook_stack(lives_obj_instance_t *, lives_hook_stack_t *);
+lives_index_t *lives_obj_instance_get_hook_stacks(lives_obj_instance_t *);
+
+boolean lives_obj_instance_get_active(lives_obj_instance_t *);
+void lives_obj_instance_set_active(lives_obj_instance_t *, const char *desc, boolean active);
+
 //// attr groups
 
 /* #define lives_obj_instance_set_attr_group(loi, attrgrp)		\ */
@@ -292,10 +293,10 @@ weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, 
 
 // each lpt has a "data" area. Any type of data can be written here
 // and later recalled
-weed_plant_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *);
-lives_result_t lives_obj_instance_set_attr_group(lives_obj_instance_t *, weed_plant_t *attrgrp);
-weed_plant_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *);
-weed_plant_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *, lives_obj_instance_t *src);
+lives_attrgrp_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *);
+lives_result_t lives_obj_instance_set_attr_group(lives_obj_instance_t *, lives_attrgrp_t *attrgrp);
+lives_attrgrp_t *lives_obj_instance_ensure_attr_group(lives_obj_instance_t *);
+lives_attrgrp_t *lives_obj_instance_share_attr_group(lives_obj_instance_t *, lives_obj_instance_t *src);
 
 weed_error_t lives_obj_instance_set_attr_val(lives_obj_instance_t *loi, const char *name, ...);
 weed_error_t lives_obj_instance_set_attr_array(lives_obj_instance_t *loi, const char *name, int ne, ...);
@@ -314,7 +315,7 @@ void lives_obj_attribute_make_static(lives_obj_instance_t *loi, const char *name
   weed_set_##type##_value(lives_obj_instance_get_atribute(lives_obj_instance_ensure_attr_group(loi),\
 							  name), liVES_LEAFE_VALUE, val);; \
     lives_obj_instance_make_static(lives_obj_instance_get_attribute((loi), name);} while(0);
-#define SET_ATTR_ARRAY(loi, type, name, nvals, valsptr) do {		\
+#define SET_ATTR_ARAY(loi, type, name, nvals, valsptr) do {		\
   weed_set_##type##_array(lives_obj_instance_get_attribute(loi, name),	\
 			  LIVES_LEAF_VALUE, nvals, valsptr);		\
   lives_obj_attribute_make_static(lives_obj_instance_get_attribute(loi, name);} while(0);

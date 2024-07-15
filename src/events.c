@@ -4791,12 +4791,12 @@ static boolean do_xdg_opt(lives_obj_t *obj, void *data) {
 }
 
 static boolean add_xdg_opt(lives_obj_t *obj, livespointer data) {
-  if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) {
-    LiVESWidget *cbut = lives_standard_check_button_new(_("Preview in default video player afterwards"),
-                        FALSE, LIVES_BOX(widget_opts.last_container), NULL);
-    lives_widget_object_ref(cbut);
-    lives_hook_cb_append(NULL, COMPLETED_HOOK, 0, do_xdg_opt, "V", cbut);
-  }
+  /* if (check_for_executable(&capable->has_xdg_open, EXEC_XDG_OPEN) == PRESENT) { */
+  /*   LiVESWidget *cbut = lives_standard_check_button_new(_("Preview in default video player afterwards"), */
+  /*                       FALSE, LIVES_BOX(widget_opts.last_container), NULL); */
+  /*   lives_widget_object_ref(cbut); */
+  /*   lives_obj_instance_add_hook_cb_full(obj, COMPLETED_HOOK, 0, do_xdg_opt, "V", cbut); */
+  /* } */
   return FALSE;
 }
 
@@ -4847,7 +4847,7 @@ boolean start_render_effect_events(weed_event_list_t *event_list, boolean render
   if (cfile->old_frames > 0) cfile->nopreview = TRUE; /// FIXME...
 
   if (THREAD_INTENTION == OBJ_INTENTION_TRANSCODE && render_vid) {
-    lives_hook_cb_append(NULL, SYNC_ANNOUNCE_HOOK, 0, add_xdg_opt);
+    //    lives_hook_cb_append(NULL, SYNC_ANNOUNCE_HOOK, 0, add_xdg_opt);
   }
 
   // play back the file as fast as possible, each time calling render_events()

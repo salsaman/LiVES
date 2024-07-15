@@ -3466,6 +3466,7 @@ void show_lives(void) {
 
   if (!(prefs->focus_steal & FOCUS_STEAL_STARTUP))
     gtk_window_set_focus_on_map(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET), FALSE);
+
   if (prefs->present && prefs->show_gui) {
     lives_window_present(LIVES_WINDOW(LIVES_MAIN_WINDOW_WIDGET));
   }

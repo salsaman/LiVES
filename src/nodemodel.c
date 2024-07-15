@@ -19,6 +19,8 @@
 #include "cvirtual.h"
 #include "diagnostics.h"
 
+#define Q_SWITCH_RATIO 0.6
+
 static volatile int nplans = 0;
 pthread_mutex_t nplans_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -1642,15 +1644,15 @@ static double dec_running_steps(plan_step_t *step) {
 
 static pthread_mutex_t planrunner_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static int planrunner_trylock(void) {
+int planrunner_trylock(void) {
   return pthread_mutex_trylock(&planrunner_mutex);
 }
 
-static int planrunner_lock(void) {
+int planrunner_lock(void) {
   return pthread_mutex_lock(&planrunner_mutex);
 }
 
-static int planrunner_unlock(void) {
+int planrunner_unlock(void) {
   return pthread_mutex_unlock(&planrunner_mutex);
 }
 
@@ -1709,7 +1711,7 @@ static void run_plan(exec_plan_t *plan) {
   if (plan->iteration == 1) {
     glob_timing->plan.tot_duration = glob_timing->plan.avg_duration = 0.;
     if (ann_proc && (plan->model->flags & NODEMODEL_NEW))
-      lives_proc_thread_set_loveliness(ann_proc, DEF_LOVELINESS);
+      lives_proc_thread_set_loveliness(ann_proc, AVG_LOVELINESS);
   }
 
   plan->tdata->trun_time = lives_get_session_time();
@@ -1727,7 +1729,9 @@ static void run_plan(exec_plan_t *plan) {
     // this is OK since we set a callback for this
 
     // wait for plan cycle to be triggered
+    planrunner_unlock();
     _lives_proc_thread_pause(self, TRUE);
+    planrunner_lock();
     plan->tdata->trigger_time = lives_get_session_time();
   }
   pthread_mutex_unlock(pause_mutex);
@@ -1775,7 +1779,9 @@ static void run_plan(exec_plan_t *plan) {
     }
 
     for (LiVESList *steps = plan->steps; steps; steps = steps->next) {
+      planrunner_unlock();
       lives_microsleep;
+      planrunner_lock();
       step_count++;
       //g_print("check step %d\n", step_count);
 
@@ -3992,7 +3998,8 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
     d_print_debug("chksz3\n");
 
     if (in->flags & NODEFLAG_IO_FIXED_SIZE) {
-      // if the input is flagged as FIXED_SIZE, then we use whateve size is currently set
+      // if the input is flagged as FIXED_SIZE, then we use whatever size is currently set
+      // BUT - if this is aplaeyback plugin which can resize
       // the only thing we want to check is, whether letterboxing is enabled,
       // if so we scale out size to fit in output size, rather than stretching or shrinking to exactly
       // fixed size
@@ -4166,7 +4173,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
       xmaxw = rmaxw;
       xmaxh = rmaxh;
-
+ 
       for (ni = 0; ni < nins; ni++) {
         // calculate expanded bounding box
         // find widest and tallest, note opposite directions, we will have rmaxw X xmaxh, xmaxw X rmaxh
@@ -4325,7 +4332,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         }
       }
     }
-
+ 
     xopwidth = width;
     xopheight = height;
 
@@ -4490,6 +4497,29 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
         d_print_debug("output chan %d got sizes %d X %d\n",
                       no, out->width, out->height);
+      }
+    }
+  }
+  else {
+    if (prefs->pb_quality != PB_QUALITY_HIGH) {
+      if (n->n_inputs && !n->n_outputs) {
+	if (prefs->pb_quality == PB_QUALITY_MED) {
+	  opwidth = (opwidth * 3) >> 2;
+	  opheight = (opheight * 3) >> 2;
+	}
+	else {
+	  if (prefs->pb_quality == PB_QUALITY_LOW) {
+	    opwidth = opwidth >> 1;
+	    opheight = opheight >> 1;
+	  }
+	}
+	for (ni = 0; ni < n->n_inputs; ni++) {
+	  in = n->inputs[ni];
+	  if (in->flags & NODEFLAGS_IO_SKIP) continue;
+	  if (in->flags & NODEFLAG_IO_FIXED_SIZE) continue;
+	  in->width = opwidth;
+	  in->height = opheight;
+	}
       }
     }
   }
@@ -8132,9 +8162,9 @@ void cleanup_nodemodel(lives_nodemodel_t **nodemodel) {
       }
     }
 
-    mainw->frame_layer = NULL;
     reset_old_frame_layer();
     reset_ext_player_layer(FALSE);
+    //mainw->frame_layer = NULL;
 
     lives_free(mainw->layers);
     mainw->layers = NULL;
@@ -8278,15 +8308,24 @@ void rebuild_nodemodel(void) {
 
   if (mainw->refresh_model == 2) {
     if (prefs->pb_quality == future_prefs->pb_quality) {
+      g_print("skip rebui;ld\n");
       mainw->refresh_model = 0;
       return;
     }
 
     xtime = lives_get_session_time();
     if (!mainw->qnodemodels[prefs->pb_quality - 1]) {
-      mainw->debug_ptr = mainw->qnodemodels[prefs->pb_quality - 1] = mainw->nodemodel;
+      mainw->qnodemodels[prefs->pb_quality - 1] = mainw->nodemodel;
       mainw->qexec_plans[prefs->pb_quality - 1] = mainw->exec_plan;
+      mainw->qnodemodels[prefs->pb_quality - 1]->inst_fps = mainw->inst_fps;
     }
+
+    /* if (mainw->qnodemodels[future_prefs->pb_quality - 1]) { */
+    /*   // quality switch DENIED as it was measured as too slow ! */
+    /*   if (mainw->qnodemodels[future_prefs->pb_quality - 1]->inst_fps < mainw->inst_fps * */
+    /* 	  Q_SWITCH_RATIO) future_prefs->pb_quality = prefs->pb_quality; */
+    /*   return; */
+    /* } */
 
     prefs->pb_quality = future_prefs->pb_quality;
 
@@ -8315,9 +8354,11 @@ void rebuild_nodemodel(void) {
 
       planrunner_lock();
       mainw->refresh_model = 0;
-      mainw->frame_layer = NULL;
+      //mainw->frame_layer = NULL;
+      g_print("rsofl\n");
       reset_old_frame_layer();
       reset_ext_player_layer(FALSE);
+      g_print("rsofl done\n");
       mainw->nodemodel = mainw->qnodemodels[prefs->pb_quality - 1];
       mainw->exec_plan = mainw->qexec_plans[prefs->pb_quality - 1];
       align_with_model(mainw->nodemodel);
@@ -8326,11 +8367,11 @@ void rebuild_nodemodel(void) {
       planrunner_unlock();
       return;
     }
+    lives_proc_thread_t lpt = STEAL_POINTER(mainw->plan_runner_proc);
 
-    if (mainw->plan_runner_proc && !lives_proc_thread_check_finished(mainw->plan_runner_proc))
-      lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE);
-
-    if (mainw->plan_runner_proc) {
+    if (lpt) {
+      if (!lives_proc_thread_check_finished(lpt))
+	lives_proc_thread_request_cancel(lpt, FALSE);
       if (mainw->plan_cycle) {
         int state = mainw->plan_cycle->state;
         if (state == PLAN_STATE_WAITING ||
@@ -8339,16 +8380,18 @@ void rebuild_nodemodel(void) {
         lives_millisleep_while_true(mainw->plan_cycle->state == PLAN_STATE_WAITING ||
                                     mainw->plan_cycle->state == PLAN_STATE_QUEUED);
       }
-      lives_proc_thread_t lpt = STEAL_POINTER(mainw->plan_runner_proc);
       if (lpt) {
         lives_proc_thread_join_void(lpt);
         lives_proc_thread_unref(lpt);
       }
     }
+
     planrunner_lock();
-    mainw->frame_layer = NULL;
+    g_print("rsofl2\n");
     reset_old_frame_layer();
     reset_ext_player_layer(FALSE);
+    //mainw->frame_layer = NULL;
+    g_print("rsofl2 done\n");
 
     if (mainw->plan_cycle) exec_plan_free(STEAL_POINTER(mainw->plan_cycle));
   } else {

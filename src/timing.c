@@ -201,31 +201,24 @@ LIVES_GLOBAL_INLINE int64_t lives_get_session_time_nsec(void) {
   int64_t nsec = lives_get_relative_time(mainw->initial_time) - mainw->susp_time;
 
   if (RUNNER_IS(gdb)) {
-    int64_t clock_delta;
-    static int64_t last_nsec = 0;
+    static int64_t last_nsec;
     static boolean inited = FALSE;
-    if (!inited) {
-      inited = TRUE;
+    if (inited) {
+      int64_t clock_delta = nsec - last_nsec;
+      mainw->time_jump = 0;
+      if (LIVES_IS_PLAYING) {
+	if (clock_delta > DELTA_THRESH) {
+	  g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
+	  if (clock_delta > 0) mainw->susp_time += clock_delta;
+	  nsec -= clock_delta;
+	  mainw->time_jump = clock_delta;
+	}
+      }
+      else inited = TRUE;
       last_nsec = nsec;
     }
-
-    mainw->time_jump = 0;
-
-    clock_delta = nsec - last_nsec;
-
-    if (LIVES_IS_PLAYING) {
-      if (clock_delta > DELTA_THRESH || clock_delta < -0.01) {
-        g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
-        if (clock_delta > 0) mainw->susp_time += clock_delta;
-        nsec -= clock_delta;
-        mainw->time_jump = clock_delta;
-      }
-    }
-    last_nsec = nsec;
   }
-
   return nsec;
-
 }
 
 
@@ -644,18 +637,21 @@ void fdef_add_data(lives_funcdef_t *fdef, ...) {
 
 /// estimate the machine overall load
 static boolean inited = FALSE;
-static int struggling = 0;
+static double struggling = 0.;
 static tab_data_t *force = NULL;
+static double inertia = 0.;
+static short eff_q;
 
 void reset_effort(void) {
   if (force) {
     free_tabdata(force);
     force = NULL;
   }
-
+  eff_q = prefs->pb_quality;
   prefs->pb_quality = future_prefs->pb_quality;
   inited = TRUE;
   struggling = 0;
+  inertia = 0.;
   if ((mainw->is_rendering || (mainw->multitrack
                                && mainw->multitrack->is_rendering)) && !mainw->preview_rendering)
     mainw->effort = -EFFORT_RANGE_MAX;
@@ -665,11 +661,23 @@ void reset_effort(void) {
   }
 }
 
+#define QDOWN_BIAS 1.2
+#define INERTIAL_DAMPING 0.5
 
 void update_effort(double impulse) {
-  short pb_quality = prefs->pb_quality;
+  // use an inertial model for adaptive quality
+  // receive impulses of goodness (-ve) or badness (+ve)
+  // effort is the total of impulses over a time window
+  // then we have another quantity, inertia. The impulses act to
+  // change the inertial velocity On each call we update struggling by adding inertia
+  // when struggling reaches the edge limit we should transition to the next quality value
+  // when we do so we apply a damping to impluse, slowing it to a max threshold
+  // when we jump into the next region, we warp to the middle of it,
+  // so we cannot immediately turn and cross back over the divisor
+  // the change here is only a recommendation and may be denied by the nodemodeller
 
   double newvals[1];
+  short new_eff_q = eff_q;
 
   if (LIVES_IS_RENDERING) {
     mainw->effort = -EFFORT_RANGE_MAX;
@@ -681,37 +689,44 @@ void update_effort(double impulse) {
 
   newvals[0] = impulse;
   tabdata_update(force, newvals);
-  mainw->effort = (int)(force->avgs[0]);
+  mainw->effort = (int)(force->tots[0]);
+  inertia += impulse;
+  struggling += inertia;
+  inertia -= sig(struggling) * (struggling * struggling) / 1000.;
 
-  g_print("eff is %f %d\n", force->avgs[0],  mainw->effort);
+  g_print("eff is %f %d impulse %f inertia = %f struggling = %f, %d %d\n", force->tots[0],  mainw->effort, impulse, inertia, struggling, eff_q, new_eff_q);
 
   if (mainw->effort > EFFORT_RANGE_MAX) mainw->effort = EFFORT_RANGE_MAX;
   if (mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
 
-  if (mainw->effort <= 0) struggling--;
-  else struggling++;
+  if (impulse > 0.) impulse *= QDOWN_BIAS;
 
-  g_print("strf is %d\n", struggling);
-
-  if (struggling > EFFORT_LIMIT_MED) struggling = EFFORT_LIMIT_MED;
-  if (struggling < -EFFORT_LIMIT_MED) struggling = -EFFORT_LIMIT_MED;
-
-  if (mainw->effort > 0) {
-    if (struggling >= EFFORT_LIMIT_MED && mainw->effort >= EFFORT_LIMIT_MED)
-      pb_quality = PB_QUALITY_LOW;
-    else if (struggling > 0 && pb_quality == PB_QUALITY_HIGH)
-      pb_quality = PB_QUALITY_MED;
+  if (struggling >= EFFORT_LIMIT_MED) {
+    struggling = EFFORT_LIMIT_MED;
+    if (eff_q == PB_QUALITY_HIGH)
+      new_eff_q = PB_QUALITY_MED;
+    else if (eff_q == PB_QUALITY_MED)
+      new_eff_q = PB_QUALITY_LOW;
+  }
+  else if (struggling <= -EFFORT_LIMIT_MED) {
+    struggling = -EFFORT_LIMIT_MED;
+    if (eff_q == PB_QUALITY_MED)
+      new_eff_q = PB_QUALITY_HIGH;
+    else if (eff_q == PB_QUALITY_LOW)
+      new_eff_q = PB_QUALITY_MED;
   }
 
-  if (mainw->effort < 0) {
-    if (struggling <= -EFFORT_LIMIT_MED && mainw->effort <= -EFFORT_LIMIT_MED)
-      pb_quality = PB_QUALITY_HIGH;
-    else if (struggling > 0 && pb_quality == PB_QUALITY_LOW)
-      pb_quality = PB_QUALITY_MED;
-  }
+  //g_print("strf is %f\n", struggling);
 
-  if (pb_quality != future_prefs->pb_quality)
-    future_prefs->pb_quality = pb_quality;
+  if (new_eff_q != eff_q) {
+    /* if (new_eff_q != future_prefs->pb_quality) { */
+    /*   future_prefs->pb_quality = eff_q; */
+    /*   if (!mainw->refresh_model) mainw->refresh_model = 2; */
+    /* } */
+    //inertia *= INERTIAL_DAMPING;
+    struggling = inertia = 0.;
+    eff_q = new_eff_q;
+   }
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
 }
 

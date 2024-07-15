@@ -1168,8 +1168,8 @@ static lives_result_t rte_on_off(int key, int on_off) {
     }
   }
   else {
-    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
-    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
+    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
+    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
     if (CURRENT_CLIP_IS_VALID && cfile->play_paused)
       mainw->force_show = TRUE;
     if (refresh_model) mainw->refresh_model = TRUE;

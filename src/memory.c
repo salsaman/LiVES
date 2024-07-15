@@ -271,7 +271,7 @@ void _ext_free(void *p) {
 int weed_set_value_free_key(weed_plant_t *pl, char *key, weed_seed_t st,  ...) {
   va_list va;
   va_start(va, st);
-  weed_leaf_from_varg(pl, (const char *)key, st, 1, va);
+  weed_leaf_from_varg(pl, (const char *)key, st, -1, va);
   va_end(va);
   if (st == WEED_SEED_VOIDPTR || st == WEED_SEED_PLANTPTR) weed_leaf_autofree(pl, key);
   lives_free(key);

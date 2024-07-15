@@ -633,8 +633,6 @@ static void pre_init(void) {
 
   future_prefs->disk_quota = prefs->disk_quota;
 
-  mainw->video_seek_ready = mainw->audio_seek_ready = TRUE;
-
   prefs->show_msg_area = future_prefs->show_msg_area = get_boolean_prefd(PREF_SHOW_MSGS, TRUE);
 
   // get some prefs we need to set menu options
@@ -1654,9 +1652,11 @@ boolean lives_startup(livespointer data) {
 
   create_LiVES();
 
-  mainw->ignore_screen_size = TRUE;
-  reset_mainwin_size();
-  mainw->ignore_screen_size = FALSE;
+  //////////////////
+  /* mainw->ignore_screen_size = TRUE; */
+  /* reset_mainwin_size(); */
+  /* mainw->ignore_screen_size = FALSE; */
+  /////////////
 
   create_fx_defs_menu();
 
@@ -1824,9 +1824,9 @@ void lives_startup2(void) {
 
   //list_prefs();
 
-  mainw->ignore_screen_size = TRUE;
-  reset_mainwin_size();
-  mainw->ignore_screen_size = FALSE;
+  /* mainw->ignore_screen_size = TRUE; */
+  /* reset_mainwin_size(); */
+  /* mainw->ignore_screen_size = FALSE; */
 
   run_deferred_configs();
 
@@ -1925,17 +1925,17 @@ void lives_startup2(void) {
   // crash recovery - reload
 
   prefs->skip_ign = FALSE;
-  if (!mainw->cliplist)
-    if (prefs->crash_recovery) got_files = check_for_recovery_files(auto_recover, no_recover);
+  if (!mainw->cliplist && prefs->crash_recovery)
+    got_files = check_for_recovery_files(auto_recover, no_recover);
 
   ///////////////
 
-  /* if (mainw->ascrap_file != -1 && !mainw->event_list) { */
-  /*   int current_file = mainw->current_file; */
-  /*   mainw->current_file = mainw->ascrap_file; */
-  /*   close_current_file(current_file); */
-  /*   mainw->ascrap_file = -1; */
-  /* } */
+  if (mainw->ascrap_file != -1 && !mainw->event_list) {
+    int current_file = mainw->current_file;
+    mainw->current_file = mainw->ascrap_file;
+    close_current_file(current_file);
+    mainw->ascrap_file = -1;
+  }
 
   if (prefs->show_disk_quota && !prefs->vj_mode) do_show_quota = TRUE;
 
@@ -2079,9 +2079,9 @@ void lives_startup2(void) {
     lives_widget_queue_draw(mainw->sep_image);
   }
 
-  mainw->ignore_screen_size = TRUE;
-  reset_mainwin_size();
-  mainw->ignore_screen_size = FALSE;
+  /* mainw->ignore_screen_size = TRUE; */
+  /* reset_mainwin_size(); */
+  /* mainw->ignore_screen_size = FALSE; */
 
   if (!mainw->multitrack)
     lives_notify_int(LIVES_OSC_NOTIFY_MODE_CHANGED, STARTUP_CE);
@@ -2103,6 +2103,8 @@ void lives_startup2(void) {
     /* BG_THREADVAR(hook_hints) = 0; */
   }
 
+  //  msg_area_config(mainw->msg_area);
+  
   mainw->can_play = TRUE;
 
   what_sup = sup_ready;

@@ -165,8 +165,6 @@ typedef struct _lives_jack_driver_t {
 
   uint64_t jack_port_flags;               /**< flags to be passed to jack when opening the output ports - unused*/
 
-  lives_audio_loop_t loop;  ///< playback loop mode
-
   jack_transport_state_t state;
 
   float volume[JACK_MAX_PORTS];      ///< amount volume, 1.0 is full volume

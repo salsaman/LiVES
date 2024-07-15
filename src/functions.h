@@ -19,7 +19,6 @@
 
 typedef struct _hstack_t lives_hook_stack_t;
 
-
 // recursion prevention:
 // - there are two types, global and thread specific
 //  -- a global recursion guard ensures that a segment of code is not called recursively, counting all threads
@@ -178,9 +177,8 @@ void lpt_params_free(lives_proc_thread_t, boolean do_exec);
 
 #define PROC_THREAD_PARAM(n) LIVES_LEAF_THREAD_PARAM  #n
 
-#define LIVES_LEAF_LONGJMP "_longjmp_env_ptr"
-
-weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, weed_seed_t type, weed_size_t ne, va_list xargs);
+// for ne: -1 == scalar value, 0 == set type only, >= 1, array
+weed_error_t weed_leaf_from_varg(weed_plant_t *, const char *key, weed_seed_t type, int32_t ne, va_list xargs);
 
 boolean call_funcsig(lives_proc_thread_t);
 lives_result_t do_call(lives_funcinst_t *);
@@ -311,13 +309,15 @@ void _func_exit(char *file_ref, int line_ref, const char *valname, ...);
 //////////
 
 typedef union {
-  lives_proc_thread_t lpt;
+  lives_proc_thread_t 	lpt;
+  lives_obj_instance_t 	*obj;
   pthread_t		thread;
 } action_source;
 
 #define ACTION_SOURCE_NONE 	0
 #define ACTION_SOURCE_LPT 	1
-#define ACTION_SOURCE_THREAD 	2
+#define ACTION_SOURCE_OBJ 	2
+#define ACTION_SOURCE_THREAD 	3
 
 /// HOOK FUNCTIONS ///////
 
@@ -690,8 +690,7 @@ typedef struct {
   // for one-shot, is set to COND_ALWAYS
   lives_condition remove_cond;
   pthread_mutex_t mutex;
-  lives_hook_stack_t **hstacks;
-  int hstype;
+  lives_hook_stack_t *hstack;
   int trigger_act_src_type;
   action_source triggerer;
   lives_proc_thread_t orig_adder;
@@ -811,8 +810,7 @@ typedef struct {
 #define ACCEL_END_HOOK		SEGMENT_END_HOOK
 
 #define LIVES_GUI_HOOK		INTERNAL_HOOK_0
-#define LIVES_PRE_HOOK		INTERNAL_HOOK_1
-#define LIVES_POST_HOOK		INTERNAL_HOOK_2
+#define LIVES_SEEK_READY_HOOK	INTERNAL_HOOK_1
 
 // TODO:
 // for data_hooks, there are really only 2 types - pre and post
@@ -1049,7 +1047,7 @@ typedef struct _hstack_t {
 				   {.htype = COMPLETED_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				      .cascade = {			\
 						  .target_item = (LDB_TARGET_OBJECT "/" LIVES_LEAF_THRD_STATE), \
-						  .when = LIVES_POST_HOOK, \
+						  .when = POST_TRIGGER, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 										"COND_UINT64_VAL", THRD_STATE_COMPLETED, ")"), \
 						  .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1062,7 +1060,7 @@ typedef struct _hstack_t {
 				       {.htype = ATTRS_UPDATED_HOOK, .pattern = HOOK_PATTERN_DATA, \
 					  .cascade = {			\
 						      .target_item = LDB_TARGET_OBJECT "/" LIVES_LEAF_THRDATTRS, \
-						      .when = LIVES_POST_HOOK \
+						      .when = POST_TRIGGER \
 						      },		\
 					  .op_flags = 0})
 #define CONST_HOOKSRCS_ATTRS_UPDATED "P|$target_object", NULL
@@ -1071,7 +1069,7 @@ typedef struct _hstack_t {
 				  {.htype = FINISHED_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
-						 .when = LIVES_POST_HOOK, \
+						 .when = POST_TRIGGER, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 										"COND_UINT64_VAL", THRD_STATE_FINISHED, ")"), \
 						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1084,7 +1082,7 @@ typedef struct _hstack_t {
 				  {.htype = CANCELLED_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
-						 .when = LIVES_PRE_HOOK, \
+						 .when = PRE_TRIGGER, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 										"COND_UINT64_VAL", THRD_STATE_CANCELLED, ")"), \
 						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1097,7 +1095,7 @@ typedef struct _hstack_t {
 				  {.htype = ERROR_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
-						 .when = LIVES_PRE_HOOK, \
+						 .when = PRE_TRIGGER, \
 						  .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 										"COND_UINT64_VAL", THRD_STATE_ERROR, ")"), \
 						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1110,7 +1108,7 @@ typedef struct _hstack_t {
 				  {.htype = PAUSED_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
-						 .when = LIVES_POST_HOOK, \
+						 .when = POST_TRIGGER, \
 						 .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 									       "COND_UINT64_VAL", THRD_STATE_PAUSED, ")"), \
 						 .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1123,7 +1121,7 @@ typedef struct _hstack_t {
 				  {.htype = RESUMING_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
-						 .when = LIVES_POST_HOOK, \
+						 .when = POST_TRIGGER, \
 						 .pre_cond = lives_cond_create("COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 									       "COND_UINT64_VAL", THRD_STATE_PAUSED), \
 						 .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1136,7 +1134,7 @@ typedef struct _hstack_t {
 			      {.htype = BUSY_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				 .cascade = {				\
 					     .target_item = LIVES_LEAF_THRD_STATE, \
-					     .when = LIVES_POST_HOOK,	\
+					     .when = POST_TRIGGER,	\
 					     .pre_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 									   "COND_UINT64_VAL", THRD_STATE_BUSY, ")"), \
 					     .post_cond = lives_cond_create("COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1147,7 +1145,7 @@ typedef struct _hstack_t {
 				  {.htype = UNBUSY_HOOK, .pattern = HOOK_PATTERN_DATA, \
 				     .cascade = {			\
 						 .target_item = LIVES_LEAF_THRD_STATE, \
-						 .when = LIVES_POST_HOOK, \
+						 .when = POST_TRIGGER, \
 						 .pre_cond = lives_cond_create("COND_SYM_OLD_VALUE", "COND_BIT_SET", \
 									       "COND_UINT64_VAL", THRD_STATE_BUSY), \
 						 .post_cond = lives_cond_create("COND_NOT", "(", "COND_SYM_NEW_VALUE", "COND_BIT_SET", \
@@ -1209,18 +1207,18 @@ void fg_deferral_remove_persistent(void);
 // hstacks == NULL -> self_hook_stacks(hstype)
 /// normal api - can be followed by trigger cond if hook_cb_conditional,, and args_fmt etc
 #define lives_hook_cb_append(hstacks, hstype, cbflags, func, ...)	\
-  _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+  _lives_hook_cb_add_full((hstacks)[(hstype)], (cbflags), (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
 			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 // same but caller defines rtype and args
 #define lives_hook_cb_append_full(hstacks, hstype, cbflags, func, rtype, ...) \
-  _lives_hook_cb_add_full((hstacks), (hstype), (cbflags), (lives_funcptr_t)(func), #func, (rtype), \
+  _lives_hook_cb_add_full((hstacks)[(hstype)], (cbflags), (lives_funcptr_t)(func), #func, (rtype), \
 			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 ////////////////////////////////////////////////////
 
 // normal funcs, but not called directly
-void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags, lives_funcptr_t func,
+void *_lives_hook_cb_add_full(lives_hook_stack_t *, uint64_t cbflags, lives_funcptr_t func,
                               const char *fname, int return_type, const char **anames, ...);
 
 /* // SAM AS APPEND, BUT WE CAN SET RTYPE AND NAME */
@@ -1228,24 +1226,40 @@ void *_lives_hook_cb_add_full(lives_hook_stack_t **, int type, uint64_t cbflags,
 /*   _lives_hook_cb_add_full((hs), (type), (cbflags), func, fname, (rtype), VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL) */
 
 // func call with variant addmode INTERNAL
-void *lives_hook_cb_add(lives_hook_stack_t **hooks, int type, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode, ...);
+void *lives_hook_cb_add_funcinst_full(lives_hook_stack_t *, lives_funcinst_t *finst, uint64_t cbflags, uint64_t addmode, ...);
+
+
+#define lives_hook_cb_add(hstack, cbflags, func, rtype, ...) \
+  _lives_hook_cb_add_full(hstack, cbflags, (lives_funcptr_t)func, #func, rtype, VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+
 
 
 // same, but get hstacks for lpt
 #define lives_proc_thread_add_hook_cb(lpt, hstype, cbflags, func, ...)	\
-  _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (hstype), (cbflags), \
+  _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt)[(hstype)], (cbflags), \
 			  (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
 			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 
 #define lives_proc_thread_add_hook_cb_full(lpt, hstype, cbflags, func, rtype, ...) \
-  _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt), (hstype), (cbflags), \
+  _lives_hook_cb_add_full(lives_proc_thread_get_hook_stacks(lpt)[(hstype)], (cbflags), \
+			  (lives_funcptr_t)(func), #func, (rtype),	\
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+////
+
+#define lives_obj_instance_add_hook_cb(obj, hstype, cbflags, func, ...)	\
+  _lives_hook_cb_add_full(lives_obj_instance_find_hook_stack((obj), (hstype)), (cbflags), \
+			  (lives_funcptr_t)(func), #func, WEED_SEED_BOOLEAN, \
+			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
+
+
+#define lives_obj_instance_add_hook_cb_full(obj, hstype, cbflags, func, rtype, ...) \
+  _lives_hook_cb_add_full(lives_obj_instance_find_hook_stack((obj), (hstype)), (cbflags), \
 			  (lives_funcptr_t)(func), #func, (rtype),	\
 			  VARNAMES(__VA_ARGS__)__VA_OPT__(,)__VA_ARGS__, NULL)
 
 // for those times when you already have a funcinst (no paramdata freefuncs allowed though)
-void *lives_hook_cb_add_funcinst(lives_hook_stack_t **hstacks, int type,
-                                 lives_funcinst_t *finst, uint64_t cbflags);
+void *lives_hook_cb_add_funcinst(lives_hook_stack_t *hstack, lives_funcinst_t *finst, uint64_t cbflags);
 
 ////////////////////////////
 
@@ -1263,21 +1277,35 @@ void ref_cb_added_list(void);
 
 void unref_cb_added_list(void);
 
-void lives_hook_stack_clear(lives_hook_stack_t **, int hstype);
+void lives_hook_stack_clear(lives_hook_stack_t *);
 void lives_hook_stacks_clear_all(lives_hook_stack_t **, int ntypes);
 
-boolean has_hook_cbs(lives_hook_stack_t **, int hstype);
+void lives_obj_instance_clear_all_hook_stacks(lives_obj_instance_t *);
 
-lives_result_t _lives_hook_trigger(lives_hook_stack_t **hstacks, int hstype, const char *args_fmt, ...);
-#define lives_hook_trigger(hstacks, hstype, ...) _lives_hook_trigger(hstacks, hstype __VA_OPT__(,) __VA_ARGS__, NULL)
+boolean has_hook_cbs(lives_hook_stack_t **, int hstype);
+boolean lives_obj_instance_has_hook_cbs(lives_obj_instance_t *, int hstype);
+
+lives_result_t _lives_hook_trigger(lives_hook_stack_t *hstack, const char *args_fmt, ...);
+#define lives_hook_trigger(hstacks, hstype, ...) _lives_hook_trigger(hstacks[hstype] __VA_OPT__(,) __VA_ARGS__, NULL)
+
+lives_result_t _lives_obj_instance_trigger_hook(lives_obj_instance_t *obj, int hstype, const char *args_fmt, ...);
+#define lives_obj_instance_trigger_hook(obj, hstype, ...) \
+  _lives_obj_instance_trigger_hook(obj, hstype __VA_OPT__(,) __VA_ARGS__, NULL)
 
 lives_result_t _lives_proc_thread_trigger_hook(int hstype, const char *args_fmt, ...);
 #define lives_proc_thread_trigger_hook(hstype, ...) _lives_proc_thread_trigger_hook(hstype __VA_OPT__(,) __VA_ARGS__, NULL)
 
-int _lives_hook_trigger_async(int hstype, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
+int _lives_hook_trigger_async(lives_hook_stack_t *hstack, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
 #define lives_hook_trigger_async(hstype, xlpts, ...) _lives_hook_trigger_async(hstype, xlpts __VA_OPT__(,) __VA_ARGS__, NULL)
+
+int _lives_obj_instance_trigger_hook_async(lives_obj_instance_t *, int hstype, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
+#define lives_obj_instance_trigger_hook_async(obj, hstype, xlpts, ...) _lives_obj_instance_trigger_hook_async(obj, hstype, xlpts __VA_OPT__(,) __VA_ARGS__, NULL)
+
 boolean lives_hook_async_join(int hstype);
 void lives_hook_async_cancel(int hstype);
+
+boolean lives_obj_instance_async_join(lives_obj_instance_t *, int hstype);
+void lives_obj_instance_async_cancel(lives_obj_instance_t *, int hstype);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
 lives_hook_stack_t **self_hook_stacks(int hstype);
@@ -1363,42 +1391,45 @@ weed_error_t val_copy_from_allvalues(void *retloc, allvalues_t *);
 void get_val_from_allvals(void *valp, allvalues_t *);
 #define VAL_FROM_ALLVALS(var, allvp) get_val_from_allvals(&var, allvp)
 
-void get_array_byref_from_allvals(void *valp, allvalues_t *avp, int *ne);
+void get_array_byref_from_allvals(void **valpp, allvalues_t *avp, int *ne);
 
-#define ARRAY_BYREF_FROM_ALLVALS(array, allvp, ne) get_array_byref_from_allvals((void *)array, allvp, ne)
+#define ARRAY_BYREF_FROM_ALLVALS(arrayp, allvp, ne) get_array_byref_from_allvals((void **)arrayp, allvp, ne)
 
-#define BOUND_BYREF_FROM_ALLVALS(array, allvp) get_array_byref_from_allvals((void *)array, allvp, NULL)
+#define BOUND_BYREF_FROM_ALLVALS(varp, allvp) get_array_byref_from_allvals((void **)varp, allvp, NULL)
 
 /* #define set_val_from_allvalues(var, avp) get_allv_val(var, avp) */
 /* #define set_array_from_allvalues(var, avp, ne) get_allv_array(var, avp, ne) */
 
-allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
-allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
+allvalues_t *_make_allval_va(allvalues_t *, weed_seed_t stype, int flags, va_list va);
+allvalues_t *_make_allval(allvalues_t *, weed_seed_t stype, int flags, const char *valname, ...);
 
-#define MAKE_ALLVALUE(stype, val) (_make_allval(NULL, stype, 1, 0, #val, (val)))
-#define MAKE_ALLVALUE_BOUND(stype, varptr) (_make_allval(NULL, stype, 1, PARAM_FLAG_BOUND, #varptr, (void *)(varptr)))
-#define MAKE_ALLVALUE_VA(stype, va) (_make_allval_va(NULL, stype, 1, 0, va))
-#define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval(NULL, stype, ne, 0, #vals, (vals)))
-#define MAKE_ALLVALUE_ARRAY_VA(stype, ne, va) (_make_allval_va(NULL, stype, ne, 0, va))
-#define MAKE_ALLVALUE_FINST(stype, va) (_make_allval_va(NULL, stype, 1, 0, va))
+allvalues_t *_make_allval_array_va(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, va_list va);
+allvalues_t *_make_allval_array(allvalues_t *, weed_seed_t stype, weed_size_t ne, int flags, const char *valname, ...);
+
+#define MAKE_ALLVALUE(stype, val) (_make_allval(NULL, stype, 0, #val, (val)))
+#define MAKE_ALLVALUE_BOUND(stype, varptr) (_make_allval(NULL, stype, PARAM_FLAG_BOUND, #varptr, (void *)(varptr)))
+#define MAKE_ALLVALUE_VA(stype, va) (_make_allval_va(NULL, stype, 0, va))
+#define MAKE_ALLVALUE_ARRAY(stype, ne, vals) (_make_allval_array(NULL, stype, ne, 0, #vals, (vals)))
+#define MAKE_ALLVALUE_ARRAY_VA(stype, ne, va) (_make_allval_array_va(NULL, stype, ne, 0, va))
+#define MAKE_ALLVALUE_FINST(va) (_make_allval_va(NULL, LIVES_SEED_FUNCINST, 0, va))
 
 #define BIND_VALUE(typecode, var) MAKE_ALLVALUE_BOUND(get_seedtype(typecode), var)
 
-#define SET_ALLVALUE(avp, stype, val) (_make_allval(avp, stype, 1, 0, #val, (val)))
-#define SET_ALLVALUE_VA(avp, stype, va) (_make_allval_va(avp, stype, 1, 0, va))
-#define SET_ALLVALUE_BOUND(avp, stype, varptr) (_make_allval(avp, stype, 1, PARAM_FLAG_BOUND, #varptr, (void *)(varptr)))
-#define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval(avp, stype, ne, 0, #vals, (vals)))
-#define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_va(avp, stype, ne, 0, va))
+#define SET_ALLVALUE(avp, stype, val) (_make_allval(avp, stype, 0, #val, (val)))
+#define SET_ALLVALUE_VA(avp, stype, va) (_make_allval_va(avp, stype, 0, va))
+#define SET_ALLVALUE_BOUND(avp, stype, varptr) (_make_allval(avp, stype, PARAM_FLAG_BOUND, #varptr, (void *)(varptr)))
+#define SET_ALLVALUE_ARRAY(avp, stype, ne, vals) (_make_allval_array(avp, stype, ne, 0, #vals, (vals)))
+#define SET_ALLVALUE_ARRAY_VA(avp, stype, ne, va) (_make_allval_array_va(avp, stype, ne, 0, va))
 
 void allvalues_free(allvalues_t *);
 allvalues_t *allvalues_copy(allvalues_t *);
 
 // extern types
-#define make_allvalue_extern(allvp, xtype, type, obj)	_DW0	\
+#define make_allvalue_extern(allvp, xtype, type, obj) _DW0		\
   (allvp->values.V = (void **)&obj;					\
-   xflags = ALLV_FLAG_POINTER | ALLV_FLAG_EXTERN;				\
-   allvp->stype = stype ? stype : WEED_SEED_UNKNOWN;		\
-   allvp->size = sizeof(obj);					\
+   xflags = ALLV_FLAG_POINTER | ALLV_FLAG_EXTERN;			\
+   allvp->stype = stype ? stype : WEED_SEED_UNKNOWN;			\
+   allvp->size = sizeof(obj);						\
    allvp->ext_typename = (xtype ? lives_strdup(#xtype) : NULL);)
 
 #define make_allvalue_extern_va(allvp, xtype, va) _DW0		\

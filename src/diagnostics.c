@@ -1233,6 +1233,7 @@ char *get_stats_msg(boolean calc_only) {
   char *msg2 = lives_strdup("");
   double avsync = 1.0;
   boolean have_avsync = FALSE;
+  lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
 
   if (!LIVES_IS_PLAYING) return NULL;
 
@@ -1247,8 +1248,8 @@ char *get_stats_msg(boolean calc_only) {
       have_avsync = TRUE;
     }
     if (pseq != mainw->play_sequence ||
-        mainw->playing_file != last_pfile ||
-        !mainw->video_seek_ready || !mainw->audio_seek_ready) {
+        mainw->playing_file != last_pfile
+	|| lives_aplayer_get_seek_state(aplayer) != not_seeking) {
       pseq = mainw->play_sequence;
       last_pfile = mainw->playing_file;
       av_offs = avsync;

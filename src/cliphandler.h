@@ -968,6 +968,9 @@ void ignore_clip(const char *clipdir);
 
 void make_cleanable(int clipno, boolean isit);
 
+#define lives_remove_info_file(clipno) _DW0				\
+  (lives_clip_t *sfile = RETURN_NORMAL_CLIP(clipno); if (sfile) lives_rm(sfile->info_file);)
+
 void remove_old_headers(int which);
 boolean write_headers(int which);
 boolean read_headers(int which, const char *dir, const char *file_name);

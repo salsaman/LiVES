@@ -3303,7 +3303,8 @@ boolean check_for_recovery_files(boolean auto_recover, boolean no_recover) {
 
   /// CRITICAL: make sure this gets called even on system failure and abort
   if (prefs->crash_recovery && !no_recover)
-    rewrite_recovery_rcpt = lives_hook_cb_append(mainw->global_hook_stacks, FATAL_HOOK, 0, rewrite_recovery_file_cb);
+    rewrite_recovery_rcpt = lives_hook_cb_add(mainw->global_hook_stacks[FATAL_HOOK],
+					      0, rewrite_recovery_file_cb, WEED_SEED_VOID);
 
   // check for layout recovery file
   recfname = lives_strdup_printf("%s.%d.%d.%d.%s", LAYOUT_FILENAME, luid, lgid, recpid,

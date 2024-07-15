@@ -22,6 +22,8 @@
 
 #define PREF_FLAGS_NONE			0
 
+typedef weed_plant_t lives_preference_t;
+
 // internal application prefs, not intended to be altered by users
 #define PREF_FLAG_INTERNAL		(1 << 0)
 
@@ -34,14 +36,29 @@
 // complete, but needs  adding to the interface
 #define PREF_FLAG_UNDOCUMENTED		(1 << 16)
 
+/* #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS, ...) _DW0(define_pref(IDX,PR,WEED_SEED_BOOLEAN, PDEF, FLAGS __VA_OPT__(,)__VA_ARGS__, NULL);) */
+/* #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS, ...) _DW0(define_pref(IDX,PR,WEED_SEED_INT, PDEF, FLAGS __VA_OPT__(,)__VA_ARGS__, NULL);) */
+/* #define DEFINE_PREF_INT64(IDX, PR, PDEF, FLAGS, ...) _DW0(define_pref(IDX,PR,WEED_SEED_INT64, PDEF, FLAGS __VA_OPT__(,)__VA_ARGS__, NULL);) */
+/* #define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS, ...) _DW0(define_pref(IDX,PR,WEED_SEED_DOUBLE, PDEF, FLAGS __VA_OPT__(,)__VA_ARGS__, NULL);) */
+/* #define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS, ...) _DW0(define_pref(IDX,PR,WEED_SEED_FLOAT, PDEF, FLAGS __VA_OPT__(,)__VA_ARGS__, NULL);) */
+
+
+/* #define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS, ...) \ */
+/*     _DW0(weed_plant_t *p = define_pref(IDX, PR, WEED_SEED_STRING, PDEF, FLAGS __VA_OPT__(,) __VA_ARGS__, NULL); \ */
+/*     weed_set_int_value(p, WEED_LEAF_MAXCHARS, (SLEN));) */
+
+
 #define DEFINE_PREF_BOOL(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_BOOLEAN,FLAGS,PDEF);)
 #define DEFINE_PREF_INT(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_INT,FLAGS,PDEF);)
 #define DEFINE_PREF_INT64(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_INT64,FLAGS,PDEF);)
 #define DEFINE_PREF_DOUBLE(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_DOUBLE,FLAGS,PDEF);)
 #define DEFINE_PREF_FLOAT(IDX, PR, PDEF, FLAGS) _DW0(define_pref(IDX,PR,WEED_SEED_FLOAT,FLAGS,PDEF);)
 #define DEFINE_PREF_STRING(IDX, PR, SLEN, PDEF, FLAGS) _DW0(weed_plant_t*p= \
-							    define_pref(IDX,PR,WEED_SEED_STRING,FLAGS,PDEF); \
-							    weed_set_int_value(p,WEED_LEAF_MAXCHARS,(SLEN));)
+                                                           define_pref(IDX,PR,WEED_SEED_STRING,FLAGS,PDEF); \
+                                                           weed_set_int_value(p,WEED_LEAF_MAXCHARS,(SLEN));)
+
+
+
 #define SET_PREF_WIDGET(IDX, WIDGET) (set_pref_widget(PREF_##IDX, (WIDGET)) ? SET_VOIDP_DATA(WIDGET, PREFIDX_KEY, PREF_PREFIX #IDX) \
 				      : SET_VOIDP_DATA(WIDGET, PREFIDX_KEY, PREF_PREFIX #IDX))
 
@@ -304,13 +321,14 @@ typedef struct {
   boolean discard_tv;
   boolean save_directories;
   int rec_opts;
-#define REC_FRAMES		(1 << 0)
-#define REC_FPS			(1 << 1)
-#define REC_EFFECTS		(1 << 2)
-#define REC_CLIPS		(1 << 3)
-#define REC_AUDIO		(1 << 4)
-#define REC_AFTER_PB		(1 << 5)
-#define REC_AUDIO_AUTOLOCK	(1 << 6)
+#define REC_FRAMES			(1 << 0)
+#define REC_FPS				(1 << 1)
+#define REC_EFFECTS			(1 << 2)
+#define REC_CLIPS			(1 << 3)
+#define REC_AUDIO			(1 << 4)
+#define REC_AFTER_PB			(1 << 5)
+#define REC_AUDIO_AUTOLOCK		(1 << 6)
+#define REC_AUDIO_AUTOLOCK_RESETS	(1 << 7)
 
   int audio_src;
 #define AUDIO_SRC_INT 0
@@ -411,10 +429,10 @@ typedef struct {
   /// resync when audio direction inverts
 #define AUDIO_OPTS_RESYNC_ADIR		(1 << 4) // off (0) by default
 
-  /// resync when audio clip switches
+  /// resync when audio clip switches (to current video clip)
 #define AUDIO_OPTS_RESYNC_ACLIP		(1 << 5) // off (0) by default
 
-  /// audio is locked (temporarily overrides FOLLOW_CLIPS | FOLLOW_FPS and all resyncs)
+  /// audio is locked (temporarily overrides FOLLOW_CLIPS | FOLLOW_FPS and all resyncs, unless specifically enabled)
 #define AUDIO_OPTS_IS_LOCKED		(1 << 16)
 
   /// video freeze / unfreeze still affects locked audio
@@ -423,16 +441,19 @@ typedef struct {
   /// locked audio should ping-pong loop
 #define AUDIO_OPTS_LOCKED_PING_PONG	(1 << 18)
 
-  /// resync audio when it becomes unlocked (unless NO_RESYC_FPS is also set)
+  /// resync audio when it becomes unlocked (unless NO_RESYNC_FPS is also set)
 #define AUDIO_OPTS_UNLOCK_RESYNC	(1 << 19)
 
-  /// whether fps reset should resync locked audio
+  /// whether fps reset should reset locked audio (direction and velocity only)
 #define AUDIO_OPTS_LOCKED_RESET		(1 << 20)
 
   /// whether audio should auto unlock when playback ends
 #define AUDIO_OPTS_AUTO_UNLOCK		(1 << 21)
 
-  /// (see also REC_AUDIO_AUTOLOCK) ///
+  /// whether locking audio triggers a reset (velocity / direction)
+#define AUDIO_OPTS_LOCKING_RESETS	(1 << 22)
+
+  /// (see also REC_AUDIO_AUTOLOCK, REC_AUDIO_AUTOLOCK_RESETS) ///
 
 #define AUDIO_OPTS_EXT_FX		(1 << 25) // apply effects to external audio -> audio out
 #define AUDIO_OPTS_AUX_RECORD		(1 << 26) // mix aux in when recording
@@ -1398,6 +1419,7 @@ void apply_button_set_enabled(LiVESWidget *widget, livespointer func_data);
 #define PREF_SHOW_PLAYER_STATS "show_player_stats"
 #define PREF_INSTANT_OPEN "instant_open"
 #define PREF_MIDISYNCH "midisynch"
+#define PREF_PRESENT "present_windows"
 #define PREF_AUTO_DEINTERLACE "auto_deinterlace"
 #define PREF_REC_DESKTOP_AUDIO "rec_desktop_audio"
 #define PREF_INSERT_RESAMPLE "insert_resample"

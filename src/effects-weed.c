@@ -4092,7 +4092,7 @@ boolean weed_leaf_autofree(weed_plant_t *plant, const char *key) {
       }
       switch (st) {
       case WEED_SEED_PLANTPTR: {
-        boolean nofree = TRUE;
+        boolean nofree = FALSE;
         weed_plantptr_t *pls = weed_get_plantptr_array_counted(plant, key, &nvals);
         for (int i = 0; i < nvals; i++) {
           if (pls[i]) {
@@ -4151,7 +4151,6 @@ void  weed_plant_autofree(weed_plant_t *plant) {
     }
   }
 }
-
 
 
 LIVES_GLOBAL_INLINE weed_error_t weed_leaf_set_autofree(weed_plant_t *plant, const char *key, boolean state) {
@@ -4233,7 +4232,7 @@ weed_error_t weed_leaf_set_host(weed_plant_t *plant, const char *key, weed_seed_
     weed_leaf_set_flags(plant, key, flags);
     if (autofree) weed_leaf_autofree(plant, key);
     err = _weed_leaf_set(plant, key, seed_type, num_elems, values);
-    if (autofree) flags &= LIVES_FLAG_FREE_ON_DELETE;
+    if (autofree) flags |= LIVES_FLAG_FREE_ON_DELETE;
     weed_leaf_set_flags(plant, key, flags);
   }
   return err;
@@ -7410,8 +7409,8 @@ int register_audio_client(void) {
   if (!mainw->afbuffer) {
     lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
     mainw->afbuffer = init_audio_frame_buffers(aplayer);
-    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
-    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
+    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
+    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
   }
   pthread_mutex_lock(&mainw->afbuffer->nreader_mutex);
   nreaders = ++mainw->afbuffer->readers;
@@ -7426,8 +7425,8 @@ int unregister_audio_client(void) {
   nreaders = --mainw->afbuffer->readers;
   pthread_mutex_unlock(&mainw->afbuffer->nreader_mutex);
   if (nreaders <= 0) {
-    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT));
-    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT));
+    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
+    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
     free_audio_frame_buffer(mainw->afbuffer);
     mainw->afbuffer = NULL;
     return 0;
@@ -7444,83 +7443,33 @@ boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
 }
 
 
-int register_aux_audio_channels(int nchannels) {
-  if (nchannels <= 0) return mainw->afbuffer_aux_clients;
-  pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
-  /* if (mainw->afbuffer_aux_clients == 0) { */
-  /*   init_aux_audio_frame_buffers(prefs->audio_player); */
-  /*   mainw->afbuffer_aux_clients_read = 0; */
-  /* } */
-  mainw->afbuffer_aux_clients += nchannels;
-  pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
-  return mainw->afbuffer_aux_clients;
+int register_aux_audio_client(void) {
+  int nreaders;
+  if (!mainw->aux_afbuffer) {
+    lives_obj_instance_t *aplayer = get_aplayer_instance(AUDIO_SRC_EXT);
+    mainw->aux_afbuffer = init_audio_frame_buffers(aplayer);
+    update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), TRUE);
+  }
+  pthread_mutex_lock(&mainw->aux_afbuffer->nreader_mutex);
+  nreaders = ++mainw->aux_afbuffer->readers;
+  pthread_mutex_unlock(&mainw->aux_afbuffer->nreader_mutex);
+  return nreaders;
 }
 
 
-int unregister_aux_audio_channels(int nchannels) {
-  if (!mainw->audio_frame_buffer_aux) {
-    mainw->afbuffer_aux_clients = 0;
-    return -1;
+int unregister_aux_audio_client(void) {
+  int nreaders;
+  if (!mainw->aux_afbuffer) return -1;
+  pthread_mutex_lock(&mainw->aux_afbuffer->nreader_mutex);
+  nreaders = --mainw->aux_afbuffer->readers;
+  pthread_mutex_unlock(&mainw->aux_afbuffer->nreader_mutex);
+  if (nreaders <= 0) {
+    update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), TRUE);
+    free_audio_frame_buffer(mainw->aux_afbuffer);
+    mainw->aux_afbuffer = NULL;
+    return 0;
   }
-
-  mainw->afbuffer_aux_clients -= nchannels;
-  if (mainw->afbuffer_aux_clients <= 0) {
-    // lock out the audio thread
-    pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
-    for (int i = 0; i < 2; i++) {
-      if (mainw->afb_aux[i]) {
-        free_audio_frame_buffer(mainw->afb_aux[i]);
-        lives_free(mainw->afb_aux[i]);
-        mainw->afb_aux[i] = NULL;
-      }
-    }
-    mainw->audio_frame_buffer_aux = NULL;
-    pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
-  }
-  return mainw->afbuffer_aux_clients;
-}
-
-
-boolean fill_audio_channel_aux(weed_plant_t *achan) {
-  // this is for duplex mode, we read from aux inputs
-  static lives_audio_buf_t *audbuf;
-
-  if (achan) {
-    weed_set_int_value(achan, WEED_LEAF_AUDIO_DATA_LENGTH, 0);
-    weed_set_voidptr_value(achan, WEED_LEAF_AUDIO_DATA, NULL);
-  }
-
-  if (!mainw->audio_frame_buffer_aux || mainw->audio_frame_buffer_aux->samples_filled <= 0
-      || mainw->afbuffer_aux_clients == 0) {
-    // no audio has been buffered
-    return FALSE;
-  }
-
-  // lock the buffers
-
-  if (mainw->afbuffer_aux_clients_read == 0) {
-    /// when the first client reads, we grab the audio frame buffer and swap the other for writing
-    // cast away the (volatile)
-    pthread_mutex_lock(&mainw->abuf_aux_frame_mutex);
-    audbuf = (lives_audio_buf_t *)mainw->audio_frame_buffer_aux;
-    if (audbuf == mainw->afb_aux[0]) mainw->audio_frame_buffer_aux = mainw->afb_aux[1];
-    else mainw->audio_frame_buffer_aux = mainw->afb_aux[0];
-    pthread_mutex_unlock(&mainw->abuf_aux_frame_mutex);
-  }
-
-  // push read buffer to channel
-  if (achan && audbuf) {
-    // convert audio to format requested, and copy it to the audio channel data
-    pull_audio_for_channel(NULL, achan, audbuf);
-  }
-
-  if (++mainw->afbuffer_aux_clients_read >= mainw->afbuffer_aux_clients) {
-    // all clients have read the data, now we can free it
-    free_audio_frame_buffer(audbuf);
-    mainw->afbuffer_aux_clients_read = 0;
-  }
-
-  return TRUE;
+  return nreaders;
 }
 
 

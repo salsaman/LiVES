@@ -1448,9 +1448,9 @@ LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_asamps(weed_layer_t *laye
 }
 
 
-LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *layer, double seek_time) {
-  if (!WEED_IS_LAYER(layer)) return NULL;
-  weed_set_double_value(layer, LIVES_LEAF_AUDIO_SEEK, seek_time);
+LIVES_GLOBAL_INLINE weed_layer_t *weed_layer_set_audio_direction(weed_layer_t *layer, lives_direction_t dir) {
+  if (!WEED_IS_LAYER(layer)) return 0;
+  weed_set_int_value(layer, LIVES_LEAF_AUDIO_DIRECTION, dir);
   return layer;
 }
 
@@ -1494,9 +1494,9 @@ LIVES_GLOBAL_INLINE double weed_layer_get_audio_vel(weed_layer_t *layer) {
 }
 
 
-LIVES_GLOBAL_INLINE double weed_layer_get_audio_seek(weed_layer_t *layer) {
+LIVES_GLOBAL_INLINE lives_direction_t  weed_layer_get_audio_direction(weed_layer_t *layer) {
   if (!WEED_IS_LAYER(layer)) return 0;
-  return weed_get_double_value(layer, LIVES_LEAF_AUDIO_SEEK, NULL);
+  return weed_get_int_value(layer, LIVES_LEAF_AUDIO_DIRECTION, NULL);
 }
 
 

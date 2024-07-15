@@ -179,10 +179,11 @@ typedef struct {
 } lives_file_buffer_t;
 
 typedef enum {
-  edge_stop,
-  edge_rollover,
-  edge_bounce
-} lives_edge_behaviour_t;
+	      limit_stop,   /// stop when limit reached
+	      limit_rollover, /// continue from opposite limit
+	      limit_bounce, /// invert direction
+	      limit_ignore, /// continue beyond limit
+} limit_behaviour_t;
 
 lives_file_buffer_t *find_in_file_buffers(int fd);
 lives_file_buffer_t *find_in_file_buffers_by_pathname(const char *pathname);

@@ -1016,7 +1016,9 @@ xprocess *create_threaded_dialog(char *text, boolean has_cancel, boolean *td_had
   lives_set_cursor_style(LIVES_CURSOR_BUSY, NULL);
 
   gtk_window_set_focus_on_map(LIVES_WINDOW(procw->processing), FALSE);
-  lives_window_present(LIVES_WINDOW(procw->processing));
+
+  if (prefs->present && prefs->show_gui)
+    lives_window_present(LIVES_WINDOW(procw->processing));
 
   lives_widget_show_all(procw->processing);
 

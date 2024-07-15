@@ -36,13 +36,6 @@
 #define LIVES_LEAF_LAYER_STATUS "layer_status"
 #define LIVES_LEAF_LST_MUTEX "lst_mutex"
 
-///
-
-#define LIVES_LEAF_AUDIO_SEEK "_aud_seek"
-#define LIVES_LEAF_AUDIO_POS "_aud_pos"
-#define LIVES_LEAF_AUDIO_VEL "_aud_vel"
-#define LIVES_LEAF_AUDIO_SRC "_aud_src"
-
 // layer statuses
 
 #define LAYER_STATUS_NONE		0
@@ -241,11 +234,11 @@ weed_layer_t *weed_layer_set_audio_is_float(weed_layer_t *, boolean isfloat);
 weed_layer_t *weed_layer_set_audio_src(weed_layer_t *, int src_type);
 int weed_layer_get_audio_src(weed_layer_t *);
 
-weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *, double seektime);
-double weed_layer_get_audio_seek(weed_layer_t *);
+/* weed_layer_t *weed_layer_set_audio_seek(weed_layer_t *, double seektime); */
+/* double weed_layer_get_audio_seek(weed_layer_t *); */
 
-weed_layer_t *weed_layer_set_audio_pos(weed_layer_t *, int64_t pos);
-int64_t weed_layer_get_audio_pos(weed_layer_t *);
+/* weed_layer_t *weed_layer_set_audio_pos(weed_layer_t *, int64_t pos); */
+/* int64_t weed_layer_get_audio_pos(weed_layer_t *); */
 
 weed_layer_t *weed_layer_set_audio_vel(weed_layer_t *, double vel);
 double weed_layer_get_audio_vel(weed_layer_t *);

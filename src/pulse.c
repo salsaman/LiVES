@@ -27,7 +27,7 @@ static char pactxnm[512];
 
 static uint32_t pulse_server_rate = 0;
 
-static boolean seek_err;
+//static boolean seek_err;
 
 static volatile int lock_count = 0;
 
@@ -35,7 +35,7 @@ static off_t fwd_seek_pos = 0;
 
 static weed_layer_t *alayers[4] = {NULL, NULL, NULL, NULL};
 
-static weed_layer_t *make_output_layer(pulse_driver_t *, int clipno);
+static weed_layer_t *make_buffer_layer(pulse_driver_t *, int clipno, weed_layer_t *);
 
 ///////////////////////////////////////////////////////////////////
 
@@ -115,7 +115,7 @@ boolean lives_pulse_init(short startup_phase) {
 
   if (pa_mloop) return TRUE;
 
-retry:
+ retry:
 
   pa_mloop = pa_threaded_mainloop_new();
   lives_snprintf(pactxnm, 512, "LiVES-%"PRId64, lives_random());
@@ -154,10 +154,10 @@ retry:
     if (!mainw->foreign) {
       if (startup_phase != 2) {
         resp = do_abort_retry_cancel_dialog(
-                 _("\nUnable to connect to the pulseaudio server.\n"
-                   "Click Abort to exit from LiVES, Retry to try again,\n"
-                   "or Cancel to run LiVES without audio features.\n"
-                   "Audio settings can be updated in Tools/Preferences/Playback.\n"));
+					    _("\nUnable to connect to the pulseaudio server.\n"
+					      "Click Abort to exit from LiVES, Retry to try again,\n"
+					      "or Cancel to run LiVES without audio features.\n"
+					      "Audio settings can be updated in Tools/Preferences/Playback.\n"));
         if (resp == LIVES_RESPONSE_RETRY) {
           fprintf(stderr, "Retrying...\n");
           goto retry;
@@ -235,70 +235,73 @@ static void pulse_buff_free(void *ptr) {lives_free(ptr);}
 #endif
 
 
-static void handle_data_ready_hook(pulse_driver_t *pulsed, weed_layer_t *alayer, size_t nbytes) {
-  static int writer_count = 0;
-  static weed_layer_t *dr_layer = NULL;
-  static lives_hook_stack_t **mystacks = NULL;
-
+static void handle_data_ready_hook(pulse_driver_t *pulsed, int idx, size_t nbytes) {
+  static weed_layer_t *dr_layers[4] = {NULL, NULL, NULL, NULL};
+				   
+  weed_layer_t *alayer = alayers[idx];
   int nchans;
   float **fltbuff;
-
-  if (!mystacks) mystacks = self_hook_stacks(DATA_READY_HOOK);
+  int active_count = weed_get_int_value(alayer, "active_cnt", NULL);
 
   // here we make sure that the DATA_READY hook callbacks have all completed
   // we must do this before we can free the data from the previous cycle
-  if (writer_count) {
-    if (lives_hook_async_join(DATA_READY_HOOK)) {
-      if (dr_layer) {
-        fltbuff = weed_layer_get_audio_data(dr_layer, &nchans);
+  if (active_count) {
+    if (lives_obj_instance_async_join(pulsed->inst, DATA_READY_HOOK)) {
+      if (dr_layers[idx]) {
+        fltbuff = weed_layer_get_audio_data(dr_layers[idx], &nchans);
         if (fltbuff) {
           for (int i = 0; i < nchans; i++)
             if (fltbuff[i]) lives_free(fltbuff[i]);
           lives_free(fltbuff);
-          weed_layer_set_audio_data(dr_layer, NULL, 0, 0, 0);
+          weed_layer_set_audio_data(dr_layers[idx], NULL, 0, 0, 0);
         }
       }
       cleanup_self_receipts();
-      writer_count = 0;
+      active_count = 0;
+      weed_set_int_value(alayer, "active_cnt", 0);
     }
   }
 
   fltbuff = (float **)weed_get_voidptr_array_counted(alayer, "sbf_buff", &nchans);
 
   if (fltbuff) {
-    if (alayers[0] && has_hook_cbs(mystacks, DATA_READY_HOOK)) {
+    if (alayer && lives_obj_instance_has_hook_cbs(pulsed->inst, DATA_READY_HOOK)) {
       // if we have data ready callbacks, we will insert silence in the float buffer
       // then try to trigger the hook
       int xnchans = nchans;
       int64_t sbf_size = weed_get_int64_value(alayer, "sbf_size", NULL);
       size_t bytes = nbytes;
 
-      if (weed_layer_get_audio_interleaved(alayer)) xnchans = 1;
-      else bytes = nbytes / xnchans;
-
+      if (bytes) {
       // inject silence
+	if (weed_layer_get_audio_interleaved(alayer)) xnchans = 1;
+	else bytes = nbytes / xnchans;
 
-      for (int i = 0; i < xnchans; i++) {
-        fltbuff[i] = lives_realloc(fltbuff[i], sbf_size + bytes);
-        lives_memset(&fltbuff[i][sbf_size / sizeof(float)], 0, bytes);
+	for (int i = 0; i < xnchans; i++) {
+	  fltbuff[i] = lives_realloc(fltbuff[i], sbf_size + bytes);
+	  lives_memset(&fltbuff[i][sbf_size / sizeof(float)], 0, bytes);
+	}
+
+	weed_set_voidptr_array(alayer, "sbf_buff", nchans, (void **)fltbuff);
+
+	sbf_size += bytes;
+	weed_set_int64_value(alayer, "sbf_size", sbf_size);
       }
 
-      weed_set_voidptr_array(alayer, "sbf_buff", nchans, (void **)fltbuff);
-
-      sbf_size += bytes;
-      weed_set_int64_value(alayer, "sbf_size", sbf_size);
-
-      if (!writer_count) {
-        if (!dr_layer) dr_layer = make_output_layer(pulsed, -1);
-        if (dr_layer) {
-          int nch = weed_layer_get_naudchans(dr_layer);
+      if (!active_count) {
+	weed_layer_t *dr_layer;
+	if (!dr_layers[idx]) dr_layers[idx] = make_buffer_layer(pulsed, -1, NULL);
+	dr_layer = dr_layers[idx];
+	if (dr_layer) {
+	  int nch = weed_layer_get_naudchans(dr_layer);
           int arate = weed_layer_get_audio_rate(dr_layer);
           int asamps = weed_layer_get_audio_asamps(dr_layer);
           weed_layer_set_audio_data(dr_layer, fltbuff, arate, nch, sbf_size / (asamps >> 3));
 
           //g_print("CALLING DR hook %ld\n", sbf_size / (asamps >> 3));
-          writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL, "P", dr_layer);
-          weed_set_voidptr_value(alayer, "sbf_buff", NULL);
+	  active_count = lives_obj_instance_trigger_hook_async(pulsed->inst, DATA_READY_HOOK, NULL, "P", dr_layer);
+	  weed_set_int_value(alayer, "active_cnt", active_count);
+	  weed_set_voidptr_value(alayer, "sbf_buff", NULL);
         }
       }
     } else {
@@ -318,7 +321,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
   size_t xbytes;
   uint8_t *pa_buff;
 #endif
-  size_t nsamples;
+  int nsamples;
   int ret = 0;
   boolean no_add = FALSE;
 
@@ -360,7 +363,7 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
 
   //if (pulsed->astream_fd != -1) audio_stream(silbuff, nbytes, pulsed->astream_fd); // old streaming API
 
-  nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
+  nsamples = (int)(nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3));
 
   // streaming API
   /* if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float && pulsed->playing_file != -1 */
@@ -368,12 +371,13 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
   /*   sample_silence_stream(pulsed->out_achans, nsamples); */
   /* } */
 
-
-  if (mainw->audio_seek_ready != not_seeking) no_add = TRUE;
-
+  if (lives_aplayer_get_seek_state(pulsed->inst) != not_seeking) {
+    if (lives_aplayer_get_seek_state(pulsed->inst) != seek_approximate)
+      no_add = TRUE;
+  }
   if (no_add) goto done;
 
-  handle_data_ready_hook(pulsed, alayers[0], nbytes);
+  handle_data_ready_hook(pulsed, 0, nbytes);
 
   if (pulsed->in_use) {
     pthread_mutex_lock(&xtra_mutex);
@@ -384,18 +388,22 @@ static void sample_silence_pulse(pulse_driver_t *pulsed, ssize_t nbytes) {
   if (!pulsed->is_paused) pulsed->samples_written += nsamples;
   pulsed->real_seek_pos = pulsed->seek_pos;
 
-  /* if (LIVES_IS_PLAYING) { */
-  /*   if (IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos < afile->afilesize) */
-  /*     afile->aseek_pos = pulsed->seek_pos; */
-
-done:
+  if (LIVES_IS_PLAYING) {
+    if (IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos < afile->afilesize)
+      afile->aseek_pos = pulsed->seek_pos;
+    afile->adirection = lives_aplayer_get_direction(pulsed->inst);
+    if (afile->arate)
+      afile->avelocity = fabs((double)pulsed->in_arate / (double)afile->arate);
+    weed_layer_set_audio_vel(alayers[0], afile->avelocity);
+  }
+ done:
   return;
 }
 
 static volatile boolean in_ap = FALSE;
 
 static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno,
-    boolean activate, boolean running) {
+					      boolean activate, boolean running) {
   // called from CMD_FILE_OPEN and also prepare...
   // set:
   // reverse endian, paused, mute, loop mode.
@@ -405,7 +413,7 @@ static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno
     int aendian = !(sfile->signed_endian & AFORM_BIG_ENDIAN);
 
     if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN))
-        || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
+	|| (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN)))
       pulsed->reverse_endian = TRUE;
     else pulsed->reverse_endian = FALSE;
 
@@ -413,23 +421,15 @@ static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno
       int64_t astat = lives_aplayer_get_status(pulsed->inst);
       if (!running) pulsed->is_paused = FALSE;
       else {
-        pulsed->is_paused = afile->play_paused;
-        if (pulsed->is_paused)
-          pulsed->mute = mainw->mute;
+	pulsed->is_paused = afile->play_paused;
+	if (pulsed->is_paused)
+	  pulsed->mute = mainw->mute;
       }
       if (pulsed->is_paused) astat |= APLAYER_STATUS_PAUSED;
       else astat &= ~APLAYER_STATUS_PAUSED;
       if (pulsed->mute) astat |= APLAYER_STATUS_MUTED;
       else astat &= ~APLAYER_STATUS_MUTED;
       lives_aplayer_set_status(pulsed->inst, astat);
-
-      if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) {
-        if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->multitrack
-            && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-                || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
-          pulsed->loop = AUDIO_LOOP_PINGPONG;
-        else pulsed->loop = AUDIO_LOOP_FORWARD;
-      } else pulsed->loop = AUDIO_LOOP_NONE;
 
       if ((activate || running) && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)) {
         if (!sfile->play_paused)
@@ -453,11 +453,9 @@ static void lives_pulse_set_client_attributes(pulse_driver_t *pulsed, int fileno
 }
 
 
-static weed_layer_t *make_output_layer(pulse_driver_t *pulsed, int clipno) {
+static weed_layer_t *make_buffer_layer(pulse_driver_t *pulsed, int clipno, weed_layer_t *layer) {
   // analogous to how we have clip_src_grps with apparent palette / apparent_gamma for clip video
   // we can now also have clip audio_srcs and       || pulsed->seek_pos < 0 ||
-
-  weed_layer_t *layer;
   audio_dtls adtls;
   // set intermediate format - this becomes 'apparent' audio for the clip
   adtls.rate = DEFAULT_AUDIO_RATE;
@@ -468,11 +466,13 @@ static weed_layer_t *make_output_layer(pulse_driver_t *pulsed, int clipno) {
   adtls.asigned = TRUE;
   adtls.endian = DEFAULT_AUDIO_ENDIAN;
 
+  weed_layer_set_audio_vel(layer, 1.);
+
   if (!IS_VALID_CLIP(clipno))
-    layer = config_alayer_dtls(NULL, &adtls);
+    layer = config_alayer_dtls(layer, &adtls);
   else {
     set_audio_apparent(clipno, &adtls);
-    layer = config_alayer_for_clip(NULL, clipno);
+    layer = config_alayer_for_clip(layer, clipno);
   }
   return layer;
 }
@@ -562,6 +562,15 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   pulse_driver_t *pulsed = va_arg(ap, pulse_driver_t *);
   va_end(ap);
 
+  float **xfbuffer = NULL;
+  float **fbuffer = NULL;
+  lives_obj_instance_t *self = NULL;
+
+  if (!mainw->is_ready || !pulsed) {
+    if (pulsed) sample_silence_pulse(pulsed, -nbytes);
+    goto done;
+  }
+
   static double last_xtime = 0.;
   double xtime = lives_get_session_time();
 
@@ -569,56 +578,101 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
   pa_operation *paop;
   aserver_message_t *msg;
-  //ssize_t pad_bytes = 0;
   uint16_t *buffer;
-  uint64_t nsamples = nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3);
+  int nsamples = (int)(nbytes / pulsed->out_achans / (pulsed->out_asamps >> 3));
 #if HAVE_PA_STREAM_BEGIN_WRITE
   size_t xbytes;
 #endif
-  off_t seek, xseek;
+  off_t seek;
   pa_volume_t pavol;
 
-  static lives_thread_data_t *tdata = NULL;
   //static arec_details *dets = NULL;
 
   boolean got_cmd = FALSE;
   boolean from_memory = FALSE;
 
+  double xseek;
+  
   int new_file;
   int ret = 0;
 
-  lives_proc_thread_t self = pulsed->inst;
+  self = pulsed->inst;
   //g_print("pa ping\n");
 
-  lives_hook_stack_t **mystacks = self_hook_stacks(DATA_PREVIEW_HOOK);
+  int64_t ibytes = 0, fbytes = 0, ofbytes = 0;
+  double vel = 1.;
+  float clip_vol = 1.;
+  //boolean alock_mixer = FALSE;
 
-  float **xfbuffer = NULL;
-  float **fbuffer = NULL;
-
-  //#if NEW_CACHE
-  //#endif
-
-  if (!tdata) {
-    tdata = get_thread_data();
-    lives_proc_thread_set_thread_data(self, tdata);
-
-    lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Writer Thread");
-    lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
-    tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_WRITER;
-  }
+  // TODOO - should be lives_object_include_states, etc
+  
+  if (!lives_obj_instance_get_active(self))
+    lives_obj_instance_set_active(self, "Pulseaudio Writer Thread", TRUE);
 
   ____FUNC_ENTRY____(pulse_audio_write_process, "", "VIV");
 
-  lives_proc_thread_include_states(self, THRD_STATE_RUNNING);
-  lives_proc_thread_exclude_states(self, THRD_STATE_IDLING);
+  lives_obj_instance_include_states(self, THRD_STATE_RUNNING);
+  lives_obj_instance_exclude_states(self, THRD_STATE_IDLING);
 
   in_ap = TRUE;
 
   //pa_thread_make_realtime(50);
   //g_print("PA\n");
+
   pulsed->real_seek_pos = pulsed->seek_pos;
   pulsed->pstream = pstream;
 
+  // need to deal with the various seek_states
+  // active - initiates seek    :: layer fill should abort
+  // --- converging,    :: audio_cahe with target OR
+  // --- needstarget
+  // needstarget: waits for video_seek_beacon -> set target -> converging
+  //
+  // converging -> can fill cache -> approximate
+  // approximate -> wait for mutex locked,
+  // read new beacon value -> set seek -> wait for cache fill ->
+  // sync_with player
+  //
+  // -> not_seeking
+  //
+  // video player sees:
+  // anything other than not_seeking :: light beacon
+  // approximate - lock mutex, sync_with
+  //
+  // if beacon set to -1, immediately set state to not_seeking
+  // ret from sync_with -> beacon = 0
+  //
+
+  seek_phase skstate = lives_aplayer_get_seek_state(self);
+
+  if (skstate != not_seeking) {
+    if (mainw->video_seek_beacon == -1)
+      lives_aplayer_set_seek_state(self, not_seeking);
+    else {
+      if (mainw->video_seek_beacon) {
+	if (skstate == seek_needstarget) {
+	  double xtime = calc_time_from_frame(lives_aplayer_get_seek_clip(self), mainw->video_seek_beacon);
+	  lives_aplayer_set_seek_time(self, xtime);
+	  audio_cache(1, 1, alayers, self);
+	  lives_aplayer_set_seek_state(self, seek_converging);
+	}
+	else if (skstate == seek_approximate) {
+	  if (pthread_mutex_trylock(&mainw->avseek_mutex)) {
+	    double xtime = calc_time_from_frame(lives_aplayer_get_seek_clip(self), mainw->video_seek_beacon);
+	    lives_aplayer_set_seek_time(self, xtime);
+	    audio_cache(1, 1, alayers, self);
+	    lives_aplayer_set_seek_state(self, seek_ready);
+	  }
+	  else pthread_mutex_unlock(&mainw->avseek_mutex);
+	}
+      }
+      else {
+	sample_silence_pulse(pulsed, -nbytes);
+	goto done;
+      }
+    }
+  }
+  
   if (mainw->aud_rec_rcpt && (!mainw->record || !IS_VALID_CLIP(mainw->ascrap_file) || !LIVES_IS_PLAYING)) {
     // TODO !!! - check if we need to call *_rec_audio_end
     lives_cb_receipt_block_cb(mainw->aud_rec_rcpt);
@@ -626,180 +680,25 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     /* mainw->aud_rec_rcpt = NULL; */
   }
 
-  if (!mainw->is_ready || !pulsed || ((!LIVES_IS_PLAYING || !pulsed->in_use) && !pulsed->msgq)) {
+  if (!LIVES_IS_PLAYING || (!pulsed->in_use
+			    && lives_aplayer_get_seek_state(self)
+			    == not_seeking)) {
     sample_silence_pulse(pulsed, -nbytes);
-    //g_print("pt a1 %ld %d %p %d %p %ld\n",nsamples, mainw->is_ready, pulsed, mainw->playing_file, pulsed->msgq, nbytes);
     goto done;
   }
 
-  /// handle control commands from the main (video) thread
-  if ((msg = (aserver_message_t *)pulsed->msgq) != NULL) {
-    //got_cmd = TRUE;
-    int cmd = (int)msg->command;
-    while (1) {
-      g_print("pulse got cmd %d\n", cmd);
-      switch (cmd) {
-      case ASERVER_CMD_FILE_OPEN:
-
-        //LIVES_ASSERT(msg->next);
-        new_file = atoi((char *)msg->data);
-
-        if (pulsed->playing_file == new_file) break;
-
-        if (pulsed->playing_file != -1 && IS_VALID_CLIP(new_file)) {
-          cmd = ASERVER_CMD_FILE_CLOSE;
-          break;
-        }
-
-        got_cmd = TRUE;
-
-        pulsed->in_use = TRUE;
-        pulsed->playing_file = new_file;
-        lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE);
-
-        alayers[0] = make_output_layer(pulsed, new_file);
-
-        paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
-        pa_operation_unref(paop);
-
-        if (IS_VALID_CLIP(new_file)) {
-          pulsed->in_use = TRUE;
-          pulsed->playing_file = new_file;
-          lives_pulse_set_client_attributes(pulsed, new_file, FALSE, TRUE);
-        }
-
-        audio_cache(1, 1, alayers, self);
-
-        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = 0;
-        break;
-
-      case ASERVER_CMD_FILE_CLOSE:
-        got_cmd = TRUE;
-
-        alayers[0] = NULL;
-
-        paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
-        pa_operation_unref(paop);
-        pulsed->playing_file = -1;
-        pulsed->in_use = FALSE;
-        if (cmd != (int)msg->command) {
-          cmd = (int)msg->command;
-          continue;
-        }
-        break;
-      case ASERVER_CMD_FILE_SEEK:
-      case ASERVER_CMD_FILE_SEEK_ADJUST:
-        if (!IS_VALID_CLIP(pulsed->playing_file)) break;
-        got_cmd = TRUE;
-        pulsed->in_use = TRUE;
-
-        paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
-        pa_operation_unref(paop);
-        xseek = seek = atol((char *)msg->data);
-
-        if (msg->command == ASERVER_CMD_FILE_SEEK_ADJUST) {
-          ticks_t delta = mainw->currticks - msg->tc;
-          xseek += delta / TICKS_PER_SECOND_DBL * (double)(afile->adirection * afile->arate
-                   * afile->achans * (afile->asampsize >> 3));
-        }
-        if (seek < 0.) xseek = 0.;
-        xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3));
-
-        weed_layer_set_audio_seek(alayers[0], xseek);
-        weed_layer_set_audio_vel(alayers[0], 1.0);
-
-        g_print("layer primed and ready, -> fill big bucket\n%p and %p\n", alayers, alayers[0]);
-
-        audio_cache(1, 1, alayers, self);
-
-        fwd_seek_pos = pulsed->real_seek_pos = pulsed->seek_pos = afile->aseek_pos = xseek;
-
-        if (msg->extra) {
-          double ratio = lives_strtod(msg->extra);
-          pulse_set_avel(pulsed, pulsed->playing_file, ratio);
-        }
-
-        /* if (pulsed->playing_file == mainw->ascrap_file || afile->adirection == LIVES_DIRECTION_FORWARD) */
-        /*   //dir = fwd; */
-        break;
-      default:
-        pulsed->msgq = NULL;
-        msg->data = NULL;
-      }
-
-      if (msg->next != msg) {
-        lives_freep((void **)&msg->data);
-        lives_freep((void **)&msg->extra);
-      }
-
-      msg->command = ASERVER_CMD_PROCESSED;
-      pulsed->msgq = msg->next;
-
-      if (!pulsed->msgq) break;
-
-      msg = (aserver_message_t *)pulsed->msgq;
-      cmd = msg->command;
-    }
-  }
-
-  //////// handled commands
-
-  /// this is the value we will return from pulse_get_rec_avals
-  fwd_seek_pos = pulsed->real_seek_pos;
-
-  int64_t ibytes = 0, fbytes = 0, ofbytes = 0;
-  double vel = 1.;
-  float clip_vol = 1.;
-  /* the ratio of samples in : samples out - may be negative. This is NOT the same as the velocity as it incluides a resampling factor */
-  //boolean alock_mixer = FALSE;
-
-  double seek_time = lives_aplayer_get_seek(self);
-
-  if (seek_time >= 0.) {
-    if (mainw->video_seek_ready == -1) {
-      audio_sync_ready();
-    } else {
-      lives_aplayer_set_seek(self, -1.);
-      if (mainw->audio_seek_ready != seek_converging) {
-        lives_aplayer_set_pos(self, seek_time
-                              * (double)(pulsed->in_arate
-                                         * pulsed->in_achans * (pulsed->in_asamps >> 3)));
-        mainw->audio_seek_ready = seek_active;
-      }
-    }
-  }
-
-  if (mainw->audio_seek_ready == seek_notarget) {
-    if (!mainw->video_seek_ready) {
-      sample_silence_pulse(pulsed, nbytes);
-      goto done;
-    }
-    if (mainw->video_seek_ready == -1) {
-      audio_sync_ready();
-    } else {
-      lives_aplayer_set_pos(self, (double)(mainw->video_seek_ready - 1.) /
-                            (double)afile->fps * pulsed->in_arate
-                            * pulsed->in_achans * (pulsed->in_asamps >> 3));
-      mainw->audio_seek_ready = seek_active;
-    }
-  }
-
-  if (mainw->audio_seek_ready == seek_active) {
-    xseek = lives_aplayer_get_pos(self);
-    if (xseek < 0) mainw->audio_seek_ready = seek_notarget;
-    else {
-      mainw->audio_seek_ready = seek_converging;
-      weed_layer_set_audio_seek(alayers[0], xseek);
-      weed_layer_set_audio_vel(alayers[0], 1.0);
-      audio_cache(1, 1, alayers, self);
-    }
-  }
+  /* //audio_sync_ready(self); */
+  /* pulsed->playing_file = lives_layer_get_clip(alayers[0]); */
+  /* lives_pulse_set_client_attributes(pulsed, pulsed->playing_file, TRUE, FALSE); */
 
 #ifdef DEBUG_PULSE
   lives_printerr("playing... pulseSamplesAvailable = %ld\n", pulseSamplesAvailable);
 #endif
 
   pulsed->num_calls++;
+  
+  /// this is the value we will return from pulse_get_rec_avals
+  fwd_seek_pos = pulsed->real_seek_pos;
 
   // set input volume level for output to sink
   if (future_prefs->volume != pulsed->volume_linear) {
@@ -819,8 +718,8 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     pa_operation_unref(paop);
   }
 
-  if (!pulsed->in_use || pulsed->seek_pos < 0 ||
-      ((((!mainw->multitrack && IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos > afile->afilesize))
+  if ((!pulsed->in_use && lives_aplayer_get_seek_state(self) == not_seeking) || pulsed->seek_pos < 0
+      || ((((!mainw->multitrack && IS_VALID_CLIP(pulsed->playing_file) && pulsed->seek_pos > afile->afilesize))
         && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit))) || mainw->multitrack)
       || pulsed->is_paused || ((mainw->pulsed_read && mainw->pulsed_read->playing_file != -1))) {
     sample_silence_pulse(pulsed, nbytes);
@@ -835,49 +734,62 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
       from_memory = TRUE;
     } else {
       int64_t fb_offs, bb_in_offs, bb_in_pos;
-
-      if (pulsed->playing_file > -1 && !mainw->multitrack) clip_vol = afile->vol;
-
-      if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
-        vel = (double)afile->pb_fps / (double)afile->fps;
-
+      
+      if (pulsed->playing_file > -1) {
+	if (!mainw->multitrack) clip_vol = afile->vol;
+	if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)) {
+	  vel = (double)afile->pb_fps / (double)afile->fps;
+	  weed_layer_set_audio_vel(alayers[0], vel);
+	}
+      }
       lives_aplayer_set_data_len(self, nsamples);
-      LIVES_ASSERT(lives_aplayer_get_data_len(self) ==  nsamples);
-
+      //LIVES_ASSERT(lives_aplayer_get_data_len(self) ==  nsamples);
+    
       if (audio_cache(0, vel, clip_vol) == LIVES_RESULT_BUSY_RETRY) {
-        if (got_cmd || mainw->audio_seek_ready == seek_converging) {
-          sample_silence_pulse(pulsed, nbytes);
-          goto done;
-        }
-        lives_microsleep_while_true(audio_cache(0, vel, clip_vol) == LIVES_RESULT_BUSY_RETRY);
+	if (lives_aplayer_get_seek_state(self) == seek_converging ||
+	    lives_aplayer_get_seek_state(self) == seek_ready) {
+	  sample_silence_pulse(pulsed, -nbytes);
+	  goto done;
+	}
+	lives_microsleep_while_true(audio_cache(0, vel, clip_vol) == LIVES_RESULT_BUSY_RETRY);
       }
 
-      if (mainw->audio_seek_ready == seek_converging) {
-        mainw->audio_seek_ready = seek_approximate; // Corrected: == to =
-        if (!mainw->video_seek_ready) {
-          sample_silence_pulse(pulsed, nbytes);
-          goto done;
-        }
-        if (!pthread_mutex_trylock(&mainw->avseek_mutex)) {
-          pthread_mutex_unlock(&mainw->avseek_mutex);
-          sample_silence_pulse(pulsed, nbytes);
-          goto done;
-        } else {
-          if (mainw->video_seek_ready != -1) {
-            weed_set_int64_value(alayers[0], "bb_adj", ((mainw->video_seek_ready - 1.) * pulsed->in_arate
-                                 * pulsed->in_achans * (pulsed->in_asamps >> 3))
-                                 - pulsed->seek_pos);
-            mainw->audio_seek_ready = seek_ready;
-          }
-        }
+      if (lives_aplayer_get_seek_state(self) == seek_converging) {
+	// we reached the approximation point, now we should get the exact point from the video player
+	g_print("set ss4 conv\n");
+        lives_aplayer_set_seek_state(self, seek_approximate);
       }
 
+      if (lives_aplayer_get_seek_state(self) == seek_approximate) {
+	// check mutex
+	if (pthread_mutex_trylock(&mainw->avseek_mutex)) {
+	  double xtime = calc_time_from_frame(lives_aplayer_get_seek_clip(self), mainw->video_seek_beacon);
+	  lives_aplayer_set_seek_time(self, xtime);
+	  lives_aplayer_set_seek_state(self, seek_ready);
+	  audio_cache(1, 1, alayers, self);
+	  if (audio_cache(0, vel, clip_vol) == LIVES_RESULT_BUSY_RETRY) {
+	    sample_silence_pulse(pulsed, nbytes);
+	    goto done;
+	  }
+	}
+	else pthread_mutex_unlock(&mainw->avseek_mutex);
+      }
+      if (lives_aplayer_get_seek_state(self) == seek_ready) {
+	lives_proc_thread_sync_with(mainw->player_proc, SYNCIDX_AVSYNC, MM_IGNORE);
+	pulsed->in_use = TRUE;
+	lives_aplayer_set_seek_state(self, not_seeking);
+	lives_obj_instance_trigger_hook(self, SEEK_READY_HOOK);
+	//audio_sync_ready(self);
+      }
+  
+  g_print("here ok2\n");
       /////////////////////////////////
       fbuffer = (float **)weed_get_voidptr_array(alayers[0], "sbf_buff", NULL);
       ofbytes = weed_get_int64_value(alayers[0], "sbf_size", NULL);
       fbytes = weed_get_int64_value(alayers[0], "sbf_newsize", NULL);
       //////////////////////////////////////////////////////
 
+      g_print("here ok2222 %p %ld %ld\n", fbuffer, fbytes, nbytes);
       if (!fbuffer || fbytes < nbytes) {
         sample_silence_pulse(pulsed, nbytes);
         goto done;
@@ -895,7 +807,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     }
   } else from_memory = TRUE;
 
-
   if (from_memory) {
     /* if (pulsed->read_abuf > -1 && !pulsed->mute) { */
     /*   sample_move_abuf_float(xfbuffer, pulsed->out_achans, */
@@ -905,40 +816,48 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     /*   goto done; */
     /* } */
   } else {
-    if (has_hook_cbs(mystacks, DATA_PREVIEW_HOOK)) {
+#if 0
+    if (lives_obj_instance_has_hook_cbs(self, DATA_PREVIEW_HOOK)) {
       lives_aplayer_set_data(self, (void **)xfbuffer);
       lives_aplayer_set_data_len(self, fbytes / (pulsed->out_asamps >> 3));
-      lives_hook_trigger(mystacks, DATA_PREVIEW_HOOK, "P", self);
+      // orefx hook
+      lives_obj_instance_trigger_hook(self, DATA_PREVIEW_HOOK);
+      // apply fx
+      lives_obj_instance_trigger_hook(self, DATA_PREVIEW_HOOK);
+
+      if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY) {
+	if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) {
+	  // post fx
+	  // read from mainw->aux_afbuffer, mix with aplayer data
+	}
+	else {
+	  // make a copy of data - mix with copy - convert for player
+	  // original sent to data_ready
+	}
+	lives_obj_instance_trigger_hook(self, DATA_PREVIEW_HOOK);
+      }
     }
+#endif
   }
-
-
   ////////
 
-  if (mainw->audio_seek_ready == seek_ready || mainw->audio_seek_ready == seek_approximate) {
-    if (mainw->video_seek_ready && LIVES_IS_PLAYING) {
-      if (mainw->video_seek_ready != -1) {
-        if (pthread_mutex_trylock(&mainw->avseek_mutex)) {
-          lives_proc_thread_sync_with(mainw->player_proc, SYNCIDX_AVSYNC, MM_IGNORE);
-        } else pthread_mutex_unlock(&mainw->avseek_mutex);
-      }
-      audio_sync_ready();
-    } else {
-      if (mainw->video_seek_ready && !LIVES_IS_PLAYING) {
-        audio_sync_ready();
-        sample_silence_pulse(pulsed, nbytes);
-        goto done;
-      }
+  if (lives_aplayer_get_seek_state(self) == seek_ready
+      || lives_aplayer_get_seek_state(self) == seek_approximate) {
+    if (audio_sync_ready(self) != LIVES_RESULT_SUCCESS) {
+      sample_silence_pulse(pulsed, nbytes);
+      goto done;
     }
   }
 
+  g_print("here ok\n");
+  
 #if !HAVE_PA_STREAM_BEGIN_WRITE
   buffer = (uint8_t *)lives_calloc(1, nbytes);
   //
   if (!buffer) {
     sample_silence_pulse(pulsed, nbytes);
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
     if (xfbuffer) lives_free(xfbuffer);
     if (fbuffer) lives_free(fbuffer);
     in_ap = FALSE;
@@ -950,11 +869,11 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   if (ret) {
     sample_silence_pulse(pulsed, nbytes);
     in_ap = FALSE;
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
     if (xfbuffer) lives_free(xfbuffer);
     if (fbuffer) lives_free(fbuffer);
-    return;
+    ____FUNC_EXIT____;
   }
 
   if (xbytes < ibytes) ibytes = xbytes;
@@ -964,7 +883,7 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
   nsamples = sample_move_float_int((void *)buffer, (float **)xfbuffer, nsamples, 1.,
                                    pulsed->out_achans, PA_SAMPSIZE, FALSE, FALSE, FALSE, 1.0);
 
-  ibytes = nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3);
+  ibytes = (int64_t)(nsamples * pulsed->out_achans * (pulsed->out_asamps >> 3));
   //g_print("out was %d samps, %ld bytes\n", nsamples,  ibytes);
 
   if (pulsed->in_use) {
@@ -978,8 +897,8 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     g_print("writing %ld\n", ibytes);
     pa_stream_write(pulsed->pstream, buffer, ibytes, NULL, 0, PA_SEEK_RELATIVE);
   }
-
-  handle_data_ready_hook(pulsed, alayers[0], nbytes);
+  
+  handle_data_ready_hook(pulsed, 0, 0);
 
   // measure 3 things - average reuest size - average call frequency, average response time
   // averages over 50 cycles
@@ -990,8 +909,6 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
     newvals[1] = (double)(xtime - last_xtime);
     newvals[2] = (double)(lives_get_session_time() - xtime);
     tabdata_update(avers, newvals);
-
-
     /* g_print("pulse diag : avg nsamps %.2f avg freq, %.4f, avg service time %s\nav samps * freq = %.4f,, occupancy = %.2f %%\n ", */
     /* 	avers->avgs[0], 1. / avers->avgs[1], lives_format_timing_string(avers->avgs[2]), */
     /* 	avers->avgs[0] / avers->avgs[1], 100. * avers->avgs[2] / avers->avgs[1]); */
@@ -1010,8 +927,10 @@ static void pulse_audio_write_process(pa_stream *pstream, ...) {
 
 
 done:
-  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+  if (self) {
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
+  }
   in_ap = FALSE;
   if (xfbuffer) lives_free(xfbuffer);
   if (fbuffer) lives_free(fbuffer);
@@ -1031,32 +950,30 @@ static void pulse_audio_read_process(pa_stream *pstream, ...) {
   // read nsamples from pulse buffer, and then possibly write to mainw->aud_rec_fd
   // this is the callback from pulse when we are recording or playing external audio
   static lives_thread_data_t *tdata = NULL;
-  static void *back_buff = NULL;
-  static size_t bbsize = 0;
-  static int async_reader_count = 0;
 
   pulse_driver_t *pulsed = (pulse_driver_t *)arg;
   void *data;
-  size_t rbytes = nbytes, zbytes, nsamples;;
-  lives_proc_thread_t self = pulsed->inst;
+  size_t rbytes = nbytes, zbytes;
+  int nsamples;;
+  lives_obj_instance_t *self = pulsed->inst;
 
   if (!tdata) {
     tdata = get_thread_data();
-    lives_proc_thread_set_thread_data(self, tdata);
+    lives_obj_instance_set_thread_data(self, tdata);
     lives_snprintf(tdata->vars.var_origin, 128, "%s", "Pulseaudio Reader Thread");
-    lives_proc_thread_include_states(self, THRD_STATE_EXTERN);
+    lives_obj_instance_include_states(self, THRD_STATE_EXTERN);
     tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_AUDIO_READER;
   }
 
   ____FUNC_ENTRY____(pulse_audio_read_process, "", "VIV");
 
   if (pulsed->is_corked) {
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING | THRD_STATE_BLOCKED);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING | THRD_STATE_BLOCKED);
     ____FUNC_EXIT____;
   }
 
-  lives_proc_thread_include_states(self, THRD_STATE_RUNNING);
-  lives_proc_thread_exclude_states(self, THRD_STATE_IDLING | THRD_STATE_BLOCKED);
+  lives_obj_instance_include_states(self, THRD_STATE_RUNNING);
+  lives_obj_instance_exclude_states(self, THRD_STATE_IDLING | THRD_STATE_BLOCKED);
 
   pulsed->pstream = pstream;
 
@@ -1067,14 +984,14 @@ static void pulse_audio_read_process(pa_stream *pstream, ...) {
       pa_stream_drop(pulsed->pstream);
     }
 
-    nsamples = rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3);
+    nsamples = (int)(rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3));
 
     pthread_mutex_lock(&xtra_mutex);
     if (pulsed->in_use)
       pulsed->extrausec += ((double)nsamples / (double)pulsed->in_arate * ONE_MILLION_DBL + .5);
     pthread_mutex_unlock(&xtra_mutex);
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
     ____FUNC_EXIT____;
   }
 
@@ -1082,25 +999,28 @@ static void pulse_audio_read_process(pa_stream *pstream, ...) {
 
   if (zbytes == 0) {
     //g_print("nothing to read from PA\n");
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
     ____FUNC_EXIT____;
   }
 
+  ///// get data from pa
   if (pa_stream_peek(pulsed->pstream, (const void **)&data, &rbytes)) {
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
     ____FUNC_EXIT____;
   }
 
   if (!data) {
     if (rbytes > 0) pa_stream_drop(pulsed->pstream);
-    lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-    lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+    lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+    lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
     ____FUNC_EXIT____;
   }
 
-  nsamples = rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3);
+  ///
+  
+  nsamples = (int)(rbytes / pulsed->in_achans / (pulsed->in_asamps >> 3));
 
   if (mainw->ext_audio_mon && !mainw->fs && !mainw->faded && !mainw->multitrack)
     lives_toggle_tool_button_set_active(LIVES_TOGGLE_TOOL_BUTTON(mainw->ext_audio_mon), (*(uint8_t *)data & 0x80) >> 7);
@@ -1114,39 +1034,25 @@ static void pulse_audio_read_process(pa_stream *pstream, ...) {
   if (!pulsed->is_paused) {
     pulsed->samples_written += nsamples;
   }
-
-  if (async_reader_count) {
-    // here we make sure that the DATA_READY hook callbacks have all completed
-    // we must do this before we can free the data from the previous cycle
-    lives_hook_async_join(DATA_READY_HOOK);
-    async_reader_count = 0;
-    cleanup_self_receipts();
-    weed_set_int64_value(alayers[0], "sbf_size", 0);
-  }
-
-  if (bbsize < rbytes) {
-    if (back_buff) lives_free(back_buff);
-    back_buff = lives_malloc(rbytes);
-    bbsize = rbytes;
-  }
-
-  lives_memcpy(back_buff, data, rbytes);
-
-  /* void **vbuffer = weed_get_voidptr_value(alayers[0], "sbi_buff", NULL); */
-  /* nbytes = weed_get_int64_value(alayers[0], "sbi_size", NULL); */
-  /* lives_memcpy(pulsed->sound_buffer, vbuffer[0], nbytes); */
-
-  /* if (has_hook_cbs(mystacks, DATA_READY_HOOK)) { */
-  /*   dr_layer = make_output_layer(pulsed, -1); */
-  /*   weed_layer_set_audio_data(dr_layer, fbuffer, arate, achans, nsamples);	     */
-  /*   // the DATA_READY_HOOK callbacks are run async parallel, so there is zero blocking here ! */
-  /*   // however we must ensure that back_buff is not freed until the next cycle has called lives_hook_async_join() */
-  /*   async_reader_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL, "P", dr_layer); */
-  /* } */
-
+  
   pulsed->seek_pos += rbytes;
 
   pa_stream_drop(pulsed->pstream);
+
+  if (lives_obj_instance_has_hook_cbs(pulsed->inst, DATA_READY_HOOK)) {
+    // handle DATA_READY hook - take the data we just read
+    // convert to float
+    // append to sbf_buff
+    // - in this case we will use alayers[1] and write to aux_afbuffer
+
+    block_unlbock_aux_cbs(TRUE);    
+    if (!alayers[0]) alayers[0] = make_buffer_layer(pulsed, -1, NULL);
+    handle_data_ready_hook(pulsed, 0, 0);
+
+    block_unlbock_aux_cbs(FALSE);    
+    if (!alayers[1]) alayers[1] = make_buffer_layer(pulsed, -1, NULL);
+    handle_data_ready_hook(pulsed, 1, 0);
+  }  
 
   if (pulsed->playing_file == -1 || (mainw->record && mainw->record_paused) || pulsed->is_paused) {
     if (pulsed->is_paused) {
@@ -1161,8 +1067,8 @@ static void pulse_audio_read_process(pa_stream *pstream, ...) {
   if (mainw->rec_samples == 0 && mainw->cancelled == CANCEL_NONE) {
     mainw->cancelled = CANCEL_KEEP; // we wrote the required #
   }
-  lives_proc_thread_include_states(self, THRD_STATE_IDLING);
-  lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING);
+  lives_obj_instance_include_states(self, THRD_STATE_IDLING);
+  lives_obj_instance_exclude_states(self, THRD_STATE_RUNNING);
   ____FUNC_EXIT____;
 }
 
@@ -1373,12 +1279,13 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
   /// TODO: try to set volume and mute state from sever rather then the other way round
 
   if (!pdriver->inst) pdriver->inst = lives_player_inst_create(PLAYER_SUBTYPE_AUDIO);
-  mainw->aplayer = pdriver->inst;
+
+  if (pdriver->is_output) mainw->aplayer = pdriver->inst;
 
   lives_aplayer_set_float(pdriver->inst, FALSE);
   lives_aplayer_set_interleaved(pdriver->inst, TRUE);
   lives_aplayer_set_signed(pdriver->inst, TRUE);
-  lives_aplayer_set_seek(mainw->aplayer, -1.);
+  lives_aplayer_set_seek_state(pdriver->inst, not_seeking);
 
   /* // create the arena buffer */
   /* register_audio_client(FALSE); */
@@ -1495,25 +1402,29 @@ int pulse_driver_activate(pulse_driver_t *pdriver) {
 }
 
 
-
 static void flushed_cb(pa_stream *s, int success, void *userdata) {
   pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
-  pa_operation_unref(pdriver->paop);
-  pdriver->paop = NULL;
-  pdriver->is_corked = FALSE;
+  /* pa_operation_unref(pdriver->paop); */
+  /* pdriver->paop = NULL; */
   prefs->force_system_clock = FALSE;
+  pa_threaded_mainloop_signal(pa_mloop, 0);
 }
+
 
 //#define DEBUG_PULSE_CORK
 static void uncorked_cb(pa_stream *s, int success, void *userdata) {
+  ticks_t timeout;
   pulse_driver_t *pdriver = (pulse_driver_t *)userdata;
 #ifdef DEBUG_PULSE_CORK
   g_print("uncorked %p\n", pdriver);
 #endif
-  pa_operation_unref(pdriver->paop);
-  pdriver->paop = pa_stream_flush(pdriver->pstream, flushed_cb, pdriver);
-}
+  lives_alarm_set_timeout(BILLIONS(2));
+  pdriver->is_corked = FALSE;
 
+  pdriver->paop = pa_stream_flush(pdriver->pstream, flushed_cb, pdriver);
+
+  //prefs->force_system_clock = FALSE;
+}
 
 
 static void corked_cb(pa_stream *s, int success, void *userdata) {
@@ -1530,9 +1441,9 @@ static void corked_cb(pa_stream *s, int success, void *userdata) {
 void pulse_driver_uncork(pulse_driver_t *pdriver) {
   pdriver->abs_maxvol_heard = 0.;
   if (!pdriver->is_corked) return;
-  pa_mloop_lock();
+  ///pa_mloop_lock();
   pdriver->paop = pa_stream_cork(pdriver->pstream, 0, uncorked_cb, pdriver);
-  pa_mloop_unlock();
+  //pa_mloop_unlock();
 }
 
 
@@ -1555,11 +1466,11 @@ void pulse_driver_cork(pulse_driver_t *pdriver) {
   pa_operation_unref(pdriver->paop);
   pa_mloop_unlock();
   lives_alarm_disarm();
-
+  lives_alarm_set_timeout(BILLIONS(2));
   pa_mloop_lock();
   pdriver->paop = pa_stream_flush(pdriver->pstream, flushed_cb, pdriver);
   while (pa_operation_get_state(pdriver->paop) == PA_OPERATION_RUNNING
-         && (timeout = lives_alarm_check(alarm_handle)) > 0) {
+         && !lives_alarm_triggered()) {
     pa_threaded_mainloop_wait(pa_mloop);
   }
   pa_mloop_unlock();
@@ -1612,23 +1523,13 @@ boolean pa_time_reset(pulse_driver_t *pulsed, ticks_t offset) {
 }
 
 
+
+
 /**
    @brief calculate the playback time based on samples sent to the soundcard
 */
 int64_t lives_pulse_get_time(pulse_driver_t *pulsed) {
   // get the time in ticks since playback started
-  // we try to get time from pa_stream_get_time() and subtract initial time
-  // if we fail, just return the previous value - the timer will interpolate
-  // using clock time
-
-  volatile aserver_message_t *msg = pulsed->msgq;
-
-  if (msg && (msg->command == ASERVER_CMD_FILE_SEEK || msg->command == ASERVER_CMD_FILE_OPEN)) {
-    // if called from audio thread, then we have nothing else to clear the message queue
-    // so just return the most recent value
-    if (THREADVAR(fx_is_audio)) return TICKS_TO_NSEC(mainw->currticks);
-    if (await_audio_queue(BILLIONS(2)) != LIVES_RESULT_SUCCESS) return -1;
-  }
   return 1000 * pulsed->extrausec;
 }
 
@@ -1659,89 +1560,97 @@ double lives_pulse_get_timing_ratio(pulse_driver_t *pulsed, int64_t current) {
 }
 
 
-off_t lives_pulse_get_offset(pulse_driver_t *pulsed) {
+int64_t lives_pulse_get_read_offset(pulse_driver_t *pulsed) {
+  // get aplayer offset in source file in bytes, updated when bytes are read
   if (pulsed->playing_file > -1) return pulsed->seek_pos;
   return -1;
 }
 
 
-boolean pulse_audio_seek_frame_velocity(pulse_driver_t *pulsed, double frame, double vel) {
-  // seek to frame "frame" in current audio file
-  // position will be adjusted to (floor) nearest sample
-  off_t seekstart;
-
-  if (!IS_VALID_CLIP(pulsed->playing_file)) return FALSE;
-
-  if (frame > afile->frames && afile->frames > 0) frame = afile->frames;
-
-  seekstart = (off_t)(((frame - 1.) / afile->fps
-                       + (LIVES_IS_PLAYING ? (double)(mainw->currticks - mainw->startticks) / TICKS_PER_SECOND_DBL
-                          * LIVES_DIRECTION_SIG(pulsed->in_arate) : 0.)) * (double)afile->arate)
-              * afile->achans * afile->asampsize / 8;
-
-  /* g_print("vals %ld and %ld %d\n", mainw->currticks, mainw->startticks, afile->arate); */
-  /* g_print("bytes %f     %f       %d        %ld          %f\n", frame, afile->fps, LIVES_IS_PLAYING, seekstart, */
-  /*         (double)seekstart / (double)afile->arate / 4.); */
-  pulse_audio_seek_bytes_velocity(pulsed, seekstart, afile, vel);
-  return TRUE;
+int lives_pulse_get_samples_played(pulse_driver_t *pulsed) {
+  // get number of samples played per channel since the last time reset
+  // updated after samples are played
+  if (pulsed->playing_file > -1) return pulsed->samples_written;
+  return -1;
 }
 
 
-LIVES_GLOBAL_INLINE void pulse_audio_seek_frame(pulse_driver_t *pulsed, int clip, frames_t frame) {
-  lives_aplayer_set_seek(pulsed->inst, (double)(frame - 1.) / (double)afile->fps);
-  audio_cache(1, 1, alayers, pulsed->inst);
+static void seek_ready_cb(void) {
+  // do nothing
 }
 
 
-off_t pulse_audio_seek_bytes_velocity(pulse_driver_t *pulsed, off_t bytes, lives_clip_t *sfile, double vel) {
-  // seek to position "bytes" in current audio file
-  // position will be adjusted to (floor) nearest sample
+// must be bytes per channel
+double bytes_to_time(lives_clip_t *sfile, int64_t bytes) {
+  if (!sfile || !sfile->asampsize || !sfile->fps) return -1.;
+  double xtm = (double)bytes / sfile->fps / (double)(sfile->asampsize >> 3);
+  return xtm;
+}
 
-  // if the position is > size of file, we will seek to the end of the file
-  off_t seekstart;
 
-  // set this here so so that pulse_get_rec_avals returns the forward seek position
-  if (pulsed->is_corked) pulse_driver_uncork(pulsed);
+lives_result_t lives_pulse_seek_to(pulse_driver_t *pulsed, int clip, double xtime,
+				   lives_direction_t dir, double vel, boolean block) {
+  // seek to time offset xtime in clip
+  // if clip is -1 or invalid, seek is within the currently playing audio clip
+  // if time < 0. then if clip == -1, seek to align with video
+  //      if clip >= 0, seek is to the file aseekpos, which is
+  //    lives_pulse_get_read_offset() converted to time, and set after playing
+  // if block is set, the function is run syncronously
+  // otherwise caller can be notified by adding a callback to seek_ready
+  // dir = lives_no_direction == use clip adirection
+  // vel == 0. use clip velocity
 
-  if (!pulsed->is_corked) {
-    if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT * 10) || pulsed->playing_file == -1) {
-      if (pulsed->playing_file > -1) LIVES_WARN("Pulse connect timed out");
-      seek_err = TRUE;
-      return 0;
-    }
+  if (prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) return LIVES_RESULT_SUCCESS;
+
+  lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
+  if (!sfile) {
+    clip = mainw->playing_file;
+    sfile = RETURN_VALID_CLIP(clip);
+  }
+  if (!sfile) return LIVES_RESULT_INVALID;
+
+  pulsed->playing_file = clip;
+
+  pulsed->in_use = FALSE;
+
+  if (dir == LIVES_NO_DIRECTION) dir = sfile->adirection;
+  if (vel <= 0.) vel = sfile->avelocity;
+
+  // seek and fill
+  
+  if (xtime >= 0. || sfile != afile) {
+    if (sfile != afile && xtime < 0.) xtime = bytes_to_time(sfile, sfile->aseek_pos);
+    lives_aplayer_set_seek_vals(pulsed->inst, clip, xtime, dir, vel);
+    lives_aplayer_set_seek_state(pulsed->inst, seek_active);
+  }
+  else {
+    lives_aplayer_set_seek_clip(pulsed->inst, mainw->playing_file);
+    lives_aplayer_set_seek_state(pulsed->inst, seek_needstarget);
   }
 
-  if (bytes < 0) bytes = 0;
-  if (bytes > sfile->afilesize) bytes = sfile->afilesize;
+  if (!alayers[0]) alayers[0] = make_buffer_layer(pulsed, clip, NULL);
 
-  seekstart = ((off_t)(bytes / sfile->achans / (sfile->asampsize / 8))) * sfile->achans * (sfile->asampsize / 8);
+  audio_cache(1, 1, alayers, pulsed->inst);
 
-  if (seekstart < 0) seekstart = 0;
-  if (seekstart > sfile->afilesize) seekstart = sfile->afilesize;
+  pulsed->paop = pa_stream_flush(pulsed->pstream, NULL, NULL);
+  pa_operation_unref(pulsed->paop);
 
-  fwd_seek_pos = seekstart;
+  pulse_driver_uncork(pulsed);
 
-  pulse_message2.command = ASERVER_CMD_FILE_SEEK;
+  if (!CLIP_HAS_AUDIO(clip)) {
+    uint64_t astat = lives_aplayer_get_status(pulsed->inst) & ~3;
+    lives_aplayer_set_status(pulsed->inst, astat | APLAYER_STATUS_READY);
+  }
+  else {
+    pulsed->in_use = TRUE;
+    if (lives_aplayer_get_seek_state(pulsed->inst) == seek_active)
+      lives_aplayer_set_seek_state(pulsed->inst, seek_converging);
+  }
 
-  if (vel !=  0. && LIVES_IS_PLAYING && !mainw->preview) {
-    pulse_message2.extra = lives_strdup_printf("%f", vel);
-    pulse_message2.tc = mainw->currticks;
-    pulse_message2.command = ASERVER_CMD_FILE_SEEK_ADJUST;
-  } else lives_freep((void **)&pulse_message2.extra);
+  if (block) lives_obj_instance_add_hook_cb(pulsed->inst, LIVES_SEEK_READY_HOOK,
+					    HOOK_OPT_ONESHOT | HOOK_CB_BLOCKING, seek_ready_cb);
 
-  pulse_message2.next = NULL;
-  pulse_message2.data = lives_strdup_printf("%"PRId64, seekstart);
-  pulse_message2.tc = 0.;
-
-  if (!pulsed->msgq) pulsed->msgq = &pulse_message2;
-  else pulsed->msgq->next = &pulse_message2;
-
-  return seekstart;
-}
-
-
-LIVES_GLOBAL_INLINE off_t pulse_audio_seek_bytes(pulse_driver_t *pulsed, int64_t bytes, lives_clip_t *sfile) {
-  return pulse_audio_seek_bytes_velocity(pulsed, bytes, sfile, 0.);
+  return LIVES_RESULT_SUCCESS;
 }
 
 
@@ -1790,56 +1699,27 @@ void pulse_aud_pb_ready(pulse_driver_t *pulsed, int fileno) {
   lives_clip_t *sfile;
 
   if (!pulsed || !IS_VALID_CLIP(fileno)) return;
-
-  //avsync_force();
-
-  // hmmm
-  if (pulsed && pulsed->is_corked) pulse_driver_uncork(pulsed);
-
   sfile = mainw->files[fileno];
 
   if ((!mainw->multitrack || mainw->multitrack->is_rendering) &&
       (!mainw->event_list || mainw->record || (mainw->preview && mainw->is_processing))) {
     // tell pulse server to open audio file and start playing it
-    // if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
-    // else {
-    pulse_message.command = ASERVER_CMD_FILE_OPEN;
-    pulse_message.data = lives_strdup_printf("%d", fileno);
-    /* pulse_message.next = NULL; */
-    /* pulsed->msgq = &pulse_message; */
-
     if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
         (sfile->laudio_time > 0. || sfile->opening ||
          (mainw->multitrack && mainw->multitrack->is_rendering &&
           lives_file_test((tmpfilename = lives_get_audio_file_name(fileno)), LIVES_FILE_TEST_EXISTS)))) {
-
-
-      /* pulse_message2.command = ASERVER_CMD_FILE_SEEK; */
-      /* pulse_message.next = &pulse_message2; */
-      /* pulse_message2.data = lives_strdup_printf("%"PRId64, sfile->aseek_pos); */
-      /* pulse_message2.next = NULL; */
-
-      mainw->pulsed->msgq = &pulse_message;
-
-      lives_pulse_set_client_attributes(pulsed, fileno, TRUE, FALSE);
+      lives_aplayer_seek_to(fileno, 0., LIVES_DIRECTION_NONE, 0., FALSE);
     }
 
-    /* pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile); */
-
-    //if (!await_audio_queue(LIVES_DEFAULT_TIMEOUT)) seek_err = TRUE;
-
-    /* if (seek_err) { */
-    /*   seek_err = FALSE; */
-    /*   if (pulse_try_reconnect()) pulse_audio_seek_bytes(pulsed, sfile->aseek_pos, sfile); */
+    /* if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) { */
+    /*   // trigger data_preview */
     /* } */
 
-    if (mainw->agen_key != 0 && !mainw->multitrack) pulsed->in_use = TRUE; // audio generator is active
+    //if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY) register_aux_audio_client(1);
+    //nb - AUDIO_OPTS_AUX_RECORD
 
-    // wrong - we just need data_preview
-    if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) register_audio_client();
-
-    if ((mainw->agen_key != 0 || mainw->agen_needs_reinit)
-        && !mainw->multitrack && !mainw->preview) pulsed->in_use = TRUE; // audio generator is active
+    /* if ((mainw->agen_key != 0 || mainw->agen_needs_reinit) */
+    /*     && !mainw->multitrack && !mainw->preview) pulsed->in_use = TRUE; // audio generator is active */
 
     /* mainw->rec_aclip = fileno; */
     /* if (mainw->rec_aclip != -1) { */

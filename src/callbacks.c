@@ -7885,40 +7885,21 @@ void on_loop_cont_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   }
 
 #ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK) {
-    if (mainw->jackd && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-        mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-      else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
-    } else if (mainw->jackd) mainw->jackd->loop = AUDIO_LOOP_NONE;
-  }
+  /* if (prefs->audio_player == AUD_PLAYER_JACK) { */
+  /*   if (mainw->jackd && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) { */
+  /*     if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
+  /*       mainw->jackd->loop = AUDIO_LOOP_PINGPONG; */
+  /*     else mainw->jackd->loop = AUDIO_LOOP_FORWARD; */
+  /*   } else if (mainw->jackd) mainw->jackd->loop = AUDIO_LOOP_NONE; */
+  /* } */
 #endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE) {
-    if (mainw->pulsed && (mainw->loop_cont || mainw->whentostop == NEVER_STOP)) {
-      if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS)
-        mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-      else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-    } else if (mainw->pulsed) mainw->pulsed->loop = AUDIO_LOOP_NONE;
-  }
-#endif
+  lives_aplayer_update_loop_mode(mainw->aplayer);
 }
 
 
 void on_ping_pong_activate(LiVESMenuItem * menuitem, livespointer user_data) {
   mainw->ping_pong = !mainw->ping_pong;
-#ifdef ENABLE_JACK
-  if (prefs->audio_player == AUD_PLAYER_JACK && mainw->jackd && mainw->jackd->loop != AUDIO_LOOP_NONE) {
-    if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->jackd->loop = AUDIO_LOOP_PINGPONG;
-    else mainw->jackd->loop = AUDIO_LOOP_FORWARD;
-  }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-  if (prefs->audio_player == AUD_PLAYER_PULSE && mainw->pulsed && mainw->pulsed->loop != AUDIO_LOOP_NONE) {
-    if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) mainw->pulsed->loop = AUDIO_LOOP_PINGPONG;
-    else mainw->pulsed->loop = AUDIO_LOOP_FORWARD;
-  }
-#endif
+  lives_aplayer_update_loop_mode(mainw->aplayer);
 }
 
 

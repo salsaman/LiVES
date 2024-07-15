@@ -53,7 +53,8 @@ typedef enum {
   THRD_TYPE_UNKNOWN,
   /* internal types */
   THRD_TYPE_MAIN,
-  THRD_TYPE_AUX,
+  //THRD_TYPE_AUX,
+  THRD_TYPE_OBJ,
   THRD_TYPE_WORKER,
   /* external types */
   THRD_TYPE_EXTERN = 256,
@@ -78,6 +79,8 @@ typedef struct {
   char var_origin[128]; // thread descriptive text eg "LiVES Worker Thread"
 
   lives_proc_thread_t var_proc_thread;
+
+  lives_obj_instance_t *var_obj_instance;
 
   lives_obj_attr_t **var_attributes; // attributes passed to proc_thread
 
@@ -259,6 +262,8 @@ lives_thread_data_t *get_thread_data_by_slot_idx(int32_t idx);
 lives_thread_data_t *get_thread_data_by_pthread(pthread_t pth);
 lives_thread_data_t *get_thread_data_by_uid(uint64_t uid);
 lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
+lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
+lives_thread_data_t *get_thread_data_for_active_obj(lives_obj_instance_t *);
 int get_n_active_threads(void);
 
 lives_thread_data_t *get_thread_data(void);
@@ -270,8 +275,6 @@ lives_threadvars_t *get_global_threadvars(void);
 lives_thread_data_t *lives_thread_data_create(void);
 
 void pthread_cleanup_func(void *args);
-
-lives_thread_data_t *get_thread_data_for_lpt(lives_proc_thread_t);
 
 #define THREADVAR(var) (get_threadvars()->var_##var)
 
@@ -502,8 +505,14 @@ void lives_proc_thread_restore_state(lives_proc_thread_t, uint64_t tstate);
 uint64_t lives_proc_thread_include_states(lives_proc_thread_t, uint64_t state_bits);
 uint64_t lives_proc_thread_exclude_states(lives_proc_thread_t, uint64_t state_bits);
 
+uint64_t lives_obj_instance_include_states(lives_obj_instance_t *, uint64_t state_bits);
+uint64_t lives_obj_instance_exclude_states(lives_obj_instance_t *, uint64_t state_bits);
+
 lives_result_t lives_proc_thread_freeze_state(lives_proc_thread_t, boolean rdonly);
 lives_result_t lives_proc_thread_unfreeze_state(lives_proc_thread_t);
+
+lives_result_t lives_obj_instance_freeze_state(lives_obj_instance_t *, boolean rdonly);
+lives_result_t lives_obj_instance_unfreeze_state(lives_obj_instance_t *);
 
 uint64_t get_worker_id(lives_proc_thread_t);
 uint64_t get_worker_payload(uint64_t tid);
@@ -639,6 +648,9 @@ lives_thread_data_t *lives_proc_thread_get_thread_data(lives_proc_thread_t);
 void lives_proc_thread_set_thread_data(lives_proc_thread_t, lives_thread_data_t *);
 #define lives_proc_thread_set_work(lpt, work) do {			\
     if (lpt) weed_set_voidptr_value((lpt), LIVES_LEAF_THREAD_WORK, (work));} while(0);
+
+lives_thread_data_t *lives_obj_instance_get_thread_data(lives_obj_instance_t *);
+void lives_obj_instance_set_thread_data(lives_obj_instance_t *, lives_thread_data_t *);
 
 // attrs
 void lives_proc_thread_set_attrs(lives_proc_thread_t, uint64_t attrs);
@@ -804,7 +816,7 @@ boolean lives_proc_thread_nullify_on_destruction(lives_proc_thread_t, void **ptr
 #define SET_SELF_VALUE_VA(type, name, va)				\
   SET_BOOK_VALUE_VA(lives_proc_thread_ensure_book(self), type, name, va)
 #define SET_SELF_ARRAY(type, name, nvals, valsptr)			\
-  SET_BOOK_VALUE(lives_proc_thread_ensure_book(self), type, name, nvals, valsptr)
+  SET_BOOK_ARRAY(lives_proc_thread_ensure_book(self), type, name, nvals, valsptr)
 
 #define DEL_SELF_VALUE(name)		\
   DEL_BOOK_VALUE(lives_local_databook(), name)
@@ -1080,7 +1092,7 @@ LiVESList *filter_unknown_threads(LiVESList *);
 
 /// loveliness
 #define MAX_LOVELINESS 200.
-#define DEF_LOVELINESS 100.
+#define AVG_LOVELINESS 100.
 #define MIN_LOVELINESS 1.
 
 ///////////////// refcounting ////////////////
@@ -1101,6 +1113,7 @@ int refcount_dec(lives_refcounter_t *);
 int weed_refcount_inc(weed_plant_t *);
 int weed_refcount_dec(weed_plant_t *);
 int weed_refcount_query(weed_plant_t *);
+weed_plant_t *weed_refcount_query_steal(weed_plant_t **);
 
 lives_refcounter_t *weed_add_refcounter(weed_plant_t *);
 boolean weed_remove_refcounter(weed_plant_t *);

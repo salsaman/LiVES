@@ -69,11 +69,20 @@ typedef enum {
 #define LIVES_LEAF_SEEK_CLIP		"_aseek_clip"
 #define LIVES_LEAF_SEEK_DIR		"_aseek_dir"
 #define LIVES_LEAF_SEEK_VEL		"_aseek_vel"
+//
+void lives_aplayer_prepare(int clip);
+//
+
+// must be bytes per channel (divide by nchans if interleaved)
+#define bytes_to_time(sfile, bytes)			\
+  !sfile || !sfile->asampsize || !sfile->fps ?  -1.			\
+  : (double)bytes / sfile->fps / (double)(sfile->asampsize >> 3)
+
 
 lives_obj_instance_t *get_aplayer_instance(int source);
 weed_error_t lives_aplayer_set_limit_behavior(lives_obj_t *aplayer,
-					      limit_behaviour_t low,
-					      limit_behaviour_t high);
+    limit_behaviour_t low,
+    limit_behaviour_t high);
 int lives_aplayer_get_source(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source);
 int lives_aplayer_get_arate(lives_obj_t *aplayer);
@@ -93,11 +102,46 @@ weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter)
 //
 uint64_t lives_aplayer_get_status(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, uint64_t status);
-//
-void lives_aplayer_get_ready(int clip);
+
+uint64_t lives_aplayer_get_active_status(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_active_status(lives_obj_t *aplayer, uint64_t astatus);
+
+int lives_aplayer_get_clip(lives_obj_t *aplayer);
+
+lives_direction_t lives_aplayer_get_direction(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_direction(lives_obj_t *aplayer, lives_direction_t dir);
+
+int64_t lives_aplayer_get_pos(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_pos(lives_obj_t *aplayer, int64_t pos);
+
+int64_t lives_aplayer_get_tot_samps(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_add_nsamps(lives_obj_t *aplayer, int64_t nsamps);
+weed_error_t lives_aplayer_reset_nsamps(lives_obj_t *aplayer);
+
+double lives_aplayer_get_velocity(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_velocity(lives_obj_t *aplayer, double velocity);
+
+#if HAVE_SWRESAMPLE
+#include <libswresample/swresample.h>
+int get_swr_fmts(struct SwrContext **, int out_asampsz, int out_arate, int out_achans, int out_inter, int *out_nsamps,
+                 int in_asampsz, int in_arate, int in_achans, int in_inter, enum AVSampleFormat *outfmt, enum AVSampleFormat *infmt,
+                 boolean reversed);
+
+int sw_resample(void **out_data, int out_samps_per_chan,
+                void **in_data, int in_samps_per_chan,
+                struct SwrContext *swr_ctx);
+#endif
+
+///
+
+weed_error_t lives_aplayer_set_seek_state(lives_obj_t *aplayer, seek_phase state);
+seek_phase lives_aplayer_get_seek_state(lives_obj_t *aplayer);
 
 int lives_aplayer_get_seek_clip(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_seek_clip(lives_obj_t *aplayer, int clip);
+
+weed_error_t lives_aplayer_set_seek_time(lives_obj_t *aplayer, double xtime);
+double lives_aplayer_get_seek_time(lives_obj_t *aplayer);
 
 lives_direction_t lives_aplayer_get_seek_direction(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_seek_direction(lives_obj_t *aplayer, lives_direction_t dir);
@@ -105,28 +149,12 @@ weed_error_t lives_aplayer_set_seek_direction(lives_obj_t *aplayer, lives_direct
 weed_error_t lives_aplayer_set_seek_velocity(lives_obj_t *aplayer, double vel);
 weed_error_t lives_aplayer_get_seek_velocity(lives_obj_t *aplayer);
 
-double lives_aplayer_get_velocity(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_velocity(lives_obj_t *aplayer, double velocity);
-
-lives_direction_t lives_aplayer_get_direction(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_direction(lives_obj_t *aplayer, lives_direction_t dir);
-
-weed_error_t lives_aplayer_set_seek_state(lives_obj_t *aplayer, seek_phase state);
-seek_phase lives_aplayer_get_seek_state(lives_obj_t *aplayer);
-
-weed_error_t lives_aplayer_set_seek_time(lives_obj_t *aplayer, double xtime);
-double lives_aplayer_get_seek_time(lives_obj_t *aplayer);
-
-int64_t lives_aplayer_get_pos(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_pos(lives_obj_t *aplayer, int64_t pos);
-
 void lives_aplayer_set_seek_vals(lives_obj_t *aplayer, int clip, double xtime,
-				 lives_direction_t dir, double vel);
-
-int lives_aplayer_get_clip(lives_obj_t *aplayer);
+                                 lives_direction_t dir, double vel);
 
 int lives_aplayer_get_data_len(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int alength);
+
 void **lives_aplayer_get_data(lives_obj_t *aplayer);
 weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 
@@ -343,7 +371,7 @@ boolean append_silence(int out_fd, void *buff, off64_t oins_size, int64_t ins_si
                        boolean big_endian);
 
 int sample_move_float_float(float *dst, float *src, int in_samples, double scale, int dst_skip,
-                                 float vol, int out_samples) GNU_HOT;
+                            float vol, int out_samples) GNU_HOT;
 
 float sample_move_d16_float(float *dst, short *src, int nsamples, size_t src_skip, int is_unsigned, boolean rev_endian,
                             float vol) GNU_HOT;
@@ -351,7 +379,7 @@ float sample_move_d16_float(float *dst, short *src, int nsamples, size_t src_ski
 ///
 
 int sample_move_float_int(void *holding_buff, float **float_buffer, int nsamps, double scale, int chans, int asamps,
-                              int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns samples output
+                          int usigned, boolean swap_endian, boolean float_interleaved, float vol) GNU_HOT; ///< returns samples output
 
 void sample_move_float_d16(int16_t *dst, float *src,
                            int nsamples, size_t tbytes, double scale, int nDstChannels,
@@ -395,13 +423,25 @@ typedef enum {
   RECA_MIXED
 } lives_rec_audio_type_t;
 
-#define APLAYER_STATUS_READY 1
-#define APLAYER_STATUS_RESYNC 2
-#define APLAYER_STATUS_RUNNING 3
+
+// not ready, needs to be activated
+#define APLAYER_STATUS_INACTIVE		0
+
+// ready for playback but idle / outputting silence
+#define APLAYER_STATUS_STANDBY		1
+
+// seeking / resycning with video / other stream
+#define APLAYER_STATUS_RESYNC		2
+
+// normal playback state
+#define APLAYER_STATUS_RUNNING		3
+
+// active status is either inactive, standby,
+
+#define APLAYER_ASTATUS_MASK 		0x3
+
 
 #define APLAYER_STATUS_PROCESSING	(1ull << 2)
-
-#define APLAYER_STATUS_PREP		(1ull << 5)
 
 #define APLAYER_STATUS_SILENT		(1ull << 16)
 #define APLAYER_STATUS_PAUSED		(1ull << 17)
@@ -440,7 +480,7 @@ int get_aplay_rate(void);
 off_t get_aplay_offset(void);
 
 lives_result_t lives_aplayer_seek_to(int clip, double xtime,
-				     lives_direction_t dir, double vel, boolean block);
+                                     lives_direction_t dir, double vel, boolean block);
 
 boolean avsync_force(lives_obj_instance_t *aplayer);
 
@@ -484,7 +524,7 @@ boolean apply_rte_audio(int nsamples);
 lives_audio_buf_t *init_audio_frame_buffers(lives_obj_instance_t *aplayer);
 
 void update_audio_cbs(lives_obj_instance_t *aplayer, boolean is_aux);
-void block_unlbock_aux_cbs(boolean block);
+void block_unblock_aux_cbs(boolean block);
 
 void free_audio_frame_buffer(lives_audio_buf_t *abuf);
 

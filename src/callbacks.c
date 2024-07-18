@@ -96,8 +96,6 @@ void lives_exit(int signum) {
     pthread_mutex_unlock(&mainw->trcount_mutex);
     pthread_mutex_trylock(&mainw->alock_mutex);
     pthread_mutex_unlock(&mainw->alock_mutex);
-    pthread_mutex_trylock(&mainw->all_hstacks_mutex);
-    pthread_mutex_unlock(&mainw->all_hstacks_mutex);
     pthread_mutex_trylock(&mainw->play_surface_mutex);
     pthread_mutex_unlock(&mainw->play_surface_mutex);
     pthread_mutex_trylock(&mainw->pwin_surface_mutex);
@@ -7952,7 +7950,7 @@ void on_mute_activate(LiVESMenuItem * menuitem, livespointer user_data) {
     (if (LIVES_IS_PLAYING) {
     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
         weed_plant_t *event = get_last_frame_event(mainw->event_list);
-        insert_audio_event_at(event, -1, mainw->pulsed->playing_file, 0., 0.); // audio switch off
+        insert_audio_event_at(event, -1, lives_aplayer_get_clip(mainw->aplayer), 0., 0.); // audio switch off
       }
       mainw->pulsed->mute = TRUE;
       mainw->pulsed->in_use = TRUE;
@@ -11079,7 +11077,7 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
       if (LIVES_CE_PLAYBACK) {
         g_print("jumping !\n");
         if (mainw->clipstore[fnkey][0] != mainw->playing_file) {
-          // player will call do_quick_switch, and possiblt switch_audio_clip()
+          // player will call do_quick_switch, and possibly switch_audio_clip()
           mainw->new_clip = mainw->clipstore[fnkey][0];
         }
         sfile->next_frame = frame;

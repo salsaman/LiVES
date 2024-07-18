@@ -21,14 +21,14 @@
 #define PULSE_MAX_OUTPUT_CHANS PA_CHANNEL_POSITION_MAX
 
 // pb and rec
-#define LIVES_PA_BUFF_MAXLEN 16384
+#define LIVES_PA_BUFF_MAXLEN (uint32_t)-1
 
 // pb only
-#define LIVES_PA_BUFF_TARGET 4096
+#define LIVES_PA_BUFF_TARGET 2048
 #define LIVES_PA_BUFF_MINREQ 1024
 
 // rec only
-#define LIVES_PA_BUFF_FRAGSIZE 4096
+#define LIVES_PA_BUFF_FRAGSIZE 2048
 
 #define PA_SAMPSIZE 16
 #define PA_ACHANS 2
@@ -107,8 +107,6 @@ typedef struct {
 
   boolean is_output; ///< is output FROM host to jack
 
-  volatile int playing_file;
-
   double volume_linear; ///< TODO: use perchannel volume[]
 
   //volatile int read_abuf;
@@ -162,8 +160,7 @@ size_t pulse_get_buffsize(pulse_driver_t *);
 
 int64_t lives_pulse_get_read_offset(pulse_driver_t *);
 
-lives_result_t lives_pulse_seek_to(pulse_driver_t *, int clip, double xtime,
-				   lives_direction_t dir, double vel, boolean block);
+lives_result_t lives_pulse_seek(pulse_driver_t *, boolean block);
 
 /* void pulse_audio_seek_frame(pulse_driver_t *, int clip, frames_t frame);  ///< seek to (video) frame */
 /* boolean pulse_audio_seek_frame_velocity(pulse_driver_t *, double frame, double vel); */

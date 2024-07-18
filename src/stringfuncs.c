@@ -29,8 +29,10 @@ char **lives_strsplit(const char *str, const char *delim, int maxtok) {
 
 
 LIVES_GLOBAL_INLINE void lives_strfreev(char **strings) {
-  for (int i = 0; strings[i]; i++) lives_free(strings[i]);
-  lives_free(strings);
+  g_strfreev(strings);
+
+  /* for (int i = 0; strings[i]; i++) lives_free(strings[i]); */
+  /* lives_free(strings); */
 }
 
 

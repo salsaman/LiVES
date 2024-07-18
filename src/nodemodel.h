@@ -345,7 +345,7 @@ typedef struct {
 
   // measured inst_fps achieved by model plans
   double inst_fps;
-  
+
   // tracker of construction phases
   int phase;
 

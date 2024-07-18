@@ -1249,7 +1249,7 @@ char *get_stats_msg(boolean calc_only) {
     }
     if (pseq != mainw->play_sequence ||
         mainw->playing_file != last_pfile
-	|| lives_aplayer_get_seek_state(aplayer) != not_seeking) {
+        || lives_aplayer_get_seek_state(aplayer) != not_seeking) {
       pseq = mainw->play_sequence;
       last_pfile = mainw->playing_file;
       av_offs = avsync;

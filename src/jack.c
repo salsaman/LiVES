@@ -2785,606 +2785,606 @@ static int audio_process(jack_nframes_t nframes, void *arg) {
   /*   } */
   /* } */
 
-/*   mainw->xrun_active = FALSE; */
+  /*   mainw->xrun_active = FALSE; */
 
-/*   fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos; */
-/*   jackd->state = jack_transport_query(jackd->client, &pos); */
+  /*   fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos; */
+  /*   jackd->state = jack_transport_query(jackd->client, &pos); */
 
-/* #ifdef DEBUG_AJACK */
-/*   lives_printerr("STATE is %d\n", jackd->state); */
-/* #endif */
+  /* #ifdef DEBUG_AJACK */
+  /*   lives_printerr("STATE is %d\n", jackd->state); */
+  /* #endif */
 
-/*   //g_print("MAX DEL is %f\n", jack_get_max_delayed_usecs(jackd->client)); */
+  /*   //g_print("MAX DEL is %f\n", jack_get_max_delayed_usecs(jackd->client)); */
 
   /* handle playing state */
-/*   if (!(prefs->jack_opts & JACK_OPTS_STRICT_SLAVE) */
-/*       || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) */
-/*       || jackd->state == JackTransportRolling) { */
-/*     uint64_t jackFramesAvailable = nframes; /\* frames we have left to write to jack *\/ */
-/*     uint64_t inputFramesAvailable;          /\* frames we have available this loop *\/ */
-/*     uint64_t numFramesToWrite;              /\* num frames we are writing this loop *\/ */
-/*     //int64_t in_frames = 0; */
-/*     uint64_t in_bytes = 0, xin_bytes = 0; */
-/*     float shrink_factor = 1.f; */
-/*     double vol = 1.; */
-/*     double in_framesd = 0.; */
-/*     lives_clip_t *xfile = afile; */
-/*     int qnt = 1; */
-/*     if (IS_VALID_CLIP(jackd->playing_file)) qnt = afile->achans * (afile->asampsize >> 3); */
+  /*   if (!(prefs->jack_opts & JACK_OPTS_STRICT_SLAVE) */
+  /*       || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) */
+  /*       || jackd->state == JackTransportRolling) { */
+  /*     uint64_t jackFramesAvailable = nframes; /\* frames we have left to write to jack *\/ */
+  /*     uint64_t inputFramesAvailable;          /\* frames we have available this loop *\/ */
+  /*     uint64_t numFramesToWrite;              /\* num frames we are writing this loop *\/ */
+  /*     //int64_t in_frames = 0; */
+  /*     uint64_t in_bytes = 0, xin_bytes = 0; */
+  /*     float shrink_factor = 1.f; */
+  /*     double vol = 1.; */
+  /*     double in_framesd = 0.; */
+  /*     lives_clip_t *xfile = afile; */
+  /*     int qnt = 1; */
+  /*     if (IS_VALID_CLIP(jackd->playing_file)) qnt = afile->achans * (afile->asampsize >> 3); */
 
-/* #ifdef DEBUG_AJACK */
-/*     lives_printerr("playing... jackFramesAvailable = %ld %ld\n", jackFramesAvailable, fwd_seek_pos); */
-/* #endif */
+  /* #ifdef DEBUG_AJACK */
+  /*     lives_printerr("playing... jackFramesAvailable = %ld %ld\n", jackFramesAvailable, fwd_seek_pos); */
+  /* #endif */
 
-/*     jackd->num_calls++; */
+  /*     jackd->num_calls++; */
 
-/*     if (!jackd->in_use || !mainw->video_seek_beacon */
-/*         || ((jackd->playing_file < 0 || jackd->seek_pos < 0.) && jackd->read_abuf < 0 */
-/*             && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) */
-/*                 || mainw->multitrack || mainw->preview)) */
-/*         || jackd->is_paused) { */
-/*       /\* output silence if nothing is being outputted *\/ */
-/*       if (!jackd->is_silent) { */
-/*         output_silence(0, nframes, jackd, out_buffer); */
-/*         jackd->is_silent = TRUE; */
-/*       } */
-/*       lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*       lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*       in_ap = FALSE; */
-/*       return 0; */
-/*     } */
+  /*     if (!jackd->in_use || !mainw->video_seek_beacon */
+  /*         || ((jackd->playing_file < 0 || jackd->seek_pos < 0.) && jackd->read_abuf < 0 */
+  /*             && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) */
+  /*                 || mainw->multitrack || mainw->preview)) */
+  /*         || jackd->is_paused) { */
+  /*       /\* output silence if nothing is being outputted *\/ */
+  /*       if (!jackd->is_silent) { */
+  /*         output_silence(0, nframes, jackd, out_buffer); */
+  /*         jackd->is_silent = TRUE; */
+  /*       } */
+  /*       lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*       lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*       in_ap = FALSE; */
+  /*       return 0; */
+  /*     } */
 
-/*     jackd->is_silent = FALSE; */
+  /*     jackd->is_silent = FALSE; */
 
-/*     if (!mainw->xrun_active) jackd->last_proc_ticks = lives_get_current_ticks(); */
+  /*     if (!mainw->xrun_active) jackd->last_proc_ticks = lives_get_current_ticks(); */
 
-/*     /\* g_print("VALXX %ld %d %d %d %d\n", jackFramesAvailable, jackd->read_abuf, mainw->agen_key, *\/ */
-/*     /\*         mainw->agen_needs_reinit, mainw->preview); *\/ */
-/*     if (LIVES_LIKELY(jackFramesAvailable > 0 || (jackd->read_abuf > -1 */
-/*                      || (((mainw->agen_key != 0 || mainw->agen_needs_reinit) */
-/*                           && !mainw->preview) && !mainw->multitrack)))) { */
-/*       if (LIVES_IS_PLAYING && jackd->read_abuf > -1) { */
-/*         // playing back from memory buffers instead of from file */
-/*         // this is used in multitrack */
-/*         from_memory = TRUE; */
+  /*     /\* g_print("VALXX %ld %d %d %d %d\n", jackFramesAvailable, jackd->read_abuf, mainw->agen_key, *\/ */
+  /*     /\*         mainw->agen_needs_reinit, mainw->preview); *\/ */
+  /*     if (LIVES_LIKELY(jackFramesAvailable > 0 || (jackd->read_abuf > -1 */
+  /*                      || (((mainw->agen_key != 0 || mainw->agen_needs_reinit) */
+  /*                           && !mainw->preview) && !mainw->multitrack)))) { */
+  /*       if (LIVES_IS_PLAYING && jackd->read_abuf > -1) { */
+  /*         // playing back from memory buffers instead of from file */
+  /*         // this is used in multitrack */
+  /*         from_memory = TRUE; */
 
-/*         numFramesToWrite = jackFramesAvailable; */
-/*         jackd->frames_written += numFramesToWrite; */
-/*         //jackFramesAvailable = 0; */
-/*         mainw->xrun_active = FALSE; */
-/*       } else { */
-/*         boolean eof = FALSE; */
-/*         int playfile = mainw->playing_file; */
-/*         if (mainw->xrun_active) { */
-/*           if (!jackd->is_silent) { */
-/*             output_silence(0, nframes, jackd, out_buffer); */
-/*             jackd->is_silent = TRUE; */
-/*           } else { */
-/*             int64_t xseek = jackd->seek_pos + nframes * afile->achans * (afile->asampsize >> 3); */
-/*             xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3)); */
-/*             fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek; */
-/*             jackd->frames_written += nframes; */
-/*           } */
-/*           mainw->xrun_active = FALSE; */
-/*           lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*           lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*           in_ap = FALSE; */
-/*           return 0; */
-/*         } */
+  /*         numFramesToWrite = jackFramesAvailable; */
+  /*         jackd->frames_written += numFramesToWrite; */
+  /*         //jackFramesAvailable = 0; */
+  /*         mainw->xrun_active = FALSE; */
+  /*       } else { */
+  /*         boolean eof = FALSE; */
+  /*         int playfile = mainw->playing_file; */
+  /*         if (mainw->xrun_active) { */
+  /*           if (!jackd->is_silent) { */
+  /*             output_silence(0, nframes, jackd, out_buffer); */
+  /*             jackd->is_silent = TRUE; */
+  /*           } else { */
+  /*             int64_t xseek = jackd->seek_pos + nframes * afile->achans * (afile->asampsize >> 3); */
+  /*             xseek = ALIGN_CEIL64(xseek, afile->achans * (afile->asampsize >> 3)); */
+  /*             fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = afile->aseek_pos = xseek; */
+  /*             jackd->frames_written += nframes; */
+  /*           } */
+  /*           mainw->xrun_active = FALSE; */
+  /*           lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*           lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*           in_ap = FALSE; */
+  /*           return 0; */
+  /*         } */
 
-/*         jackd->seek_end = 0; */
-/*         if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file)) { */
-/*           if (mainw->playing_sel) { */
-/*             jackd->seek_end = (int64_t)((double)(afile->end - 1.) / afile->fps * afile->arps) * afile->achans */
-/*                               * (afile->asampsize / 8); */
-/*             if (jackd->seek_end > afile->afilesize) jackd->seek_end = afile->afilesize; */
-/*           } else { */
-/*             if (!mainw->loop_video) jackd->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps) */
-/*                   * afile->achans * (afile->asampsize / 8); */
-/*             else jackd->seek_end = afile->afilesize; */
-/*           } */
-/*           if (jackd->seek_end > afile->afilesize) jackd->seek_end = afile->afilesize; */
-/*         } */
-/*         if (jackd->seek_end == 0 || ((jackd->playing_file == mainw->ascrap_file && !mainw->preview) && IS_VALID_CLIP(playfile) */
-/*                                      && mainw->files[playfile]->achans > 0)) jackd->seek_end = INT64_MAX; */
+  /*         jackd->seek_end = 0; */
+  /*         if (mainw->agen_key == 0 && !mainw->agen_needs_reinit && IS_VALID_CLIP(jackd->playing_file)) { */
+  /*           if (mainw->playing_sel) { */
+  /*             jackd->seek_end = (int64_t)((double)(afile->end - 1.) / afile->fps * afile->arps) * afile->achans */
+  /*                               * (afile->asampsize / 8); */
+  /*             if (jackd->seek_end > afile->afilesize) jackd->seek_end = afile->afilesize; */
+  /*           } else { */
+  /*             if (!mainw->loop_video) jackd->seek_end = (int64_t)((double)(mainw->play_end - 1.) / afile->fps * afile->arps) */
+  /*                   * afile->achans * (afile->asampsize / 8); */
+  /*             else jackd->seek_end = afile->afilesize; */
+  /*           } */
+  /*           if (jackd->seek_end > afile->afilesize) jackd->seek_end = afile->afilesize; */
+  /*         } */
+  /*         if (jackd->seek_end == 0 || ((jackd->playing_file == mainw->ascrap_file && !mainw->preview) && IS_VALID_CLIP(playfile) */
+  /*                                      && mainw->files[playfile]->achans > 0)) jackd->seek_end = INT64_MAX; */
 
-/*         shrink_factor = (float)((double)jackd->sample_in_rate / (double)jackd->sample_out_rate / (double) mainw->audio_stretch); */
-/*         in_framesd = fabs((double)shrink_factor * (double)jackFramesAvailable); */
+  /*         shrink_factor = (float)((double)jackd->sample_in_rate / (double)jackd->sample_out_rate / (double) mainw->audio_stretch); */
+  /*         in_framesd = fabs((double)shrink_factor * (double)jackFramesAvailable); */
 
-/*         // add in a small random factor so on longer timescales we aren't losing or gaining samples */
-/*         in_bytes = (int)(in_framesd + fastrand_dbl(1.)) * jackd->num_input_channels */
-/*                    * jackd->bytes_per_channel; */
+  /*         // add in a small random factor so on longer timescales we aren't losing or gaining samples */
+  /*         in_bytes = (int)(in_framesd + fastrand_dbl(1.)) * jackd->num_input_channels */
+  /*                    * jackd->bytes_per_channel; */
 
-/*         xin_bytes = (int)(in_framesd * jackd->num_input_channels * jackd->bytes_per_channel); */
+  /*         xin_bytes = (int)(in_framesd * jackd->num_input_channels * jackd->bytes_per_channel); */
 
-/*         /\* in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate * *\/ */
-/*         /\*                              (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64)))) *\/ */
-/*         /\*   * jackd->num_input_channels * jackd->bytes_per_channel; *\/ */
+  /*         /\* in_bytes = ABS((in_frames = ((double)jackd->sample_in_rate / (double)jackd->sample_out_rate * *\/ */
+  /*         /\*                              (double)jackFramesAvailable + ((double)fastrand() / (double)LIVES_MAXUINT64)))) *\/ */
+  /*         /\*   * jackd->num_input_channels * jackd->bytes_per_channel; *\/ */
 
-/*         // update looping mode */
-/*         if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) { */
-/*           if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
-/*               && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == jackd->playing_file) */
-/*               && (!mainw->event_list || mainw->record || mainw->record_paused) */
-/*               && mainw->agen_key == 0 && !mainw->agen_needs_reinit */
-/*               && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) */
-/*                   || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG)))) */
-/*             jackd->loop = AUDIO_LOOP_PINGPONG; */
-/*           else jackd->loop = AUDIO_LOOP_FORWARD; */
-/*         } else { */
-/*           jackd->loop = AUDIO_LOOP_NONE; */
-/*         } */
+  /*         // update looping mode */
+  /*         if ((mainw->loop_cont || mainw->whentostop != STOP_ON_AUD_END) && !mainw->preview) { */
+  /*           if (mainw->ping_pong && (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) */
+  /*               && ((prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) || mainw->current_file == jackd->playing_file) */
+  /*               && (!mainw->event_list || mainw->record || mainw->record_paused) */
+  /*               && mainw->agen_key == 0 && !mainw->agen_needs_reinit */
+  /*               && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) */
+  /*                   || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG)))) */
+  /*             jackd->loop = AUDIO_LOOP_PINGPONG; */
+  /*           else jackd->loop = AUDIO_LOOP_FORWARD; */
+  /*         } else { */
+  /*           jackd->loop = AUDIO_LOOP_NONE; */
+  /*         } */
 
-/*         if (cache_buffer) eof = cache_buffer->eof; */
+  /*         if (cache_buffer) eof = cache_buffer->eof; */
 
-/*         if ((shrink_factor = (float)in_framesd / (float)jackFramesAvailable / mainw->audio_stretch) >= 0.f) { */
-/*           jackd->seek_pos += in_bytes; */
-/*           if (jackd->playing_file != mainw->ascrap_file) { */
-/*             if (eof || (jackd->seek_pos >= jackd->seek_end && !afile->opening)) { */
-/*               if (jackd->loop == AUDIO_LOOP_NONE) { */
-/*                 if (*jackd->whentostop == STOP_ON_AUD_END) { */
-/*                   *jackd->cancelled = CANCEL_AUD_END; */
-/*                   jackd->in_use = FALSE; */
-/*                 } */
-/*                 in_bytes = 0; */
-/*               } else { */
-/*                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file) */
-/*                     || clip_can_reverse(mainw->playing_file))) { */
-/*                   jackd->sample_in_rate = -jackd->sample_in_rate; */
-/*                   afile->adirection = -afile->adirection; */
-/*                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end); */
-/*                 } else { */
-/*                   if (mainw->playing_sel) { */
-/*                     fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos */
-/*                                                      = (int64_t)((double)(afile->start - 1.) / afile->fps * afile->arps) */
-/*                                                        * afile->achans * (afile->asampsize / 8); */
-/*                   } else fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = 0; */
-/*                   if (mainw->record && !mainw->record_paused) jack_set_rec_avals(jackd); */
+  /*         if ((shrink_factor = (float)in_framesd / (float)jackFramesAvailable / mainw->audio_stretch) >= 0.f) { */
+  /*           jackd->seek_pos += in_bytes; */
+  /*           if (jackd->playing_file != mainw->ascrap_file) { */
+  /*             if (eof || (jackd->seek_pos >= jackd->seek_end && !afile->opening)) { */
+  /*               if (jackd->loop == AUDIO_LOOP_NONE) { */
+  /*                 if (*jackd->whentostop == STOP_ON_AUD_END) { */
+  /*                   *jackd->cancelled = CANCEL_AUD_END; */
+  /*                   jackd->in_use = FALSE; */
+  /*                 } */
+  /*                 in_bytes = 0; */
+  /*               } else { */
+  /*                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file) */
+  /*                     || clip_can_reverse(mainw->playing_file))) { */
+  /*                   jackd->sample_in_rate = -jackd->sample_in_rate; */
+  /*                   afile->adirection = -afile->adirection; */
+  /*                   jackd->seek_pos -= (jackd->seek_pos - jackd->seek_end); */
+  /*                 } else { */
+  /*                   if (mainw->playing_sel) { */
+  /*                     fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos */
+  /*                                                      = (int64_t)((double)(afile->start - 1.) / afile->fps * afile->arps) */
+  /*                                                        * afile->achans * (afile->asampsize / 8); */
+  /*                   } else fwd_seek_pos = jackd->seek_pos = jackd->real_seek_pos = 0; */
+  /*                   if (mainw->record && !mainw->record_paused) jack_set_rec_avals(jackd); */
 /* 		  // *INDENT-OFF* */
 /* 		}}}} */
 /* 	  // *INDENT-ON* */
-/*         } else { */
-/*           // reverse playback */
-/*           off_t seek_start = (mainw->playing_sel ? */
-/*                               (int64_t)((double)(afile->start - 1.) / afile->fps * afile->arps) */
-/*                               * afile->achans * (afile->asampsize / 8) : 0); */
-/*           seek_start = ALIGN_CEIL64(seek_start - qnt, qnt); */
+  /*         } else { */
+  /*           // reverse playback */
+  /*           off_t seek_start = (mainw->playing_sel ? */
+  /*                               (int64_t)((double)(afile->start - 1.) / afile->fps * afile->arps) */
+  /*                               * afile->achans * (afile->asampsize / 8) : 0); */
+  /*           seek_start = ALIGN_CEIL64(seek_start - qnt, qnt); */
 
-/*           if ((jackd->seek_pos -= in_bytes) < seek_start) { */
-/*             // reached beginning backwards */
-/*             if (jackd->playing_file != mainw->ascrap_file) { */
-/*               if (jackd->loop == AUDIO_LOOP_NONE) { */
-/*                 if (*jackd->whentostop == STOP_ON_AUD_END) { */
-/*                   *jackd->cancelled = CANCEL_AUD_END; */
-/*                 } */
-/*                 jackd->in_use = FALSE; */
-/*               } else { */
-/*                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file) */
-/*                     || clip_can_reverse(mainw->playing_file))) { */
-/*                   jackd->sample_in_rate = -jackd->sample_in_rate; */
-/*                   afile->adirection = -afile->adirection; */
-/*                   shrink_factor = -shrink_factor; */
-/*                   jackd->seek_pos = seek_start; */
-/*                 } else { */
-/*                   jackd->seek_pos += jackd->seek_end; */
-/*                   if (jackd->seek_pos > jackd->seek_end - in_bytes) */
-/*                     jackd->seek_pos = jackd->seek_end - in_bytes; */
-/*                 } */
-/*               } */
-/*               fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos; */
-/*               if (mainw->record && !mainw->record_paused) jack_set_rec_avals(jackd); */
-/*             } */
-/*           } */
-/*         } */
+  /*           if ((jackd->seek_pos -= in_bytes) < seek_start) { */
+  /*             // reached beginning backwards */
+  /*             if (jackd->playing_file != mainw->ascrap_file) { */
+  /*               if (jackd->loop == AUDIO_LOOP_NONE) { */
+  /*                 if (*jackd->whentostop == STOP_ON_AUD_END) { */
+  /*                   *jackd->cancelled = CANCEL_AUD_END; */
+  /*                 } */
+  /*                 jackd->in_use = FALSE; */
+  /*               } else { */
+  /*                 if (jackd->loop == AUDIO_LOOP_PINGPONG && ((jackd->playing_file != mainw->playing_file) */
+  /*                     || clip_can_reverse(mainw->playing_file))) { */
+  /*                   jackd->sample_in_rate = -jackd->sample_in_rate; */
+  /*                   afile->adirection = -afile->adirection; */
+  /*                   shrink_factor = -shrink_factor; */
+  /*                   jackd->seek_pos = seek_start; */
+  /*                 } else { */
+  /*                   jackd->seek_pos += jackd->seek_end; */
+  /*                   if (jackd->seek_pos > jackd->seek_end - in_bytes) */
+  /*                     jackd->seek_pos = jackd->seek_end - in_bytes; */
+  /*                 } */
+  /*               } */
+  /*               fwd_seek_pos = jackd->real_seek_pos = jackd->seek_pos; */
+  /*               if (mainw->record && !mainw->record_paused) jack_set_rec_avals(jackd); */
+  /*             } */
+  /*           } */
+  /*         } */
 
-/*         if (jackd->mute || !cache_buffer || */
-/*             (in_bytes == 0 && */
-/*              ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack || mainw->preview))) { */
-/*           if (!mainw->multitrack && cache_buffer && !wait_cache_buffer */
-/*               && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) */
-/*                   || mainw->preview)) { */
-/*             push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor); */
-/*           } */
-/*           output_silence(0, nframes, jackd, out_buffer); */
-/*           if (jackd->playing_file >= 0) afile->aseek_pos = jackd->seek_pos; */
-/*           lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*           lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*           in_ap = FALSE; */
-/*           return 0; */
-/*         } else { */
-/*           xin_bytes = 0; */
-/*         } */
-/*         if (mainw->agen_key != 0 && !mainw->multitrack && !mainw->preview) { */
-/*           // how much audio do we want to pull from any generator ? */
-/*           in_bytes = jackFramesAvailable * nch * 4; */
-/*           xin_bytes = in_bytes; */
-/*         } */
+  /*         if (jackd->mute || !cache_buffer || */
+  /*             (in_bytes == 0 && */
+  /*              ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) || mainw->multitrack || mainw->preview))) { */
+  /*           if (!mainw->multitrack && cache_buffer && !wait_cache_buffer */
+  /*               && ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) */
+  /*                   || mainw->preview)) { */
+  /*             push_cache_buffer(cache_buffer, jackd, in_bytes, nframes, shrink_factor); */
+  /*           } */
+  /*           output_silence(0, nframes, jackd, out_buffer); */
+  /*           if (jackd->playing_file >= 0) afile->aseek_pos = jackd->seek_pos; */
+  /*           lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*           lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*           in_ap = FALSE; */
+  /*           return 0; */
+  /*         } else { */
+  /*           xin_bytes = 0; */
+  /*         } */
+  /*         if (mainw->agen_key != 0 && !mainw->multitrack && !mainw->preview) { */
+  /*           // how much audio do we want to pull from any generator ? */
+  /*           in_bytes = jackFramesAvailable * nch * 4; */
+  /*           xin_bytes = in_bytes; */
+  /*         } */
 
-/*         if (!jackd->in_use || in_bytes == 0) { */
-          // reached end of audio with no looping
-/*           output_silence(0, nframes, jackd, out_buffer); */
+  /*         if (!jackd->in_use || in_bytes == 0) { */
+  // reached end of audio with no looping
+  /*           output_silence(0, nframes, jackd, out_buffer); */
 
-/*           jackd->is_silent = TRUE; */
+  /*           jackd->is_silent = TRUE; */
 
-/*           if (jackd->seek_pos < 0. && jackd->playing_file > -1 && xfile) { */
-/*             jackd->seek_pos += (double)(jackd->sample_in_rate / jackd->sample_out_rate) */
-/*                                * nframes * xfile->achans * xfile->asampsize / 8; */
-/*           } */
-/*           lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*           lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*           in_ap = FALSE; */
-/*           return 0; */
-/*         } */
+  /*           if (jackd->seek_pos < 0. && jackd->playing_file > -1 && xfile) { */
+  /*             jackd->seek_pos += (double)(jackd->sample_in_rate / jackd->sample_out_rate) */
+  /*                                * nframes * xfile->achans * xfile->asampsize / 8; */
+  /*           } */
+  /*           lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*           lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*           in_ap = FALSE; */
+  /*           return 0; */
+  /*         } */
 
-/*         if (mainw->multitrack || mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit)) { */
-/*           inputFramesAvailable = cache_buffer->samp_space; */
-/*         } else { */
-/*           inputFramesAvailable = jackFramesAvailable; */
-/*         } */
+  /*         if (mainw->multitrack || mainw->preview || (mainw->agen_key == 0 && !mainw->agen_needs_reinit)) { */
+  /*           inputFramesAvailable = cache_buffer->samp_space; */
+  /*         } else { */
+  /*           inputFramesAvailable = jackFramesAvailable; */
+  /*         } */
 
-/* #ifdef DEBUG_AJACK */
-/*         lives_printerr("%ld inputFramesAvailable == %f, %d %d,jackFramesAvailable == %ld\n", inputFramesAvailable, */
-/*                        in_framesd, jackd->sample_in_rate, jackd->sample_out_rate, jackFramesAvailable); */
-/* #endif */
+  /* #ifdef DEBUG_AJACK */
+  /*         lives_printerr("%ld inputFramesAvailable == %f, %d %d,jackFramesAvailable == %ld\n", inputFramesAvailable, */
+  /*                        in_framesd, jackd->sample_in_rate, jackd->sample_out_rate, jackFramesAvailable); */
+  /* #endif */
 
-/*         /\\* write as many bytes as we have space remaining, or as much as we have data to write *\\/ */
-/*         //numFramesToWrite = MIN(jackFramesAvailable, inputFramesAvailable); */
-/*         numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001); */
+  /*         /\\* write as many bytes as we have space remaining, or as much as we have data to write *\\/ */
+  /*         //numFramesToWrite = MIN(jackFramesAvailable, inputFramesAvailable); */
+  /*         numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001); */
 
-/* #ifdef DEBUG_AJACK */
-/*         lives_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld," */
-/*                        "jackd->num_output_channels == %d, nf2w %ld, in_bytes %ld, sf %.8f\n", */
-/*                        nframes, jackFramesAvailable, jackd->num_input_channels, nch, */
-/*                        numFramesToWrite, in_bytes, shrink_factor); */
-/* #endif */
-/*         numFramesToWrite = jackFramesAvailable; */
-/*         jackd->frames_written += numFramesToWrite; */
-/*         //jackFramesAvailable -= numFramesToWrite; /\\* take away what was written *\\/ */
+  /* #ifdef DEBUG_AJACK */
+  /*         lives_printerr("nframes == %d, jackFramesAvailable == %ld,\n\tjackd->num_input_channels == %ld," */
+  /*                        "jackd->num_output_channels == %d, nf2w %ld, in_bytes %ld, sf %.8f\n", */
+  /*                        nframes, jackFramesAvailable, jackd->num_input_channels, nch, */
+  /*                        numFramesToWrite, in_bytes, shrink_factor); */
+  /* #endif */
+  /*         numFramesToWrite = jackFramesAvailable; */
+  /*         jackd->frames_written += numFramesToWrite; */
+  /*         //jackFramesAvailable -= numFramesToWrite; /\\* take away what was written *\\/ */
 
-/* #ifdef DEBUG_AJACK */
-/*         lives_printerr("jackFramesAvailable == %ld\n", jackFramesAvailable); */
-/* #endif */
-/*       } */
+  /* #ifdef DEBUG_AJACK */
+  /*         lives_printerr("jackFramesAvailable == %ld\n", jackFramesAvailable); */
+  /* #endif */
+  /*       } */
 
-      // playback from memory or file
-      /* if (CLIP_HAS_AUDIO(jackd->playing_file) && !mainw->multitrack) */
-      /*   vol = lives_vol_from_linear(future_prefs->volume * afile->vol); */
-      /* else vol = lives_vol_from_linear(future_prefs->volume); */
+  // playback from memory or file
+  /* if (CLIP_HAS_AUDIO(jackd->playing_file) && !mainw->multitrack) */
+  /*   vol = lives_vol_from_linear(future_prefs->volume * afile->vol); */
+  /* else vol = lives_vol_from_linear(future_prefs->volume); */
 
-      /* if (numFramesToWrite > 0) { */
-      /*   if (!from_memory) { */
-      /*     //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n"); */
-      /*     if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf) && !mainw->preview_rendering && */
-      /*         !jackd->mute) { // TODO - try buffer16 instead of bufferf */
-      /*       float *fbuffer = NULL; */
+  /* if (numFramesToWrite > 0) { */
+  /*   if (!from_memory) { */
+  /*     //	if (((int)(jackd->num_calls/100.))*100==jackd->num_calls) if (mainw->soft_debug) g_print("audio pip\n"); */
+  /*     if ((mainw->agen_key != 0 || mainw->agen_needs_reinit || cache_buffer->bufferf) && !mainw->preview_rendering && */
+  /*         !jackd->mute) { // TODO - try buffer16 instead of bufferf */
+  /*       float *fbuffer = NULL; */
 
-      /*       if (!mainw->preview && !mainw->multitrack && (mainw->agen_key != 0 || mainw->agen_needs_reinit)) { */
-      /*         // audio generated from plugin */
-      /*         if (mainw->agen_needs_reinit) pl_error = TRUE; */
-      /*         else { */
-      /*           if (!get_audio_from_plugin(out_buffer, nch, */
-      /*                                      jackd->sample_out_rate, numFramesToWrite, TRUE)) { */
-      /*             pl_error = TRUE; */
-      /*           } */
-      /*           jackFramesAvailable = 0; */
-      /*         } */
+  /*       if (!mainw->preview && !mainw->multitrack && (mainw->agen_key != 0 || mainw->agen_needs_reinit)) { */
+  /*         // audio generated from plugin */
+  /*         if (mainw->agen_needs_reinit) pl_error = TRUE; */
+  /*         else { */
+  /*           if (!get_audio_from_plugin(out_buffer, nch, */
+  /*                                      jackd->sample_out_rate, numFramesToWrite, TRUE)) { */
+  /*             pl_error = TRUE; */
+  /*           } */
+  /*           jackFramesAvailable = 0; */
+  /*         } */
 
-      /*         // get back non-interleaved float fbuffer; rate and channels should match */
-      /*         if (pl_error) { */
-      /*           // error in plugin, put silence */
-      /*           output_silence(0, numFramesToWrite, jackd, out_buffer); */
-      /*         } else { */
-      /*           /\\* for (i = 0; i < nch; i++) { *\\/ */
-      /*           /\\*   // push non-interleaved audio in fbuffer to jack *\\/ */
-      /*           /\\*   if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { *\\/ */
-      /*           /\\*     // we will push the pre-effected audio to any audio reactive generators *\\/ */
-      /*           /\\*     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1); *\\/ */
-      /*           /\\*   } *\\/ */
-      /*           /\\* } *\\/ */
-      /*         } */
-      /*         //} */
-      /*         if (!pl_error && has_audio_filters(AF_TYPE_NONA)) { */
-      /*           float **xfltbuf; */
-      /*           ticks_t tc = mainw->currticks; */
-      /*           // apply inplace any effects with audio in_channels, result goes to jack */
-      /*           weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO); */
-      /*           weed_layer_set_audio_data(layer, out_buffer, jackd->sample_out_rate, */
-      /*                                     nch, numFramesToWrite); */
-      /*           weed_set_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, WEED_TRUE); */
-      /*           weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE); */
-      /*           xfltbuf = weed_layer_get_audio_data(layer, NULL); */
-      /*           for (i = 0; i < nch; i++) { */
-      /*             if (xfltbuf[i] != out_buffer[i]) { */
-      /*               lives_memcpy(out_buffer[i], xfltbuf[i], numFramesToWrite * sizeof(float)); */
-      /*               lives_free(xfltbuf[i]); */
-      /*             } */
-      /*           } */
-      /*           lives_free(xfltbuf); */
-      /*           weed_layer_set_audio_data(layer, NULL, 0, 0, 0); */
-      /*           weed_layer_unref(layer); */
-      /*         } */
+  /*         // get back non-interleaved float fbuffer; rate and channels should match */
+  /*         if (pl_error) { */
+  /*           // error in plugin, put silence */
+  /*           output_silence(0, numFramesToWrite, jackd, out_buffer); */
+  /*         } else { */
+  /*           /\\* for (i = 0; i < nch; i++) { *\\/ */
+  /*           /\\*   // push non-interleaved audio in fbuffer to jack *\\/ */
+  /*           /\\*   if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { *\\/ */
+  /*           /\\*     // we will push the pre-effected audio to any audio reactive generators *\\/ */
+  /*           /\\*     append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1); *\\/ */
+  /*           /\\*   } *\\/ */
+  /*           /\\* } *\\/ */
+  /*         } */
+  /*         //} */
+  /*         if (!pl_error && has_audio_filters(AF_TYPE_NONA)) { */
+  /*           float **xfltbuf; */
+  /*           ticks_t tc = mainw->currticks; */
+  /*           // apply inplace any effects with audio in_channels, result goes to jack */
+  /*           weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO); */
+  /*           weed_layer_set_audio_data(layer, out_buffer, jackd->sample_out_rate, */
+  /*                                     nch, numFramesToWrite); */
+  /*           weed_set_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, WEED_TRUE); */
+  /*           weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE); */
+  /*           xfltbuf = weed_layer_get_audio_data(layer, NULL); */
+  /*           for (i = 0; i < nch; i++) { */
+  /*             if (xfltbuf[i] != out_buffer[i]) { */
+  /*               lives_memcpy(out_buffer[i], xfltbuf[i], numFramesToWrite * sizeof(float)); */
+  /*               lives_free(xfltbuf[i]); */
+  /*             } */
+  /*           } */
+  /*           lives_free(xfltbuf); */
+  /*           weed_layer_set_audio_data(layer, NULL, 0, 0, 0); */
+  /*           weed_layer_unref(layer); */
+  /*         } */
 
-            /*   pthread_mutex_lock(&mainw->vpp_stream_mutex); */
-            /*   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) { */
-            /*     (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite); */
-            /*   } */
-            /*   pthread_mutex_unlock(&mainw->vpp_stream_mutex); */
+  /*   pthread_mutex_lock(&mainw->vpp_stream_mutex); */
+  /*   if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) { */
+  /*     (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite); */
+  /*   } */
+  /*   pthread_mutex_unlock(&mainw->vpp_stream_mutex); */
 
-            /*   if (mainw->record && mainw->ascrap_file != -1 && mainw->playing_file > 0) { */
-            /*     // if recording we will save this audio fragment */
-            /*     int out_unsigned = mainw->files[mainw->ascrap_file]->signed_endian & AFORM_UNSIGNED; */
-            /*     rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans * */
-            /*              mainw->files[mainw->ascrap_file]->asampsize >> 3; */
+  /*   if (mainw->record && mainw->ascrap_file != -1 && mainw->playing_file > 0) { */
+  /*     // if recording we will save this audio fragment */
+  /*     int out_unsigned = mainw->files[mainw->ascrap_file]->signed_endian & AFORM_UNSIGNED; */
+  /*     rbytes = numFramesToWrite * mainw->files[mainw->ascrap_file]->achans * */
+  /*              mainw->files[mainw->ascrap_file]->asampsize >> 3; */
 
-            /*     rbytes = audio_read_inner(jackd, out_buffer, mainw->ascrap_file, numFramesToWrite, 1.0, */
-            /*                               !(mainw->files[mainw->ascrap_file]->signed_endian */
-            /*                                 & AFORM_BIG_ENDIAN), out_unsigned); */
+  /*     rbytes = audio_read_inner(jackd, out_buffer, mainw->ascrap_file, numFramesToWrite, 1.0, */
+  /*                               !(mainw->files[mainw->ascrap_file]->signed_endian */
+  /*                                 & AFORM_BIG_ENDIAN), out_unsigned); */
 
-            /*     mainw->files[mainw->ascrap_file]->aseek_pos += rbytes; */
-            /*   } */
-            /* } else { */
-            /*   // audio from a file */
-            /*   // BAD - non realtime */
-            /*   if (wait_cache_buffer) { */
-            /*     while (!cache_buffer->is_ready && !cache_buffer->die) { */
-            /*       LIVES_HAVEANAP; */
-            /*       if (mainw->is_exiting) cache_buffer->die = TRUE; */
-            /*     } */
-            /*     wait_cache_buffer = FALSE; */
-            /*   } */
+  /*     mainw->files[mainw->ascrap_file]->aseek_pos += rbytes; */
+  /*   } */
+  /* } else { */
+  /*   // audio from a file */
+  /*   // BAD - non realtime */
+  /*   if (wait_cache_buffer) { */
+  /*     while (!cache_buffer->is_ready && !cache_buffer->die) { */
+  /*       LIVES_HAVEANAP; */
+  /*       if (mainw->is_exiting) cache_buffer->die = TRUE; */
+  /*     } */
+  /*     wait_cache_buffer = FALSE; */
+  /*   } */
 
-              // BAD - non realtime
-/*               pthread_mutex_lock(&mainw->cache_buffer_mutex); */
-/*               if (!cache_buffer->die) { */
-/*                 inputFramesAvailable = in_bytes / (jackd->num_input_channels * (afile->asampsize >> 3)); */
-/*                 numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001); */
+  // BAD - non realtime
+  /*               pthread_mutex_lock(&mainw->cache_buffer_mutex); */
+  /*               if (!cache_buffer->die) { */
+  /*                 inputFramesAvailable = in_bytes / (jackd->num_input_channels * (afile->asampsize >> 3)); */
+  /*                 numFramesToWrite = (uint64_t)((double)inputFramesAvailable / (double)fabsf(shrink_factor) + .001); */
 
-/*                 if (numFramesToWrite > jackFramesAvailable) { */
-/* #ifdef DEBUG_AJACK */
-/*                   lives_printerr("dropping last %ld samples\n", numFramesToWrite - jackFramesAvailable); */
-/* #endif */
-/*                 } else if (numFramesToWrite < jackFramesAvailable) { */
-/*                   // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples */
-/*                   // so as not to jump to leave a zero filled gap */
-/*                   size_t lack = jackFramesAvailable - numFramesToWrite; */
-/*                   for (i = 0; i < nch; i++) { */
-/*                     lives_memcpy(out_buffer[i] + numFramesToWrite, out_buffer[i] + numFramesToWrite - lack, lack * 4); */
-/*                   } */
-/*                 } */
+  /*                 if (numFramesToWrite > jackFramesAvailable) { */
+  /* #ifdef DEBUG_AJACK */
+  /*                   lives_printerr("dropping last %ld samples\n", numFramesToWrite - jackFramesAvailable); */
+  /* #endif */
+  /*                 } else if (numFramesToWrite < jackFramesAvailable) { */
+  /*                   // because of rounding, occasionally we get a sample or two short. Here we duplicate the last samples */
+  /*                   // so as not to jump to leave a zero filled gap */
+  /*                   size_t lack = jackFramesAvailable - numFramesToWrite; */
+  /*                   for (i = 0; i < nch; i++) { */
+  /*                     lives_memcpy(out_buffer[i] + numFramesToWrite, out_buffer[i] + numFramesToWrite - lack, lack * 4); */
+  /*                   } */
+  /*                 } */
 
-/*                 numFramesToWrite = jackFramesAvailable; */
+  /*                 numFramesToWrite = jackFramesAvailable; */
 
-/*                 // push audio from cache_buffer to jack */
-/*                 for (i = 0; i < nch; i++) { */
-/*                   /\\* if (afile->asampsize == 32) *\\/ */
-/*                   /\\*   sample_move_float_float(out_buffer[i], cache_buffer->bufferf[i], numFramesToWrite, 1., 1, 1.); *\\/ */
-/*                   /\\* else  *\\/ */
-/*                   // we use output_channels here since the audio has been resampled to this */
-/*                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, */
-/*                                             jackd->num_output_channels, afile->signed_endian */
-/*                                             & AFORM_UNSIGNED, FALSE, vol); */
-/*                   /\\* if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { *\\/ */
-/*                   /\\*   // we will push the pre-effected audio to any audio reactive generators *\\/ */
-/*                   /\\*   append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1); *\\/ */
-/*                   /\\* } *\\/ */
-/*                 } */
-/*                 pthread_mutex_unlock(&mainw->cache_buffer_mutex); */
+  /*                 // push audio from cache_buffer to jack */
+  /*                 for (i = 0; i < nch; i++) { */
+  /*                   /\\* if (afile->asampsize == 32) *\\/ */
+  /*                   /\\*   sample_move_float_float(out_buffer[i], cache_buffer->bufferf[i], numFramesToWrite, 1., 1, 1.); *\\/ */
+  /*                   /\\* else  *\\/ */
+  /*                   // we use output_channels here since the audio has been resampled to this */
+  /*                   jackd->abs_maxvol_heard = sample_move_d16_float(out_buffer[i], cache_buffer->buffer16[0] + i, numFramesToWrite, */
+  /*                                             jackd->num_output_channels, afile->signed_endian */
+  /*                                             & AFORM_UNSIGNED, FALSE, vol); */
+  /*                   /\\* if (mainw->afbuffer && prefs->audio_src != AUDIO_SRC_EXT) { *\\/ */
+  /*                   /\\*   // we will push the pre-effected audio to any audio reactive generators *\\/ */
+  /*                   /\\*   append_to_audio_bufferf(out_buffer[i], numFramesToWrite, i == nch - 1 ? -i - 1 : i + 1); *\\/ */
+  /*                   /\\* } *\\/ */
+  /*                 } */
+  /*                 pthread_mutex_unlock(&mainw->cache_buffer_mutex); */
 
-/*                 jackFramesAvailable = 0; */
+  /*                 jackFramesAvailable = 0; */
 
-/*                 if (has_audio_filters(AF_TYPE_NONA) && jackd->playing_file != mainw->ascrap_file) { */
-/*                   float **xfltbuf; */
-/*                   ticks_t tc = mainw->currticks; */
-/*                   // apply inplace any effects with audio in_channels */
-/*                   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO); */
-/*                   weed_layer_set_audio_data(layer, out_buffer, jackd->sample_out_rate, */
-/*                                             nch, numFramesToWrite); */
-/*                   weed_set_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, WEED_TRUE); */
-/*                   weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE); */
-/*                   xfltbuf = weed_layer_get_audio_data(layer, NULL); */
-/*                   for (i = 0; i < nch; i++) { */
-/*                     if (xfltbuf[i] != out_buffer[i]) { */
-/*                       lives_memcpy(out_buffer[i], xfltbuf[i], numFramesToWrite * sizeof(float)); */
-/*                       lives_free(xfltbuf[i]); */
-/*                     } */
-/*                   } */
-/*                   lives_free(xfltbuf); */
-/*                   weed_layer_set_audio_data(layer, NULL, 0, 0, 0); */
-/*                   weed_layer_unref(layer); */
-/*                 } */
+  /*                 if (has_audio_filters(AF_TYPE_NONA) && jackd->playing_file != mainw->ascrap_file) { */
+  /*                   float **xfltbuf; */
+  /*                   ticks_t tc = mainw->currticks; */
+  /*                   // apply inplace any effects with audio in_channels */
+  /*                   weed_layer_t *layer = weed_layer_new(WEED_LAYER_TYPE_AUDIO); */
+  /*                   weed_layer_set_audio_data(layer, out_buffer, jackd->sample_out_rate, */
+  /*                                             nch, numFramesToWrite); */
+  /*                   weed_set_boolean_value(layer, WEED_LEAF_HOST_KEEP_ADATA, WEED_TRUE); */
+  /*                   weed_apply_audio_effects_rt(layer, tc, FALSE, TRUE); */
+  /*                   xfltbuf = weed_layer_get_audio_data(layer, NULL); */
+  /*                   for (i = 0; i < nch; i++) { */
+  /*                     if (xfltbuf[i] != out_buffer[i]) { */
+  /*                       lives_memcpy(out_buffer[i], xfltbuf[i], numFramesToWrite * sizeof(float)); */
+  /*                       lives_free(xfltbuf[i]); */
+  /*                     } */
+  /*                   } */
+  /*                   lives_free(xfltbuf); */
+  /*                   weed_layer_set_audio_data(layer, NULL, 0, 0, 0); */
+  /*                   weed_layer_unref(layer); */
+  /*                 } */
 
-/*                 // BAD - non realtime */
-/*                 pthread_mutex_lock(&mainw->vpp_stream_mutex); */
-/*                 if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) { */
-/*                   (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite); */
-/*                 } */
-/*                 pthread_mutex_unlock(&mainw->vpp_stream_mutex); */
-/*               } else { */
-/*                 // cache_buffer->die == TRUE */
-/*                 pthread_mutex_unlock(&mainw->cache_buffer_mutex); */
-/*                 output_silence(0, numFramesToWrite, jackd, out_buffer); */
-/*               } */
-/*             } */
+  /*                 // BAD - non realtime */
+  /*                 pthread_mutex_lock(&mainw->vpp_stream_mutex); */
+  /*                 if (mainw->ext_audio && mainw->vpp && mainw->vpp->render_audio_frame_float) { */
+  /*                   (*mainw->vpp->render_audio_frame_float)(out_buffer, numFramesToWrite); */
+  /*                 } */
+  /*                 pthread_mutex_unlock(&mainw->vpp_stream_mutex); */
+  /*               } else { */
+  /*                 // cache_buffer->die == TRUE */
+  /*                 pthread_mutex_unlock(&mainw->cache_buffer_mutex); */
+  /*                 output_silence(0, numFramesToWrite, jackd, out_buffer); */
+  /*               } */
+  /*             } */
 
-/*             if (jackd->astream_fd != -1) { */
-/*               // audio streaming if enabled */
-/*               unsigned char *xbuf; */
+  /*             if (jackd->astream_fd != -1) { */
+  /*               // audio streaming if enabled */
+  /*               unsigned char *xbuf; */
 
-/*               rbytes = numFramesToWrite * nch * 2; */
-/*               nbytes = rbytes << 1; */
+  /*               rbytes = numFramesToWrite * nch * 2; */
+  /*               nbytes = rbytes << 1; */
 
-/*               if (pl_error) { */
-/*                 // generator plugin error - output silence */
-/*                 check_zero_buff(rbytes); */
-/*                 audio_stream(zero_buff, rbytes, jackd->astream_fd); */
-/*               } else { */
-/*                 if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) && !mainw->multitrack && !mainw->preview) */
-/*                   xbuf = (unsigned char *)cache_buffer->buffer16[0]; */
-/*                 else { */
-/*                   // plugin is generating and we are streaming: convert fbuffer to s16 */
-/*                   float **fp = (float **)lives_calloc(nch, sizeof(float *)); */
-/*                   for (i = 0; i < nch; i++) { */
-/*                     fp[i] = fbuffer + i; */
-/*                   } */
-/*                   xbuf = (unsigned char *)lives_calloc(nbytes * nch, 1); */
-/*                   sample_move_float_int((void *)xbuf, fp, numFramesToWrite, 1.0, */
-/*                                         nch, 16, 0, TRUE, TRUE, 1.0); */
-/*                 } */
+  /*               if (pl_error) { */
+  /*                 // generator plugin error - output silence */
+  /*                 check_zero_buff(rbytes); */
+  /*                 audio_stream(zero_buff, rbytes, jackd->astream_fd); */
+  /*               } else { */
+  /*                 if ((mainw->agen_key == 0 && !mainw->agen_needs_reinit) && !mainw->multitrack && !mainw->preview) */
+  /*                   xbuf = (unsigned char *)cache_buffer->buffer16[0]; */
+  /*                 else { */
+  /*                   // plugin is generating and we are streaming: convert fbuffer to s16 */
+  /*                   float **fp = (float **)lives_calloc(nch, sizeof(float *)); */
+  /*                   for (i = 0; i < nch; i++) { */
+  /*                     fp[i] = fbuffer + i; */
+  /*                   } */
+  /*                   xbuf = (unsigned char *)lives_calloc(nbytes * nch, 1); */
+  /*                   sample_move_float_int((void *)xbuf, fp, numFramesToWrite, 1.0, */
+  /*                                         nch, 16, 0, TRUE, TRUE, 1.0); */
+  /*                 } */
 
-/*                 if (nch != 2) { */
-/*                   // need to remap channels to stereo (assumed for now) */
-/*                   size_t bysize = 4, tsize = 0; */
-/*                   unsigned char *inbuf, *oinbuf = NULL; */
+  /*                 if (nch != 2) { */
+  /*                   // need to remap channels to stereo (assumed for now) */
+  /*                   size_t bysize = 4, tsize = 0; */
+  /*                   unsigned char *inbuf, *oinbuf = NULL; */
 
-/*                   if ((mainw->agen_key != 0 || mainw->agen_needs_reinit) && !mainw->multitrack && !mainw->preview) */
-/*                     inbuf = (unsigned char *)cache_buffer->buffer16[0]; */
-/*                   else oinbuf = inbuf = xbuf; */
+  /*                   if ((mainw->agen_key != 0 || mainw->agen_needs_reinit) && !mainw->multitrack && !mainw->preview) */
+  /*                     inbuf = (unsigned char *)cache_buffer->buffer16[0]; */
+  /*                   else oinbuf = inbuf = xbuf; */
 
-/*                   xbuf = (unsigned char *)lives_calloc(nbytes, 1); */
-/*                   if (!xbuf) { */
-/*                     // external streaming */
-/*                     rbytes = numFramesToWrite * nch * 2; */
-/*                     if (check_zero_buff(rbytes)) */
-/*                       audio_stream(zero_buff, rbytes, jackd->astream_fd); */
-/*                     lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*                     lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*                     in_ap = FALSE; */
-/*                     return 0; */
-/*                   } */
-/*                   if (nch == 1) bysize = 2; */
-/*                   while (nbytes > 0) { */
-/*                     lives_memcpy(xbuf + tsize, inbuf, bysize); */
-/*                     tsize += bysize; */
-/*                     nbytes -= bysize; */
-/*                     if (bysize == 2) { */
-/*                       // duplicate mono channel */
-/*                       lives_memcpy(xbuf + tsize, inbuf, bysize); */
-/*                       tsize += bysize; */
-/*                       nbytes -= bysize; */
-/*                       inbuf += bysize; */
-/*                     } else { */
-/*                       // or skip extra channels */
-/*                       inbuf += nch * 4; */
-/*                     } */
-/*                   } */
-/*                   nbytes = numFramesToWrite * nch * 4; */
-/*                   lives_freep((void **)&oinbuf); */
-/*                 } */
+  /*                   xbuf = (unsigned char *)lives_calloc(nbytes, 1); */
+  /*                   if (!xbuf) { */
+  /*                     // external streaming */
+  /*                     rbytes = numFramesToWrite * nch * 2; */
+  /*                     if (check_zero_buff(rbytes)) */
+  /*                       audio_stream(zero_buff, rbytes, jackd->astream_fd); */
+  /*                     lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*                     lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*                     in_ap = FALSE; */
+  /*                     return 0; */
+  /*                   } */
+  /*                   if (nch == 1) bysize = 2; */
+  /*                   while (nbytes > 0) { */
+  /*                     lives_memcpy(xbuf + tsize, inbuf, bysize); */
+  /*                     tsize += bysize; */
+  /*                     nbytes -= bysize; */
+  /*                     if (bysize == 2) { */
+  /*                       // duplicate mono channel */
+  /*                       lives_memcpy(xbuf + tsize, inbuf, bysize); */
+  /*                       tsize += bysize; */
+  /*                       nbytes -= bysize; */
+  /*                       inbuf += bysize; */
+  /*                     } else { */
+  /*                       // or skip extra channels */
+  /*                       inbuf += nch * 4; */
+  /*                     } */
+  /*                   } */
+  /*                   nbytes = numFramesToWrite * nch * 4; */
+  /*                   lives_freep((void **)&oinbuf); */
+  /*                 } */
 
-/*                 // push to stream */
-/*                 rbytes = numFramesToWrite * nch * 2; */
-/*                 audio_stream(xbuf, rbytes, jackd->astream_fd); */
-/*                 if (((mainw->agen_key != 0 || mainw->agen_needs_reinit) && !mainw->multitrack */
-/*                      && !mainw->preview) || xbuf != (unsigned char *)cache_buffer->buffer16[0]) lives_free(xbuf); */
-/*               } */
-/*             } // end audio stream */
-/*             lives_freep((void **)&fbuffer); */
-/*           } else { */
-/*             // no generator plugin, but audio is muted */
-/*             output_silence(0, numFramesToWrite, jackd, out_buffer); */
-/*           } */
-/*         } else { */
-/*           // cached from files - multitrack mode */
-/*           if (jackd->read_abuf > -1 && !jackd->mute) { */
-/*             ///sample_move_abuf_float(out_buffer, nch, nframes, jackd->sample_out_rate, vol); */
+  /*                 // push to stream */
+  /*                 rbytes = numFramesToWrite * nch * 2; */
+  /*                 audio_stream(xbuf, rbytes, jackd->astream_fd); */
+  /*                 if (((mainw->agen_key != 0 || mainw->agen_needs_reinit) && !mainw->multitrack */
+  /*                      && !mainw->preview) || xbuf != (unsigned char *)cache_buffer->buffer16[0]) lives_free(xbuf); */
+  /*               } */
+  /*             } // end audio stream */
+  /*             lives_freep((void **)&fbuffer); */
+  /*           } else { */
+  /*             // no generator plugin, but audio is muted */
+  /*             output_silence(0, numFramesToWrite, jackd, out_buffer); */
+  /*           } */
+  /*         } else { */
+  /*           // cached from files - multitrack mode */
+  /*           if (jackd->read_abuf > -1 && !jackd->mute) { */
+  /*             ///sample_move_abuf_float(out_buffer, nch, nframes, jackd->sample_out_rate, vol); */
 
-/*             if (jackd->astream_fd != -1) { */
-/*               // audio streaming if enabled */
-/*               unsigned char *xbuf = (unsigned char *)out_buffer; */
-/*               nbytes = numFramesToWrite * nch * 4; */
+  /*             if (jackd->astream_fd != -1) { */
+  /*               // audio streaming if enabled */
+  /*               unsigned char *xbuf = (unsigned char *)out_buffer; */
+  /*               nbytes = numFramesToWrite * nch * 4; */
 
-/*               if (nch != 2) { */
-/*                 // need to remap channels to stereo (assumed for now) */
-/*                 size_t bysize = 4, tsize = 0; */
-/*                 unsigned char *inbuf = (unsigned char *)out_buffer; */
-/*                 xbuf = (unsigned char *)lives_calloc(nbytes, 1); */
-/*                 if (!xbuf) { */
-/*                   output_silence(0, numFramesToWrite, jackd, out_buffer); */
-/*                   lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*                   lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*                   in_ap = FALSE; */
-/*                   return 0; */
-/*                 } */
+  /*               if (nch != 2) { */
+  /*                 // need to remap channels to stereo (assumed for now) */
+  /*                 size_t bysize = 4, tsize = 0; */
+  /*                 unsigned char *inbuf = (unsigned char *)out_buffer; */
+  /*                 xbuf = (unsigned char *)lives_calloc(nbytes, 1); */
+  /*                 if (!xbuf) { */
+  /*                   output_silence(0, numFramesToWrite, jackd, out_buffer); */
+  /*                   lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*                   lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*                   in_ap = FALSE; */
+  /*                   return 0; */
+  /*                 } */
 
-/*                 if (nch == 1) bysize = 2; */
-/*                 while (nbytes > 0) { */
-/*                   lives_memcpy(xbuf + tsize, inbuf, bysize); */
-/*                   tsize += bysize; */
-/*                   nbytes -= bysize; */
-/*                   if (bysize == 2) { */
-/*                     // duplicate mono channel */
-/*                     lives_memcpy(xbuf + tsize, inbuf, bysize); */
-/*                     tsize += bysize; */
-/*                     nbytes -= bysize; */
-/*                     inbuf += bysize; */
-/*                   } else { */
-/*                     // or skip extra channels */
-/*                     inbuf += nch * 4; */
-/*                   } */
-/*                 } */
-/*                 nbytes = numFramesToWrite * nch * 2; */
-/*               } */
-/*               rbytes = numFramesToWrite * nch * 2; */
-/*               audio_stream(xbuf, rbytes, jackd->astream_fd); */
-/*               if (xbuf != (unsigned char *)out_buffer) lives_free(xbuf); */
-/*             } */
-/*           } else { */
-/*             // muted or no audio available */
-/*             output_silence(0, numFramesToWrite, jackd, out_buffer); */
-/*           } */
-/*         } */
-/*       } else { */
-/*         // no input frames left, pad with silence */
-/*         output_silence(nframes - jackFramesAvailable, jackFramesAvailable, jackd, out_buffer); */
-/*         jackFramesAvailable = 0; */
-/*       } */
-/*     } */
-/*     // */
+  /*                 if (nch == 1) bysize = 2; */
+  /*                 while (nbytes > 0) { */
+  /*                   lives_memcpy(xbuf + tsize, inbuf, bysize); */
+  /*                   tsize += bysize; */
+  /*                   nbytes -= bysize; */
+  /*                   if (bysize == 2) { */
+  /*                     // duplicate mono channel */
+  /*                     lives_memcpy(xbuf + tsize, inbuf, bysize); */
+  /*                     tsize += bysize; */
+  /*                     nbytes -= bysize; */
+  /*                     inbuf += bysize; */
+  /*                   } else { */
+  /*                     // or skip extra channels */
+  /*                     inbuf += nch * 4; */
+  /*                   } */
+  /*                 } */
+  /*                 nbytes = numFramesToWrite * nch * 2; */
+  /*               } */
+  /*               rbytes = numFramesToWrite * nch * 2; */
+  /*               audio_stream(xbuf, rbytes, jackd->astream_fd); */
+  /*               if (xbuf != (unsigned char *)out_buffer) lives_free(xbuf); */
+  /*             } */
+  /*           } else { */
+  /*             // muted or no audio available */
+  /*             output_silence(0, numFramesToWrite, jackd, out_buffer); */
+  /*           } */
+  /*         } */
+  /*       } else { */
+  /*         // no input frames left, pad with silence */
+  /*         output_silence(nframes - jackFramesAvailable, jackFramesAvailable, jackd, out_buffer); */
+  /*         jackFramesAvailable = 0; */
+  /*       } */
+  /*     } */
+  /*     // */
 
-/*     if (!from_memory) { */
-/*       // push the cache_buffer to be filled */
-/*       if (!mainw->multitrack && !wait_cache_buffer && ((mainw->agen_key == 0 && ! mainw->agen_needs_reinit) */
-/*           || mainw->preview)) { */
-/*         push_cache_buffer(cache_buffer, jackd, in_bytes * 2., nframes, shrink_factor); */
-/*       } */
-/*       /// advance the seek pos even if we are reading from a generator */
-/*       /// audio gen outptut is float, so convert to playing file bytesize */
-/*       if (shrink_factor > 0.) jackd->seek_pos += xin_bytes / 4 * jackd->bytes_per_channel; */
-/*     } */
+  /*     if (!from_memory) { */
+  /*       // push the cache_buffer to be filled */
+  /*       if (!mainw->multitrack && !wait_cache_buffer && ((mainw->agen_key == 0 && ! mainw->agen_needs_reinit) */
+  /*           || mainw->preview)) { */
+  /*         push_cache_buffer(cache_buffer, jackd, in_bytes * 2., nframes, shrink_factor); */
+  /*       } */
+  /*       /// advance the seek pos even if we are reading from a generator */
+  /*       /// audio gen outptut is float, so convert to playing file bytesize */
+  /*       if (shrink_factor > 0.) jackd->seek_pos += xin_bytes / 4 * jackd->bytes_per_channel; */
+  /*     } */
 
-/*     if (jackFramesAvailable > 0) { */
-/* #ifdef DEBUG_AJACK */
-/*       ++mainw->uflow_count; */
-/*       lives_printerr("buffer underrun of %ld frames\n", jackFramesAvailable); */
-/* #endif */
-/*       output_silence(nframes - jackFramesAvailable, jackFramesAvailable, jackd, out_buffer); */
-/*     } */
-/*   } else if (jackd->state == JackTransportStarting || jackd->state == JackTransportStopped || */
-/*              jackd->state == JackTClosed || jackd->state == JackTReset) { */
-/* #ifdef DEBUG_AJACK */
-/*     lives_printerr("PAUSED or STOPPED or CLOSED, outputting silence\n"); */
-/* #endif */
+  /*     if (jackFramesAvailable > 0) { */
+  /* #ifdef DEBUG_AJACK */
+  /*       ++mainw->uflow_count; */
+  /*       lives_printerr("buffer underrun of %ld frames\n", jackFramesAvailable); */
+  /* #endif */
+  /*       output_silence(nframes - jackFramesAvailable, jackFramesAvailable, jackd, out_buffer); */
+  /*     } */
+  /*   } else if (jackd->state == JackTransportStarting || jackd->state == JackTransportStopped || */
+  /*              jackd->state == JackTClosed || jackd->state == JackTReset) { */
+  /* #ifdef DEBUG_AJACK */
+  /*     lives_printerr("PAUSED or STOPPED or CLOSED, outputting silence\n"); */
+  /* #endif */
 
-/*     /\\* output silence if nothing is being outputted *\\/ */
-/*     output_silence(0, nframes, jackd, out_buffer); */
-/*     jackd->is_silent = TRUE; */
+  /*     /\\* output silence if nothing is being outputted *\\/ */
+  /*     output_silence(0, nframes, jackd, out_buffer); */
+  /*     jackd->is_silent = TRUE; */
 
-/*     /\\* if we were told to reset then zero out some variables *\\/ */
-/*     /\\* and transition to STOPPED *\\/ */
-/*     if (jackd->state == JackTReset) { */
-/*       jackd->state = (jack_transport_state_t)JackTStopped; /\\* transition to STOPPED *\\/ */
-/*     } */
-/*   } */
+  /*     /\\* if we were told to reset then zero out some variables *\\/ */
+  /*     /\\* and transition to STOPPED *\\/ */
+  /*     if (jackd->state == JackTReset) { */
+  /*       jackd->state = (jack_transport_state_t)JackTStopped; /\\* transition to STOPPED *\\/ */
+  /*     } */
+  /*   } */
 
-/*   if (jackd->playing_file >= 0) afile->aseek_pos = jackd->seek_pos; */
+  /*   if (jackd->playing_file >= 0) afile->aseek_pos = jackd->seek_pos; */
 
-/* #ifdef DEBUG_AJACK */
-/*   lives_printerr("done\n"); */
-/* #endif */
+  /* #ifdef DEBUG_AJACK */
+  /*   lives_printerr("done\n"); */
+  /* #endif */
 
-/*   lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
-/*   lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
-/*   in_ap = FALSE; */
+  /*   lives_proc_thread_include_states(self, THRD_STATE_IDLING); */
+  /*   lives_proc_thread_exclude_states(self, THRD_STATE_RUNNING); */
+  /*   in_ap = FALSE; */
   return 0;
 }
 
@@ -3417,166 +3417,166 @@ static void timebase_callback(jack_transport_state_t state, jack_nframes_t nfram
 
 static int start_ready_callback(jack_transport_state_t state, jack_position_t *pos, void *arg) {
   // mainw->video_seek_beacon is generally FALSE
-/*   // if we are not playing, the transport poll should start playing which will set set */
-/*   // mainw->video_seek_beacon to true, as soon as the video is at the right place */
+  /*   // if we are not playing, the transport poll should start playing which will set set */
+  /*   // mainw->video_seek_beacon to true, as soon as the video is at the right place */
 
-/*   // if we are playing, we set mainw->scratch */
-/*   // this will either force a resync of audio in free playback */
-/*   // or reset the event_list position in multitrack playback */
+  /*   // if we are playing, we set mainw->scratch */
+  /*   // this will either force a resync of audio in free playback */
+  /*   // or reset the event_list position in multitrack playback */
 
-/*   jack_driver_t *jackd = (jack_driver_t *)arg; */
+  /*   jack_driver_t *jackd = (jack_driver_t *)arg; */
 
-/*   // go away until the app has started up properly */
-/*   if (mainw->go_away) return TRUE; */
+  /*   // go away until the app has started up properly */
+  /*   if (mainw->go_away) return TRUE; */
 
-/*   if (!(prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) return TRUE; */
+  /*   if (!(prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) || !(prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT)) return TRUE; */
 
-/*   if (!jackd->client) return TRUE; */
+  /*   if (!jackd->client) return TRUE; */
 
-/*   if (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE) { */
-/*     if (!LIVES_IS_PLAYING && state == JackTransportStopped) { */
-/*       if (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) { */
-/*         double trtime = (double)jack_transport_get_current_ticks(jackd) / TICKS_PER_SECOND_DBL; */
-/*         if (!mainw->multitrack) { */
-/* #ifndef ENABLE_GIW_3 */
-/*           lives_ruler_set_value(LIVES_RULER(mainw->hruler), x); */
-/*           lives_widget_queue_draw_if_visible(mainw->hruler); */
-/* #else */
-/*           lives_adjustment_set_value(giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler)), trtime); */
-/* #endif */
-/*         } else mt_tl_move(mainw->multitrack, trtime); */
-/*       } */
-/*       return TRUE; */
-/*     } */
-/*   } */
+  /*   if (prefs->jack_opts & JACK_OPTS_STRICT_SLAVE) { */
+  /*     if (!LIVES_IS_PLAYING && state == JackTransportStopped) { */
+  /*       if (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE) { */
+  /*         double trtime = (double)jack_transport_get_current_ticks(jackd) / TICKS_PER_SECOND_DBL; */
+  /*         if (!mainw->multitrack) { */
+  /* #ifndef ENABLE_GIW_3 */
+  /*           lives_ruler_set_value(LIVES_RULER(mainw->hruler), x); */
+  /*           lives_widget_queue_draw_if_visible(mainw->hruler); */
+  /* #else */
+  /*           lives_adjustment_set_value(giw_timeline_get_adjustment(GIW_TIMELINE(mainw->hruler)), trtime); */
+  /* #endif */
+  /*         } else mt_tl_move(mainw->multitrack, trtime); */
+  /*       } */
+  /*       return TRUE; */
+  /*     } */
+  /*   } */
 
-/*   if (LIVES_IS_PLAYING && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) { */
-/*     // trigger audio resync */
-/*     mainw->scratch = SCRATCH_JUMP; */
-/*   } */
+  /*   if (LIVES_IS_PLAYING && (prefs->jack_opts & JACK_OPTS_TIMEBASE_SLAVE)) { */
+  /*     // trigger audio resync */
+  /*     mainw->scratch = SCRATCH_JUMP; */
+  /*   } */
 
-/*   return (mainw->video_seek_beacon & lives_aplayer_get_seek_state(aplayer)u); */
-/* } */
+  /*   return (mainw->video_seek_beacon & lives_aplayer_get_seek_state(aplayer)u); */
+  /* } */
 
 
-/* static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes, */
-/*                                double out_scale, boolean rev_endian, boolean out_unsigned) { */
-/*   return 0; */
-/* } */
+  /* static size_t audio_read_inner(jack_driver_t *jackd, float **in_buffer, int ofileno, int nframes, */
+  /*                                double out_scale, boolean rev_endian, boolean out_unsigned) { */
+  /*   return 0; */
+  /* } */
 
-/* size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, float **in_buffer) { */
-/*   return 0; */
-/*   lives_clip_t *ofile; */
-/*   void *holding_buff, *holding_buff2;; */
-/*   size_t target_bytes; */
-/*   ssize_t actual_bytes; */
-/*   int64_t frames_out; */
+  /* size_t jack_write_data(float out_scale, int achans, int fileno, size_t nframes, float **in_buffer) { */
+  /*   return 0; */
+  /*   lives_clip_t *ofile; */
+  /*   void *holding_buff, *holding_buff2;; */
+  /*   size_t target_bytes; */
+  /*   ssize_t actual_bytes; */
+  /*   int64_t frames_out; */
 
-/*   static int async_writer_count = 0; */
+  /*   static int async_writer_count = 0; */
 
-/*   boolean is_float = FALSE; */
-/*   boolean rev_endian = FALSE; */
-/*   boolean out_unsigned; */
+  /*   boolean is_float = FALSE; */
+  /*   boolean rev_endian = FALSE; */
+  /*   boolean out_unsigned; */
 
-/*   int sampsize; */
-/*   int swap_sign; */
+  /*   int sampsize; */
+  /*   int swap_sign; */
 
-/*   lives_proc_thread_t self = jackd->inst; */
+  /*   lives_proc_thread_t self = jackd->inst; */
 
-/*   if (THREADVAR(bad_aud_file)) return 0; */
-/*   if (mainw->rec_samples == 0) return 0; */
-/*   if (nframes == 0) return 0; */
-/*   if (!IS_VALID_CLIP(fileno)) return 0; */
+  /*   if (THREADVAR(bad_aud_file)) return 0; */
+  /*   if (mainw->rec_samples == 0) return 0; */
+  /*   if (nframes == 0) return 0; */
+  /*   if (!IS_VALID_CLIP(fileno)) return 0; */
 
-/*   ofile = mainw->files[fileno]; */
-/*   sampsize = ofile->asampsize >> 3; */
+  /*   ofile = mainw->files[fileno]; */
+  /*   sampsize = ofile->asampsize >> 3; */
 
-/*   if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) achans <<= 1; */
+  /*   if (prefs->audio_opts & AUDIO_OPTS_AUX_RECORD) achans <<= 1; */
 
-/*   frames_out = (int64_t)((double)nframes / out_scale + .49999); */
-/*   holding_buff = lives_calloc(frames_out, achans * sampsize); */
+  /*   frames_out = (int64_t)((double)nframes / out_scale + .49999); */
+  /*   holding_buff = lives_calloc(frames_out, achans * sampsize); */
 
-/*   if (!holding_buff) return 0; */
+  /*   if (!holding_buff) return 0; */
 
-/*   out_unsigned = ofile->signed_endian & AFORM_UNSIGNED; */
+  /*   out_unsigned = ofile->signed_endian & AFORM_UNSIGNED; */
 
-/*   if (!is_float) { */
-/*     if (ofile->asampsize == 16) { */
-/*       int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN); */
-/*       if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) */
-/*           || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN))) */
-/*         rev_endian = TRUE; */
-/*     } */
-/*     frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, achans, */
-/*                                        ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.); */
-/*   } */
-/*   else frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, achans, 1.); */
+  /*   if (!is_float) { */
+  /*     if (ofile->asampsize == 16) { */
+  /*       int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN); */
+  /*       if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) */
+  /*           || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN))) */
+  /*         rev_endian = TRUE; */
+  /*     } */
+  /*     frames_out = sample_move_float_int(holding_buff, in_buffer, frames_out, out_scale, achans, */
+  /*                                        ofile->asampsize, out_unsigned, rev_endian, FALSE, 1.); */
+  /*   } */
+  /*   else frames_out = float_interleave(holding_buff, in_buffer, frames_out, out_scale, achans, 1.); */
 
-/*   frames_out /= achans; */
+  /*   frames_out /= achans; */
 
-/*   if (mainw->rec_samples > 0) { */
-/*     if (frames_out > mainw->rec_samples * achans) frames_out = mainw->rec_samples * achans; */
-/*     mainw->rec_samples -= frames_out / achans; */
-/*   } */
-/*   // for 16bit, generally we use S16, so if we want U16, we should change it */
-/*   swap_sign = ofile->signed_endian & AFORM_UNSIGNED; */
+  /*   if (mainw->rec_samples > 0) { */
+  /*     if (frames_out > mainw->rec_samples * achans) frames_out = mainw->rec_samples * achans; */
+  /*     mainw->rec_samples -= frames_out / achans; */
+  /*   } */
+  /*   // for 16bit, generally we use S16, so if we want U16, we should change it */
+  /*   swap_sign = ofile->signed_endian & AFORM_UNSIGNED; */
 
-/*   if (ofile->asampsize == 16) { */
-/*     int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN); */
-/*     if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) */
-/*         || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN))) */
-/*       rev_endian = TRUE; */
-/*   } */
+  /*   if (ofile->asampsize == 16) { */
+  /*     int aendian = !(ofile->signed_endian & AFORM_BIG_ENDIAN); */
+  /*     if ((aendian && (capable->hw.byte_order == LIVES_BIG_ENDIAN)) */
+  /*         || (!aendian && (capable->hw.byte_order == LIVES_LITTLE_ENDIAN))) */
+  /*       rev_endian = TRUE; */
+  /*   } */
 
-/*   target_bytes = frames_out * ofile->achans * (ofile->asampsize >> 3); */
+  /*   target_bytes = frames_out * ofile->achans * (ofile->asampsize >> 3); */
 
-/*   holding_buff2 = lives_malloc(target_bytes * 4); */
-/*   if (!holding_buff2) { */
-/*     lives_free(holding_buff); */
-/*     return 0; */
-/*   } */
+  /*   holding_buff2 = lives_malloc(target_bytes * 4); */
+  /*   if (!holding_buff2) { */
+  /*     lives_free(holding_buff); */
+  /*     return 0; */
+  /*   } */
 
-/*   if (ofile->asampsize == 16) { */
-/*     sample_move_d16_d16((short *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans, */
-/*                         rev_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0); */
-/*   } else { */
-/*     sample_move_d16_d8((uint8_t *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans, */
-/*                        swap_sign ? SWAP_S_TO_U : 0); */
-/*   } */
+  /*   if (ofile->asampsize == 16) { */
+  /*     sample_move_d16_d16((short *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans, */
+  /*                         rev_endian ? SWAP_L_TO_X : 0, swap_sign ? SWAP_S_TO_U : 0); */
+  /*   } else { */
+  /*     sample_move_d16_d8((uint8_t *)holding_buff2, holding_buff, frames_out, target_bytes, 1., ofile->achans, achans, */
+  /*                        swap_sign ? SWAP_S_TO_U : 0); */
+  /*   } */
 
-/*   if (async_writer_count) { */
-/*     // here we make sure that the DATA_READY hook callbacks have all completed */
-/*     // we must do this before we can free the data from the previous cycle */
-/*     lives_hook_async_join(DATA_READY_HOOK); */
-/*     async_writer_count = 0; */
-/*   } */
+  /*   if (async_writer_count) { */
+  /*     // here we make sure that the DATA_READY hook callbacks have all completed */
+  /*     // we must do this before we can free the data from the previous cycle */
+  /*     lives_hook_async_join(DATA_READY_HOOK); */
+  /*     async_writer_count = 0; */
+  /*   } */
 
-/*   lives_aplayer_set_data_len(self, 0); */
-/*   lives_aplayer_set_data(self, NULL); */
+  /*   lives_aplayer_set_data_len(self, 0); */
+  /*   lives_aplayer_set_data(self, NULL); */
 
-/*   if (mainw->rec_samples > 0) { */
-/*     if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples; */
-/*     mainw->rec_samples -= frames_out; */
-/*     async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL); */
-/*     actual_bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff2, target_bytes, TRUE); */
-/*   } */
+  /*   if (mainw->rec_samples > 0) { */
+  /*     if (frames_out > mainw->rec_samples) frames_out = mainw->rec_samples; */
+  /*     mainw->rec_samples -= frames_out; */
+  /*     async_writer_count = lives_hook_trigger_async(DATA_READY_HOOK, NULL); */
+  /*     actual_bytes = lives_write_buffered(mainw->aud_rec_fd, holding_buff2, target_bytes, TRUE); */
+  /*   } */
 
-/*   if (actual_bytes > 0) { */
-/*     uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK); */
-/*     mainw->aud_data_written += actual_bytes; */
-/*     if (fileno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes); */
-/*     check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk); */
-/*     ofile->aseek_pos += actual_bytes; */
-/*   } */
+  /*   if (actual_bytes > 0) { */
+  /*     uint64_t chk = (mainw->aud_data_written & AUD_WRITE_CHECK); */
+  /*     mainw->aud_data_written += actual_bytes; */
+  /*     if (fileno == mainw->ascrap_file) add_to_ascrap_mb(actual_bytes); */
+  /*     check_for_disk_space((mainw->aud_data_written & AUD_WRITE_CHECK) != chk); */
+  /*     ofile->aseek_pos += actual_bytes; */
+  /*   } */
 
-/*   if (actual_bytes < target_bytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd); */
+  /*   if (actual_bytes < target_bytes) THREADVAR(bad_aud_file) = filename_from_fd(NULL, mainw->aud_rec_fd); */
 
-/*   //if (holding_buff != data) */
-/*   lives_free(holding_buff2); */
-/*   lives_free(holding_buff); */
+  /*   //if (holding_buff != data) */
+  /*   lives_free(holding_buff2); */
+  /*   lives_free(holding_buff); */
 
-/*   return actual_bytes; */
-/* } */
+  /*   return actual_bytes; */
+  /* } */
   return 0;
 }
 
@@ -4435,7 +4435,7 @@ void jack_aud_pb_ready(jack_driver_t *jackd, int fileno) {
 
     /* if (AUD_SRC_EXTERNAL && (prefs->audio_opts & AUDIO_OPTS_EXT_FX)) register_audio_client(); */
     /*     if (prefs->audio_opts & AUDIO_OPTS_AUX_PLAY) register_aux_audio_channels(1); */
-    
+
     mainw->rec_aclip = jackd->playing_file;
     if (mainw->rec_aclip != -1) {
       mainw->rec_aseek = fabs((double)fwd_seek_pos

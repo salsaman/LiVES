@@ -40,9 +40,10 @@
 #define LIVES_PLANT_INDEX 128
 #define LIVES_PLANT_DATA_BOOK 129
 #define LIVES_PLANT_LOOKUP 130
+#define LIVES_PLANT_VALUE 132
 #define LIVES_PLANT_ATTRIBUTE 140
 #define LIVES_PLANT_OBJ_INSTANCE 200
-  
+
 #define LIVES_PLANT_ALLVALUES 400
 
 #define LIVES_PLANT_FUNCPARAMS 512
@@ -220,7 +221,7 @@ typedef index_type lookup_type;
 // find script will return the real target_item for key $target_item
 #define LIVES_LEAF_FIND_SCRIPT "_find_script"
 
-// get_script will retrun the value of $target_item 
+// get_script will retrun the value of $target_item
 #define LIVES_LEAF_GET_SCRIPT "_get_script"
 
 typedef weed_plant_t lives_index_t;
@@ -408,6 +409,7 @@ extern lives_index_t *indices[idx_type_max];
 #define LIVES_LEAF_VALUE WEED_LEAF_VALUE
 #define LIVES_LEAF_PARENT "parent"
 #define LIVES_LEAF_OBJ_TYPE "obj_type"
+#define LIVES_LEAF_PLANT_TYPE "plant_type"
 #define LIVES_LEAF_OBJ_SUBTYPE "obj_subtype"
 
 #endif

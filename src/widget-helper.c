@@ -2626,7 +2626,7 @@ WIDGET_HELPER_GLOBAL_INLINE boolean lives_widget_set_text_size(LiVESWidget * wid
   else if (strcmp(tsize, LIVES_TEXT_SIZE_MEDIUM)) xsize = atoi(tsize);
   xxsize = lives_strdup_printf("%dpx", xsize);
   retb = set_css_value(widget, state, "font-size", xxsize);
-  lives_free(xxsize);
+  //  lives_free(xxsize);
   return retb;
 #endif
 #endif
@@ -13732,19 +13732,6 @@ boolean lives_widget_context_update(void) {
       mainw->do_ctx_update = TRUE;
       return FALSE;
     } else {
-      lives_hook_stack_t **lpt_hooks = self_hook_stacks(LIVES_GUI_HOOK);
-      // trip gui loop to high prio
-      fg_service_wake();
-      if (!(lpt_hooks[LIVES_GUI_HOOK]->flags & HS_FLAG_TRIGGERING)) {
-        // action any deferred updates first
-        if (lpt_hooks[LIVES_GUI_HOOK]->stack) {
-          pthread_mutex_lock(&mainw->all_hstacks_mutex);
-          mainw->all_hstacks =
-            lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
-          pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-          lives_proc_thread_trigger_hook(LIVES_GUI_HOOK);
-        }
-      }
       // trigger gui loop update
       mainw->do_ctx_update = TRUE;
       lives_sleep_while_true(mainw->do_ctx_update);

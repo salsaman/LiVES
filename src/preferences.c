@@ -77,23 +77,23 @@ static weed_plant_t *_define_pref(const char *idxnm, const char *keyname, allval
 
   weed_set_const_string_value(prefplant, LIVES_LEAF_KEYNAME, keyname);
   weed_set_voidptr_value(prefplant, WEED_LEAF_VALUE, (void *)allvp);
-  
+
   /* weed_set_const_string_value(prefplant, LIVES_LEAF_PREF_IDX, pref_idx); */
   /* weed_set_voidptr_value(prefplant, LIVES_LEAF_VARPTR, pref_ptr); */
   /* weed_leaf_set(prefplant, WEED_LEAF_DEFAULT, vtype, 1, pdef); */
 
   weed_set_int_value(prefplant, LIVES_LEAF_STATUS, PREFSTATUS_UNSET);
   weed_set_int_value(prefplant, WEED_LEAF_FLAGS, flags);
-  
+
   /* prefplant = PLANT_FROM_BLUEPRINT(PREFERENCE, LIVES_LEAF_KEYNAME, keyname,  */
   /* 				   WEED_LEAF_VALUE, (void *)allvp, */
   /* 				   LIVES_LEAF_STATUS, PREFSTATUS_UNSET, */
-  /* 				   WEED_LEAF_FLAGS, flags); */ 
+  /* 				   WEED_LEAF_FLAGS, flags); */
 
 
   //allprefs = lives_list_append(allprefs, prefplant);
 
-  //if (desc) weed_set_const_string_value(prefplant, WEED_LEAF_DESCRIPTION, desc); 
+  //if (desc) weed_set_const_string_value(prefplant, WEED_LEAF_DESCRIPTION, desc);
 
   weed_set_plantptr_value(allprefs, idxnm, prefplant);
 
@@ -149,7 +149,7 @@ void init_prefs(void) {
 
   DEFINE_PREF_STRING(DEF_AUTHOR, def_author, 1024, "", PREF_FLAGS_NONE);
 
-  
+
   DEFINE_PREF_FLOAT(MAX_CLIP_VOL, max_clip_vol, 2., PREF_FLAGS_NONE);
 }
 
@@ -1076,8 +1076,8 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
         goto fail;
       } else {
         // success
-	lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
-	lives_aplayer_update_loop_mode(aplayer);
+        lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
+        lives_aplayer_update_loop_mode(aplayer);
         update_all_host_info(); // let fx plugins know about the change
         goto success;
       }
@@ -1111,7 +1111,7 @@ boolean pref_factory_string(const char *prefidx, const char *newval, boolean per
           goto fail;
         } else {
           // success
-	  lives_aplayer_update_loop_mode(mainw->pulsed->inst);
+          lives_aplayer_update_loop_mode(mainw->pulsed->inst);
           update_all_host_info(); // let fx plugins know about the change
           goto success;
         }

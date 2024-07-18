@@ -666,7 +666,6 @@ static void pre_init(void) {
   pthread_mutex_init(&mainw->alarmlist_mutex, &mattr);
   pthread_mutex_init(&mainw->trcount_mutex, &mattr);
   pthread_mutex_init(&mainw->alock_mutex, &mattr);
-  pthread_mutex_init(&mainw->all_hstacks_mutex, &mattr);
   pthread_mutex_init(&mainw->play_surface_mutex, &mattr);
   pthread_mutex_init(&mainw->pwin_surface_mutex, &mattr);
 
@@ -2104,7 +2103,7 @@ void lives_startup2(void) {
   }
 
   //  msg_area_config(mainw->msg_area);
-  
+
   mainw->can_play = TRUE;
 
   what_sup = sup_ready;

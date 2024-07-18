@@ -19,12 +19,45 @@ static const lives_intentcap_t *std_icaps[N_STD_ICAPS];
 #define DICT_SUBTYPE_OBJECT		IMkType("DICT.obj")
 #define DICT_SUBTYPE_WEED_PLANT		IMkType("DICT.pla")
 #define DICT_SUBTYPE_FUNCDEF		IMkType("DICT.fun")
-// eventually will become lookup for all recognised uids
-lives_objstore_t *main_objstore = NULL;
-lives_objstore_t *fn_objstore = NULL;
-lives_objstore_t *bdef_store = NULL;
 
 ////////////////////////////////
+
+LIVES_GLOBAL_INLINE boolean is_obj_instance(weed_plant_t *p) {
+  return p && weed_plant_has_leaf(p, LIVES_LEAF_OBJ_TYPE);
+}
+
+
+LIVES_LOCAL_INLINE lives_index_t *lives_obj_instance_ensure_attr_grp(lives_obj_instance_t *loi) {
+  if (loi) {
+    lives_index_t *attr_group = weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL);
+    if (!attr_group) {
+      attr_group = LIVES_MAKE_INDEX(idx_type_attr_grp, WEED_SEED_PLANTPTR);
+      lives_obj_instance_set_attr_group(loi, attr_group);
+    }
+    return attr_group;
+  }
+  return NULL;
+}
+
+
+LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_hook_stacks(lives_obj_instance_t *loi,
+    lives_index_t *hook_stacks) {
+  return lives_plant_include_sub(loi, LIVES_LEAF_HOOK_STACKS, hook_stacks);
+}
+
+
+LIVES_LOCAL_INLINE lives_index_t *lives_obj_instance_ensure_hook_stacks(lives_obj_instance_t *loi) {
+  if (loi) {
+    lives_index_t *hstacks = weed_get_plantptr_value(loi, LIVES_LEAF_HOOK_STACKS, NULL);
+    if (!hstacks) {
+      hstacks = LIVES_MAKE_INDEX(idx_type_hook_stacks, WEED_SEED_VOIDPTR);
+      lives_obj_instance_set_hook_stacks(loi, hstacks);
+    }
+    return hstacks;
+  }
+  return NULL;
+}
+
 
 LIVES_GLOBAL_INLINE lives_index_t *lives_obj_instance_get_attr_group(lives_obj_instance_t *loi) {
   return loi ? weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL) : NULL;
@@ -39,12 +72,6 @@ LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_attr_group(lives_obj_i
 
 LIVES_GLOBAL_INLINE lives_index_t *lives_obj_instance_get_hook_stacks(lives_obj_instance_t *loi) {
   return loi ? weed_get_plantptr_value(loi, LIVES_LEAF_HOOK_STACKS, NULL) : NULL;
-}
-
-
-LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_set_hook_stacks(lives_obj_instance_t *loi,
-    lives_index_t *hook_stacks) {
-  return lives_plant_include_sub(loi, LIVES_LEAF_HOOK_STACKS, hook_stacks);
 }
 
 
@@ -63,6 +90,30 @@ LIVES_GLOBAL_INLINE lives_hook_stack_t *lives_obj_instance_find_hook_stack
 }
 
 
+LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_add_hook_stack(lives_obj_instance_t *loi,
+    lives_hook_stack_t *hstack) {
+  if (!loi || !hstack) return LIVES_RESULT_INVALID;
+  lives_index_t *idx = lives_obj_instance_ensure_hook_stacks(loi);
+  char *name = LSPF("%d", hstack->type);
+  weed_error_t err = lives_index_set_value(idx, name, WEED_SEED_VOIDPTR, hstack);
+  hstack = NULL;
+  lives_free(name);
+  return err == WEED_SUCCESS ? LIVES_RESULT_SUCCESS : LIVES_RESULT_FAIL;
+}
+
+
+lives_result_t lives_obj_instance_add_hstype(lives_obj_instance_t *obj, int hstype) {
+  lives_hook_stack_t *hstack = LIVES_CALLOC_SIZEOF(lives_hook_stack_t, 1);
+  hstack->type = hstype;
+  pthread_mutex_init(&hstack->mutex, NULL);
+  hstack->owner_act_src_type = ACTION_SOURCE_OBJ;
+  hstack->owner.obj = obj;
+  hstack->hsdesc = get_hs_desc(hstype);
+  lives_obj_instance_add_hook_stack(obj, hstack);
+  return LIVES_RESULT_SUCCESS;
+}
+
+
 LIVES_GLOBAL_INLINE boolean lives_obj_instance_get_active(lives_obj_instance_t *loi) {
   return lives_obj_instance_get_thread_data(loi) ? TRUE : FALSE;
 }
@@ -78,57 +129,26 @@ void lives_obj_instance_set_active(lives_obj_instance_t *loi, const char *desc, 
       lives_obj_instance_include_states(loi, THRD_STATE_EXTERN);
       tdata->vars.var_thrd_type = tdata->thrd_type = THRD_TYPE_OBJ;
     }
-  }
-  else lives_obj_instance_set_thread_data(loi, NULL);
+  } else lives_obj_instance_set_thread_data(loi, NULL);
 }
 
 
 LIVES_GLOBAL_INLINE weed_plant_t *lives_obj_instance_create(uint64_t type, uint64_t subtype) {
   lives_obj_instance_t *loi = PLANT_FROM_BLUEPRINT(OBJ_INSTANCE, LIVES_LEAF_OBJ_TYPE, type,
-						   LIVES_LEAF_OBJ_SUBTYPE, subtype);
+                              LIVES_LEAF_OBJ_SUBTYPE, subtype);
+  // create local data book for loi, and set $SRC_OBJECT
+  // we can set any cons vals for the local databook at scope 0
+
+  SET_LPT_VALUE(loi, WEED_SEED_PLANTPTR, LDB_SRC_OBJECT, loi);
+  lives_databook_descend(lives_proc_thread_get_book(loi));
+
   if (!weed_get_voidptr_value(loi, LIVES_LEAF_STATE_RWLOCK, NULL)) {
     pthread_rwlock_t *state_rwlock = (pthread_rwlock_t *)lives_malloc(sizeof(pthread_rwlock_t));
     pthread_rwlock_init(state_rwlock, NULL);
     weed_set_voidptr_value(loi, LIVES_LEAF_STATE_RWLOCK, state_rwlock);
   }
+
   return loi;
-}
-
-
-LIVES_LOCAL_INLINE lives_index_t *lives_obj_instance_ensure_attr_grp(lives_obj_instance_t *loi) {
-  if (loi) {
-    lives_index_t *attr_group = weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL);
-    if (!attr_group) {
-      attr_group = LIVES_MAKE_INDEX(idx_type_attr_grp, WEED_SEED_PLANTPTR);
-      lives_obj_instance_set_attr_group(loi, attr_group);
-    }
-    return attr_group;
-  }
-  return NULL;
-}
-
-
-LIVES_LOCAL_INLINE lives_index_t *lives_obj_instance_ensure_hook_stacks(lives_obj_instance_t *loi) {
-  if (loi) {
-    lives_index_t *hstacks = weed_get_plantptr_value(loi, LIVES_LEAF_HOOK_STACKS, NULL);
-    if (!hstacks) {
-      hstacks = LIVES_MAKE_INDEX(idx_type_hook_stacks, WEED_SEED_VOIDPTR);
-      lives_obj_instance_set_hook_stacks(loi, hstacks);
-    }
-    return hstacks;
-  }
-  return NULL;
-}
-
-
-LIVES_GLOBAL_INLINE lives_result_t lives_obj_instance_add_hook_stack(lives_obj_instance_t *loi,
-									 lives_hook_stack_t *hstack) {
-  if (!loi || !hstack) return LIVES_RESULT_INVALID;
-  lives_index_t *idx = lives_obj_instance_ensure_hook_stacks(loi);
-  char *name = LSPF("%d", hstack->type);
-  weed_error_t err = lives_index_set_value(idx, name, WEED_SEED_VOIDPTR, hstack);
-  lives_free(name);
-  return err == WEED_SUCCESS ? LIVES_RESULT_SUCCESS: LIVES_RESULT_FAIL;
 }
 
 
@@ -323,7 +343,7 @@ weed_error_t lives_obj_instance_set_attr_val(lives_obj_instance_t *loi, const ch
   weed_seed_t attr_type = lives_attr_get_value_type(attr);
   va_list ap;
   va_start(ap, name);
-  weed_leaf_from_varg(attr, WEED_LEAF_VALUE, attr_type, (weed_size_t)-1, ap);
+  weed_leaf_from_varg(attr, WEED_LEAF_VALUE, attr_type, (weed_size_t) -1, ap);
   va_end(ap);
   return WEED_SUCCESS;
 }
@@ -407,17 +427,6 @@ LIVES_GLOBAL_INLINE char **lives_attribute_get_array_string(lives_obj_attr_t *at
 
 
 ////////////////////////
-
-
-void *lookup_entry_full(uint64_t uid) {
-  // check dictionary objects (objects and plant snapshots)
-  void *thing = (void *)get_from_hash_store_i(main_objstore, uid);
-  // check structdefs
-  if (!thing) thing = (void *)lsd_from_store(uid);
-  // check plugins
-  if (!thing) thing = (void *)plugin_from_store(uid);
-  return thing;
-}
 
 
 LIVES_GLOBAL_INLINE uint64_t lives_obj_instance_get_type(lives_obj_t *obj) {

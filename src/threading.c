@@ -12,6 +12,44 @@ weed_plant_t *auditor_refc = NULL;
 #endif
 
 
+int _lives_mutex_lock(pthread_mutex_t *m, const char *mname, const char *file, int line) {
+  int res;
+  //
+  //  g_print("lock %s @ %s, %d\n", mname, file, line);
+
+  /* if (!lives_strcmp(mname, "pause_mutex")) { */
+  /*   g_print("pm %s locked at %s, %d\n", mname, file, line); */
+  /*   //abort(); */
+  /* } */
+  res = pthread_mutex_lock(m);
+  //
+  return res;
+}
+
+
+int _lives_mutex_unlock(pthread_mutex_t *m, const char *mname, const char *file, int line) {
+  int res;
+  // g_print("unlock %s @ %s, %d\n", mname, file, line);
+  /* if (!lives_strcmp(mname, "pause_mutex")) { */
+  /*   g_print("pm %s unlocked at %s, %d\n", mname, file, line); */
+  /* } */
+
+  //
+  res = pthread_mutex_unlock(m);
+  //
+  return res;
+}
+
+
+int _lives_mutex_trylock(pthread_mutex_t *m, const char *mname, const char *file, int line) {
+  int res;
+  //
+  res = pthread_mutex_trylock(m);
+  //
+  return res;
+}
+
+
 void lives_proc_thread_autofree(lives_proc_thread_t lpt, ...) {
   // provided with a lives_proc_thread, and a NULL terminated sequence of &(void *)var0, var1,...
   // all vars will be freed and set to NULL when lpt COMPLETES. This also handles the case where lpt
@@ -333,14 +371,14 @@ boolean _lives_proc_thread_wait(lives_proc_thread_t self, uint64_t nanosec, bool
     ts.tv_sec += sec;
     ts.tv_nsec = nanosec;
 
-    if (!have_lock) pthread_mutex_lock(pause_mutex);
+    if (!have_lock) lives_mutex_lock(pause_mutex);
 
     while (!rc && !lives_proc_thread_get_resume_requested(self)
            && !lives_proc_thread_should_cancel(self)) {
       rc = pthread_cond_timedwait(pcond, pause_mutex, &ts);
     }
 
-    if (!have_lock) pthread_mutex_unlock(pause_mutex);
+    if (!have_lock) lives_mutex_unlock(pause_mutex);
 
     if (rc == ETIMEDOUT) return TRUE;
   }
@@ -428,8 +466,12 @@ static pthread_rwlock_t *lives_obj_instance_get_state_rwlock(lives_obj_instance_
 }
 
 
-LIVES_LOCAL_INLINE  pthread_rwlock_t *lives_proc_thread_get_state_rwlock(lives_proc_thread_t lpt) {
-  return lives_obj_instance_get_state_rwlock(lpt);
+pthread_rwlock_t *lives_proc_thread_get_state_rwlock(lives_proc_thread_t lpt) {
+  pthread_rwlock_t *state_rwlock = NULL;
+  //if (lives_obj_instance_ref(obj) > 1)  {
+  state_rwlock = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_STATE_RWLOCK, NULL);
+  // lives_obj_instance_unref(obj);
+  return state_rwlock;
 }
 
 
@@ -756,34 +798,20 @@ boolean is_fg_thread(void) {
 
 
 LIVES_LOCAL_INLINE void *add_to_deferral_stack(lives_funcinst_t *finst, uint64_t hook_hints) {
-  lives_hook_stack_t **hstacks = self_hook_stacks(LIVES_GUI_HOOK);
-  lives_hook_stack_t *hstack = hstacks[LIVES_GUI_HOOK];
-  pthread_mutex_lock(&mainw->all_hstacks_mutex);
-
+  lives_hook_stack_t *hstack = self_hook_stack(LIVES_GUI_HOOK);
   void *receipt = lives_hook_cb_add_funcinst(hstack, finst, hook_hints);
-
-  if (receipt)
-    mainw->all_hstacks =
-      lives_list_append_unique(mainw->all_hstacks, hstacks);
-  pthread_mutex_unlock(&mainw->all_hstacks_mutex);
   return receipt;
 }
 
 
 LIVES_LOCAL_INLINE void append_all_to_fg_deferral_stack(void) {
-  lives_hook_stack_t **hstacks = self_hook_stacks(LIVES_GUI_HOOK);
-  lives_hook_stack_t *hstack = hstacks[LIVES_GUI_HOOK];
+  lives_hook_stack_t *hstack = self_hook_stack(LIVES_GUI_HOOK);
   LiVESList *cbnext;
   pthread_mutex_t *hmutex = &(hstack->mutex),
                    *fgmutex = &(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 
-  pthread_mutex_lock(&mainw->all_hstacks_mutex);
-  mainw->all_hstacks =
-    lives_list_remove_data(mainw->all_hstacks, hstacks, FALSE);
-  pthread_mutex_unlock(&mainw->all_hstacks_mutex);
-
-  pthread_mutex_lock(hmutex);
-  pthread_mutex_lock(fgmutex);
+  lives_mutex_lock(hmutex);
+  lives_mutex_lock(fgmutex);
 
   for (LiVESList *cblist = (LiVESList *)hstack->stack; cblist; cblist = cbnext) {
     lives_funcinst_t *finst = (lives_funcinst_t *)cblist->data;
@@ -799,28 +827,22 @@ LIVES_LOCAL_INLINE void append_all_to_fg_deferral_stack(void) {
   lives_list_free((LiVESList *)hstack->stack);
   hstack->stack = NULL;
 
-  pthread_mutex_unlock(fgmutex);
-  pthread_mutex_unlock(hmutex);
+  lives_mutex_unlock(fgmutex);
+  lives_mutex_unlock(hmutex);
 }
 
 
 LIVES_LOCAL_INLINE void prepend_all_to_fg_deferral_stack(void) {
-  lives_hook_stack_t **hstacks = self_hook_stacks(LIVES_GUI_HOOK);
-  lives_hook_stack_t *hstack = hstacks[LIVES_GUI_HOOK];
+  lives_hook_stack_t *hstack = self_hook_stack(LIVES_GUI_HOOK);
   LiVESList *cbprev;
 
   pthread_mutex_t *hmutex = &(hstack->mutex),
                    *fgmutex = &(mainw->global_hook_stacks[LIVES_GUI_HOOK]->mutex);
 
-  pthread_mutex_lock(&mainw->all_hstacks_mutex);
-  mainw->all_hstacks =
-    lives_list_remove_data(mainw->all_hstacks, hstacks, FALSE);
-  pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+  lives_mutex_lock(hmutex);
+  lives_mutex_lock(fgmutex);
 
-  pthread_mutex_lock(hmutex);
-  pthread_mutex_lock(fgmutex);
-
-  for (LiVESList *cblist = lives_list_last((LiVESList *)hstacks[LIVES_GUI_HOOK]->stack);
+  for (LiVESList *cblist = lives_list_last((LiVESList *)hstack->stack);
        cblist; cblist = cbprev) {
     lives_funcinst_t *finst = (lives_funcinst_t *)cblist->data;
     uint64_t cbflags = CL_DATA(finst, cb_flags);
@@ -837,48 +859,41 @@ LIVES_LOCAL_INLINE void prepend_all_to_fg_deferral_stack(void) {
   lives_list_free((LiVESList *)hstack->stack);
   hstack->stack = NULL;
 
-  pthread_mutex_unlock(fgmutex);
-  pthread_mutex_unlock(hmutex);
+  lives_mutex_unlock(fgmutex);
+  lives_mutex_unlock(hmutex);
 }
 
-
-LIVES_GLOBAL_INLINE lives_hook_stack_t **self_hook_stacks(int hstype) {
-  if (hstype < N_NATIVE_HOOKS) return THREADVAR(hook_stacks);
-  GET_PROC_THREAD_SELF(self);
-  return self ? lives_proc_thread_get_hook_stacks(self) : NULL;
-}
 
 LIVES_GLOBAL_INLINE lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t lpt) {
+  if (lpt && (lpt == mainw->aplayer || lpt == mainw->areader)) abort();
   return lpt ? weed_get_voidptr_value(lpt, LIVES_LEAF_HOOK_STACKS, NULL) : NULL;
 }
 
 
-static pthread_mutex_t ref_sync_mutex = PTHREAD_MUTEX_INITIALIZER;
+LIVES_GLOBAL_INLINE lives_hook_stack_t *self_hook_stack(int hstype) {
+  GET_PROC_THREAD_SELF(self);
+  if (self) {
+    weed_seed_t st = weed_leaf_seed_type(self, LIVES_LEAF_HOOK_STACKS);
+    if (st == WEED_SEED_VOIDPTR) {
+      if (hstype < N_NATIVE_HOOKS) return THREADVAR(hook_stacks)[hstype];
+      return lives_proc_thread_get_hook_stacks(self)[hstype];
+    }
+    if (st == WEED_SEED_PLANTPTR)
+      return lives_obj_instance_find_hook_stack(self, hstype);
+  }
+  return NULL;
+}
 
-#ifdef DEBUG_LPT_REFS
-int _lives_proc_thread_ref(lives_proc_thread_t lpt) {
-#else
+
 int lives_proc_thread_ref(lives_proc_thread_t lpt) {
-#endif
-#if 0
-}
-#endif
-int refs = -1;
-
-if (lpt) {
-  pthread_rwlock_t *destruct_rwlock;
-  pthread_mutex_lock(&ref_sync_mutex);
-  destruct_rwlock = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL);
-  if (destruct_rwlock && !pthread_rwlock_rdlock(destruct_rwlock)) {
-    pthread_mutex_unlock(&ref_sync_mutex);
-    // having readlock, now we can unlock the mutex
-    // with the readlock, this ensures the proc_thread cannot be freed
-    // since that requires a writelock
-    refs = weed_refcount_inc(lpt);
-    pthread_rwlock_unlock(destruct_rwlock);
-  } else pthread_mutex_unlock(&ref_sync_mutex);
-}
-return refs;
+  int refs = -1;
+  if (lpt) {
+    pthread_rwlock_t *destruct_rwlock;
+    //lives_mutex_lock(&ref_sync_mutex);
+    destruct_rwlock = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL);
+    if (destruct_rwlock) refs = weed_refcount_inc(lpt);
+  }
+  return refs;
 }
 
 
@@ -901,20 +916,17 @@ if (lpt) {
   T_RETURN_VAL_IF_RECURSED_WITH_DATA(FALSE, lpt);
   pthread_rwlock_t *destruct_rwlock;
 
-  pthread_mutex_lock(&ref_sync_mutex);
+
+  // we want to get the destruct_rwlock, and get a readlock on it, but this has to be done atomically
+  // so for this we use the ref_sync_mutex
+  // we also want to
+  //, then we decrement the refcount
+  // if refcount is then 0. we get a writelock on rwlock - but to get the writelock we need to drop the readlock
+  // - thus we need to
   destruct_rwlock
     = (pthread_rwlock_t *)weed_get_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL);
-  if (destruct_rwlock && !pthread_rwlock_rdlock(destruct_rwlock)) {
-    int refs = weed_refcount_dec(lpt);
-    if (refs != 0) {
-      pthread_rwlock_unlock(destruct_rwlock);
-      pthread_mutex_unlock(&ref_sync_mutex);
-      return FALSE;
-    }
-
-    pthread_rwlock_unlock(destruct_rwlock);
-    pthread_mutex_unlock(&ref_sync_mutex);
-
+  if (destruct_rwlock) {
+    if (weed_refcount_dec(lpt)) return FALSE;
     // should stop any other threads trying to ref / unref
     weed_set_voidptr_value(lpt, LIVES_LEAF_DESTRUCT_RWLOCK, NULL);
 
@@ -931,18 +943,13 @@ if (lpt) {
       lives_hook_stack_t **lpt_hooks = lives_proc_thread_get_hook_stacks(lpt);
       if (lpt == mainw->debug_ptr) BREAK_ME("lpt free");
 
-      pthread_mutex_lock(&twork_mutex);
+      lives_mutex_lock(&twork_mutex);
       if (lives_proc_thread_get_work(lpt)) {
         // try to remove from pool, but we may be too late
         // however we also lock twork_list, and worker threads should give up if DESTROYING is set
         lpt_remove_from_pool(lpt);
       }
-      pthread_mutex_unlock(&twork_mutex);
-
-      pthread_mutex_lock(&mainw->all_hstacks_mutex);
-      mainw->all_hstacks =
-        lives_list_remove_data(mainw->all_hstacks, lpt_hooks, FALSE);
-      pthread_mutex_unlock(&mainw->all_hstacks_mutex);
+      lives_mutex_unlock(&twork_mutex);
 
       T_RECURSE_GUARD_ARM_FOR_DATA(lpt);
       // flush gui hook
@@ -994,8 +1001,8 @@ if (lpt) {
 
       // pause briefly so that threads which just read rwlock or mutex
       // dont end up with invalid objects
-      pthread_mutex_lock(&ref_sync_mutex);
-      pthread_mutex_unlock(&ref_sync_mutex);
+      /* lives_mutex_lock(&ref_sync_mutex); */
+      /* lives_mutex_unlock(&ref_sync_mutex); */
 
       // we can now unlock the rwlock
       pthread_rwlock_unlock(destruct_rwlock);
@@ -1003,10 +1010,8 @@ if (lpt) {
       lives_free(destruct_rwlock);
       return TRUE;
 	// *INDENT-OFF*
-      }}
-    else pthread_mutex_unlock(&ref_sync_mutex);
-  }
-  // *INDENT-ON*
+    }}}
+// *INDENT-ON*
 return FALSE;
 }
 
@@ -1502,15 +1507,6 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_interruptable(boolean state) {
 }
 
 
-LIVES_GLOBAL_INLINE boolean lives_proc_thread_sync_waiting(lives_proc_thread_t lpt) {
-  if (lpt) {
-    if (lives_proc_thread_is_queued(lpt)) check_pool_threads(FALSE);
-    if (lives_proc_thread_has_states(lpt, THRD_STATE_SYNC_WAITING)) return TRUE;
-  }
-  return FALSE;
-}
-
-
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_is_waiting(lives_proc_thread_t lpt) {
   // self / conditional wait
   if (lpt) {
@@ -1596,53 +1592,62 @@ boolean _lives_proc_thread_request_resume(lives_proc_thread_t lpt, boolean have_
   // once paused is cleared, remove resume_req, allowing target to unblock
   // if ensure is set, this implies that the target is expected to pause and we want to prevent it
   // from doing so. In this case we will leave resume request in its state
-  if (lives_proc_thread_ref(lpt) > 1) {
+  pthread_cond_t *pcond;
+  boolean is_fg, is_obj = FALSE;
+  if (is_obj_instance(lpt)) is_obj = TRUE;
+
+  if (is_obj || lives_proc_thread_ref(lpt) > 1) {
     volatile boolean bval = TRUE;
-    lives_thread_data_t *tdata = lives_proc_thread_get_thread_data(lpt);
+    lives_thread_data_t *tdata;
+
+    if (!is_obj) tdata = get_thread_data_for_lpt(lpt);
+    else tdata = lives_obj_instance_get_thread_data(lpt);
+
     if (tdata) {
       pthread_mutex_t *pause_mutex = &tdata->vars.var_pause_mutex;
-
-      if (!have_lock) {
-	pthread_mutex_lock(pause_mutex);
-	g_print("mutex locked\n");
+      //
+      ////
+      ////
+      if (!have_lock) lives_mutex_lock(pause_mutex);
+      //
+      ///
+      if (!lives_proc_thread_is_paused(lpt)) {
+        if (ensure) {
+          if (is_obj) lives_obj_instance_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
+          else lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
+        }
+        if (!have_lock) lives_mutex_unlock(pause_mutex);
+        if (is_obj) lives_proc_thread_unref(lpt);
+        return FALSE;
       }
 
-      if (!lives_proc_thread_is_paused(lpt)
-	  && !lives_proc_thread_sync_waiting(lpt)) {
-	if (ensure) lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
-	if (!have_lock) pthread_mutex_unlock(pause_mutex);
-	lives_proc_thread_unref(lpt);
-	return FALSE;
-      }
+      if (is_obj) lives_obj_instance_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
+      else lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
 
-      pthread_cond_t *pcond = &tdata->vars.var_pcond;
-      lives_proc_thread_include_states(lpt, THRD_STATE_RESUME_REQUESTED);
-      g_print("target is paused\n");
       if (ensure) {
-	bval = FALSE;
-	lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, 0, toggle_var_cb, "V", (void *)&bval);
-	g_print("set bval false\n");
+        bval = FALSE;
+        if (!is_obj) lives_proc_thread_add_hook_cb(lpt, RESUMING_HOOK, 0, toggle_var_cb, "V", (void *)&bval);
+        else lives_obj_instance_add_hook_cb(lpt, RESUMING_HOOK, 0, toggle_var_cb, "V", (void *)&bval);
       }
-      pthread_cond_signal(pcond);
 
-      if (!have_lock) pthread_mutex_unlock(pause_mutex);
-      boolean is_fg = is_fg_thread();
+      pcond = &tdata->vars.var_pcond;
+      pthread_cond_signal(pcond);
+      lives_mutex_unlock(pause_mutex);
 
       if (!bval) {
-	g_print("set bval wait\n");
-	
-	while (!bval) {
-	  lives_microsleep;
-	  if (is_fg) fg_service_fulfill();
-	}
-	cleanup_self_receipts();
-	g_print("set bval true\n");
-
+        is_fg = !is_obj && is_fg_thread();
+        while (!bval) {
+          lives_microsleep;
+          if (is_fg) fg_service_fulfill();
+        }
+        cleanup_self_receipts();
       }
-      lives_proc_thread_unref(lpt);
+
+      if (have_lock) lives_mutex_lock(pause_mutex);
+      if (!is_obj) lives_proc_thread_unref(lpt);
       return TRUE;
     }
-    lives_proc_thread_unref(lpt);
+    if (!is_obj) lives_proc_thread_unref(lpt);
   }
   return FALSE;
 }
@@ -1665,12 +1670,25 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_get_resume_requested(lives_proc_th
 
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_resume(lives_proc_thread_t self) {
   if (self) {
-    lives_hook_stack_t **hstacks = self_hook_stacks(RESUMING_HOOK);
+    lives_hook_stack_t *hstack = self_hook_stack(RESUMING_HOOK);
     // need to remove idling and unqueued in case this is an idle proc thread
     // which is paused / idling
     lives_proc_thread_exclude_states(self, THRD_STATE_PAUSED | THRD_STATE_UNQUEUED |
                                      THRD_STATE_IDLING | THRD_STATE_RESUME_REQUESTED);
-    lives_hook_trigger(hstacks, RESUMING_HOOK);
+    lives_hook_trigger_stack(hstack);
+  }
+  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_obj_instance_resume(lives_obj_instance_t *self) {
+  if (self) {
+    lives_hook_stack_t *hstack = self_hook_stack(RESUMING_HOOK);
+    // need to remove idling and unqueued in case this is an idle proc thread
+    // which is paused / idling
+    lives_obj_instance_exclude_states(self, THRD_STATE_PAUSED | THRD_STATE_UNQUEUED |
+                                      THRD_STATE_IDLING | THRD_STATE_RESUME_REQUESTED);
+    lives_hook_trigger_stack(hstack);
   }
   return TRUE;
 }
@@ -1696,44 +1714,59 @@ boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock) {
   //
   if (self) {
     pthread_mutex_t *pause_mutex = &(THREADVAR(pause_mutex));
-    if (lives_proc_thread_get_cancel_requested(self)) {
+    boolean is_obj = FALSE;
+    if (is_obj_instance(self)) is_obj = TRUE;
+
+    if (!is_obj && (lives_proc_thread_get_cancel_requested(self))) {
       lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
-      if (have_lock) pthread_mutex_unlock(pause_mutex);
+      if (have_lock) lives_mutex_unlock(pause_mutex);
       lives_proc_thread_cancel();
       return FALSE;
     } else {
       pthread_cond_t *pcond = &(THREADVAR(pcond));
-      lives_hook_stack_t **hook_stacks = self_hook_stacks(PAUSED_HOOK);
-      lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
+      if (!is_obj)
+        lives_proc_thread_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
+      else lives_obj_instance_exclude_states(self, THRD_STATE_PAUSE_REQUESTED);
 
-      if (!have_lock) pthread_mutex_lock(pause_mutex);
 
-      if (lives_proc_thread_get_resume_requested(self)) {	
-	lives_proc_thread_exclude_states(self, THRD_STATE_RESUME_REQUESTED);
-	if (!have_lock) pthread_mutex_unlock(pause_mutex);
-	return TRUE;
+
+
+
+      //
+      if (!have_lock) lives_mutex_lock(pause_mutex);
+      ///
+
+
+      /////
+      if (lives_proc_thread_get_resume_requested(self)) {
+        if (!is_obj) lives_proc_thread_exclude_states(self, THRD_STATE_RESUME_REQUESTED);
+        else lives_obj_instance_exclude_states(self, THRD_STATE_RESUME_REQUESTED);
+        if (!have_lock) lives_mutex_unlock(pause_mutex);
+        return TRUE;
       }
-
-
-
+      ////
       if (!lives_proc_thread_get_resume_requested(self)
-          && !lives_proc_thread_get_cancel_requested(self)) {
-        lives_hook_trigger(hook_stacks, PAUSED_HOOK);
+          && (is_obj || !lives_proc_thread_get_cancel_requested(self))) {
+        lives_hook_stack_t *hstack = self_hook_stack(PAUSED_HOOK);
+        lives_hook_trigger_stack(hstack);
+        ////
 
-        lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
+        if (is_obj) lives_obj_instance_include_states(self, THRD_STATE_PAUSED);
+        else lives_proc_thread_include_states(self, THRD_STATE_PAUSED);
+
         while (!lives_proc_thread_get_resume_requested(self)
-               && !lives_proc_thread_should_cancel(self)) {
+               && (is_obj || !lives_proc_thread_should_cancel(self))) {
           pthread_cond_wait(pcond, pause_mutex);
         }
-        THREADVAR(sync_ready) = FALSE;
-        //lives_proc_thread_exclude_states(self, THRD_STATE_SYNC_WAITING);
       }
-      if (!have_lock) pthread_mutex_unlock(pause_mutex);
 
-      lives_proc_thread_resume(self);
+      if (!have_lock) lives_mutex_unlock(pause_mutex);
+
+      if (!is_obj) lives_proc_thread_resume(self);
+      else lives_obj_instance_resume(self);
       LIVES_ASSERT(!lives_proc_thread_is_paused(self));
-      if (lives_proc_thread_get_cancel_requested(self)) {
-        if (have_lock) pthread_mutex_unlock(pause_mutex);
+      if (!is_obj && lives_proc_thread_get_cancel_requested(self)) {
+        if (have_lock) lives_mutex_unlock(pause_mutex);
         lives_proc_thread_cancel();
         return FALSE;
       }
@@ -1782,7 +1815,164 @@ LIVES_GLOBAL_INLINE volatile uint64_t lives_proc_thread_get_sync_idx(lives_proc_
 }
 
 
-LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t lpt,
+static lives_result_t lpt_sync(lives_proc_thread_t lpt, uint64_t sync_idx,
+                               int mm_op, int64_t timeout_nsec) {
+
+
+  //  lives_thread_data_t *xtdata = lives_proc_thread_get_thread_data(lpt);
+  lives_thread_data_t *xtdata = get_thread_data_for_lpt(lpt);
+
+  volatile uint64_t osync_idx;
+  boolean gotmatch = FALSE;
+  pthread_mutex_t *pause_mutex;
+  pthread_mutex_t *opause_mutex = &(xtdata->vars.var_pause_mutex);
+  lives_result_t res = LIVES_RESULT_SUCCESS;
+
+  GET_PROC_THREAD_SELF(self);
+  //MSGMODE_ON(DEBUG);
+
+  d_print_debug("syncwith: %p says: got pause mutex of other (%p)\n", self, opause_mutex);
+  d_print_debug("syncwith: %p says: getting lock on other..", self);
+
+  // (A)
+  lives_mutex_lock(opause_mutex);
+  d_print_debug("succeeded\n");
+
+  d_print_debug("syncwith: %p says: advertising sync idx %lu\n", self, sync_idx);
+  ///
+  lives_proc_thread_set_sync_idx(sync_idx);
+
+  pause_mutex = &(THREADVAR(pause_mutex));
+
+  if (lives_proc_thread_get_resume_requested(self)) {
+    d_print_debug("syncwith: %p says: resume requested, skipping sync...\n", self);
+    goto synced;
+  }
+
+  d_print_debug("syncwith: %p says: checking sync idx of other...\n", self);
+  //
+  osync_idx = xtdata->vars.var_sync_idx;
+
+  d_print_debug("got value %lu\n", osync_idx);
+
+  if (osync_idx == sync_idx) {
+    gotmatch = TRUE;
+    d_print_debug("syncwith: %p says: idx matches !\n", self);
+  } else d_print_debug("syncwith: %p says:  no idx match, will wait\n", self);
+
+  d_print_debug("syncwith: %p says: unlocking pause mutex of other\n", self);
+  lives_mutex_unlock(opause_mutex);
+
+  d_print_debug("syncwith: %p says: get lock on self pause mutex...\n", self);
+
+  lives_mutex_lock(pause_mutex);
+
+  d_print_debug("OK\n");
+
+  if (lives_proc_thread_get_resume_requested(self)) {
+    d_print_debug("syncwith: %p says: resume requested, skipping sync...\n", self);
+    goto synced;
+  }
+
+  if (!gotmatch) {
+    // check again but now with lock - either other has not yet reached (A), will block at (A)
+    // or has passed (B)
+    // if it passed (B), we will now get a match,
+    //
+    osync_idx = xtdata->vars.var_sync_idx;
+    if (osync_idx == sync_idx) {
+      gotmatch = TRUE;
+      d_print_debug("syncwith: %p says: recheched sync idx, "
+                    "now we DID get match\n", self);
+    }
+  }
+
+  if (gotmatch) {
+    boolean resrq = FALSE;
+    // we got a match, then we wait for other to either pause / wait,
+    // or to reset its sync-idx. While waitng we reset our sync_idx, so
+    // if th eother notices this it can also reset its sync_idx
+    lives_proc_thread_set_sync_idx(0);
+    //lives_mutex_unlock(pause_mutex);
+    //
+    while (1) {
+      osync_idx = xtdata->vars.var_sync_idx;
+      if (!osync_idx) {
+        d_print_debug("syncwith: %p says:  other reset sync_idx, assume synced\n", self);
+        goto synced;
+      }
+      lives_mutex_lock(opause_mutex);
+      if (!resrq && lives_proc_thread_is_paused(lpt)) {
+        d_print_debug("syncwith: %p says: other is paused, requesting resume\n", self);
+        lives_proc_thread_set_sync_idx(sync_idx);
+
+        ///
+        _lives_proc_thread_request_resume(lpt, TRUE, FALSE);
+        d_print_debug("syncwith: %p says: waiting for other to reset sync_idx\n", self);
+        resrq = TRUE;
+      }
+      lives_mutex_unlock(opause_mutex);
+      lives_microsleep;
+    }
+  }
+  // non-match, pause / wait
+  if (!timeout_nsec) {
+    d_print_debug("syncwith: %p says: pausing...\n", self);
+
+    ///
+    _lives_proc_thread_pause(self, TRUE);
+    d_print_debug("syncwith: %p says: resumed, checking for idx match\n", self);
+    if (xtdata->vars.var_sync_idx == sync_idx)
+      goto synced;
+
+    d_print_debug("syncwith: %p says: no match after resuming "
+                  "- wrong thread woke us ?\n", self);
+    res = LIVES_RESULT_FAIL;
+    goto synced;
+  } else {
+    d_print_debug("syncwith: waiting\n");
+    if (_lives_proc_thread_wait(self, timeout_nsec, TRUE)) {
+      // timed out waiting
+      d_print_debug("syncwith: timed out waiting\n");
+      if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
+        d_print_debug("syncwith: synced anyway\n");
+        goto synced;
+      }
+      d_print_debug("syncwith: timed out, should retry");
+      res = LIVES_RESULT_TIMEDOUT;
+      goto synced;
+    }
+    d_print_debug("syncwith: resumed\n");
+    if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
+      goto synced;
+    }
+    d_print_debug("no match after resuming - wrong thread woke us ?\n");
+    res = LIVES_RESULT_FAIL;
+    goto synced;
+  }
+
+synced:
+  // if here, either - requested resume, or nrither paused, or thread resumed us
+  // or timed out but sync_idx matched
+  d_print_debug("syncwith: %p says:  SYNCED with %p!!\n", self, lpt);
+
+  lives_mutex_unlock(pause_mutex);
+  lives_proc_thread_set_sync_idx(0);
+  lives_mutex_lock(opause_mutex);
+  // lock to ensure other read our sync_idx before unlocking
+  lives_mutex_unlock(opause_mutex);
+  d_print_debug("syncwith: DONE !!\n");
+  //MSGMODE_OFF(DEBUG);
+  return res;
+}
+
+
+lives_result_t lives_obj_instance_sync_with(lives_obj_instance_t *obj, uint64_t sync_idx) {
+  return lpt_sync(obj, sync_idx, MM_IGNORE, 0);
+}
+
+
+lives_result_t lives_proc_thread_sync_with_timeout(lives_proc_thread_t lpt,
     uint64_t sync_idx, int mm_op, int64_t timeout_nsec) {
   // wait for sync with other lpt
   // we want to avoid two situations - both threads are waiting for each other
@@ -1801,183 +1991,60 @@ LIVES_GLOBAL_INLINE lives_result_t lives_proc_thread_sync_with_timeout(lives_pro
 
   // - check if other is waiting, if so resume it
   // -- on resuming it will check for sync_idx match, then reset its sync_idx
+
   //
   // --- if other thread is in a timedwait, it could timeout
   // --   if this happens it will check for match, then reset its sync_idx, the same as if it were resumed
   // - so after resuming we wait for other thread to reset its sync_idx
-
+  boolean is_obj = FALSE;
   lives_result_t res = LIVES_RESULT_SUCCESS;
 
-  //MSGMODE_ON(DEBUG);
+  //  MSGMODE_ON(DEBUG);
   ____FUNC_ENTRY____(lives_proc_thread_sync_with_timeout, "I", "VUiI");
   GET_PROC_THREAD_SELF(self);
 
   if (lives_proc_thread_get_resume_requested(self)) {
     d_print_debug("syncwith: %p says: resume requested, skipping sync...\n", self);
+    //    MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT_VAL____(LIVES_RESULT_SUCCESS);
   }
   uint64_t attrs = lives_proc_thread_get_attrs(self);
-  if (attrs & LIVES_THRDATTR_IGNORE_SYNCPTS)
+  if (attrs & LIVES_THRDATTR_IGNORE_SYNCPTS) {
+    //    MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT_VAL____(LIVES_RESULT_INVALID);
+  }
   if (sync_idx == 0) sync_idx = -1;
   d_print_debug("syncwith: %p says: start sync with %p, sync identifier is %d\n", self, lpt, sync_idx);
+
+  if (is_obj_instance(lpt)) is_obj = TRUE;
+  if (is_obj) {
+    res = lpt_sync(lpt, sync_idx, mm_op, timeout_nsec);
+    //    MSGMODE_OFF(DEBUG);
+    ____FUNC_EXIT_VAL____(res);
+  }
   if (lives_proc_thread_ref(lpt) > 1)  {
     d_print_debug("syncwith: %p says: got ref on other\n", self);
     if (lpt != self) {
-      volatile uint64_t osync_idx;
-      boolean gotmatch = FALSE;
       if (lives_proc_thread_check_finished(lpt)) {
         d_print_debug("syncwith: %p says: other thread finished without us !\n", self);
         if (lives_proc_thread_was_cancelled(lpt))
           d_print_debug("syncwith: %p says: other thread was cancelled\n", self);
         if (lives_proc_thread_had_error(lpt))
           d_print_debug("syncwith: %p says: other thread got an error\n", self);
-        ____FUNC_EXIT_VAL____(LIVES_RESULT_ERROR);
-      }
-      pthread_mutex_t *opause_mutex = LPT_THREADVAR_GETp(lpt, pause_mutex),
-                       *pause_mutex = &(THREADVAR(pause_mutex));
-
-      if (!opause_mutex) {
-        d_print_debug("syncwith: no pause mutex !! %p %p %p\n", lpt, mainw->def_lpt, get_thread_data_for_lpt(lpt));
-        BREAK_ME("nopause");
         lives_proc_thread_unref(lpt);
+        //	MSGMODE_OFF(DEBUG);
         ____FUNC_EXIT_VAL____(LIVES_RESULT_ERROR);
       }
-
-      d_print_debug("syncwith: %p says: got pause mutex of other (%p)\n", self, opause_mutex);
-      d_print_debug("syncwith: %p says: getting lock on other..", self);
-
-      // (A)
-      pthread_mutex_lock(opause_mutex);
-      d_print_debug("succeeded\n");
-
-      d_print_debug("syncwith: %p says: advertising sync idx %d\n", self, sync_idx);
-      lives_proc_thread_set_sync_idx(sync_idx);
-
-      if (lives_proc_thread_get_resume_requested(self)) {
-        d_print_debug("syncwith: %p says: resume requested, skipping sync...\n", self);
-        goto synced;
-      }
-
-      d_print_debug("syncwith: %p says: checking sync idx of other...\n", self);
-      osync_idx = lives_proc_thread_get_sync_idx(lpt);
-      d_print_debug("got value %d\n", osync_idx);
-
-      if (osync_idx == sync_idx) {
-        gotmatch = TRUE;
-        d_print_debug("syncwith: %p says: idx matches !\n", self);
-      } else d_print_debug("syncwith: %p says:  no idx match, will wait\n", self);
-
-      d_print_debug("syncwith: %p says: unlocking pause mutex of other\n", self);
-      pthread_mutex_unlock(opause_mutex);
-
-      d_print_debug("syncwith: %p says: get lock on self pause mutex...\n", self);
-      // (B)
-      pthread_mutex_lock(pause_mutex);
-
-      d_print_debug("OK\n");
-
-      if (lives_proc_thread_get_resume_requested(self)) {
-        d_print_debug("syncwith: %p says: resume requested, skipping sync...\n", self);
-        goto synced;
-      }
-
-      if (!gotmatch) {
-        // check again but now with lock - either other has not yet reached (A), will block at (A)
-        // or has passed (B)
-        // if it passed (B), we will now get a match,
-        osync_idx = lives_proc_thread_get_sync_idx(lpt);
-        if (osync_idx == sync_idx) {
-          gotmatch = TRUE;
-          d_print_debug("syncwith: %p says: recheched sync idx, "
-                        "now we DID get match\n", self);
-        }
-      }
-
-      if (gotmatch) {
-        boolean resrq = FALSE;
-        // we got a match, then we wait for other to either pause / wait,
-        // or to reset its sync-idx. While waitng we reset our sync_idx, so
-        // if th eother notices this it can also reset its sync_idx
-        lives_proc_thread_set_sync_idx(0);
-        //pthread_mutex_unlock(pause_mutex);
-        //
-        while (1) {
-          osync_idx = lives_proc_thread_get_sync_idx(lpt);
-          if (!osync_idx) {
-            d_print_debug("syncwith: %p says:  other reset sync_idx, assume synced\n", self);
-            goto synced;
-          }
-          pthread_mutex_lock(opause_mutex);
-          if (!resrq && lives_proc_thread_is_paused(lpt)) {
-            d_print_debug("syncwith: %p says: other is paused, requesting resume\n", self);
-            lives_proc_thread_set_sync_idx(sync_idx);
-            _lives_proc_thread_request_resume(lpt, TRUE, FALSE);
-            d_print_debug("syncwith: %p says: waiting for other to reset sync_idx\n", self);
-            resrq = TRUE;
-          }
-          pthread_mutex_unlock(opause_mutex);
-          lives_microsleep;
-        }
-      }
-      // non-match, pause / wait
-      if (!timeout_nsec) {
-        d_print_debug("syncwith: %p says: pausing...\n", self);
-        _lives_proc_thread_pause(self, TRUE);
-        d_print_debug("syncwith: %p says: resumed, checking for idx match\n", self);
-        if (lives_proc_thread_get_sync_idx(lpt) == sync_idx)
-          goto synced;
-
-        d_print_debug("syncwith: %p says: no match after resuming "
-                      "- wrong thread woke us ?\n", self);
-        res = LIVES_RESULT_FAIL;
-        goto synced;
-      } else {
-        d_print_debug("syncwith: waiting\n");
-        if (_lives_proc_thread_wait(self, timeout_nsec, TRUE)) {
-          // timed out waiting
-          d_print_debug("syncwith: timed out waiting\n");
-          if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
-            d_print_debug("syncwith: synced anyway\n");
-            goto synced;
-          }
-          d_print_debug("syncwith: timed out, should retry");
-          res = LIVES_RESULT_TIMEDOUT;
-          goto synced;
-        }
-        d_print_debug("syncwith: resumed\n");
-        if (lives_proc_thread_get_sync_idx(lpt) == sync_idx) {
-          goto synced;
-        }
-        d_print_debug("no match after resuming - wrong thread woke us ?\n");
-        res = LIVES_RESULT_FAIL;
-        goto synced;
-      }
-
-synced:
-      // if here, either - requested resume, or nrither paused, or thread resumed us
-      // or timed out but sync_idx matched
-      d_print_debug("syncwith: %p says:  SYNCED with %p!!\n", self, lpt);
-      pthread_mutex_unlock(pause_mutex);
-      lives_proc_thread_set_sync_idx(0);
-      pthread_mutex_lock(opause_mutex);
-      // lock to ensure other read our sync_idx before unlocking
-      pthread_mutex_unlock(opause_mutex);
+      res = lpt_sync(lpt, sync_idx, mm_op, timeout_nsec);
       lives_proc_thread_unref(lpt);
-      d_print_debug("syncwith: DONE !!\n");
-      //MSGMODE_OFF(DEBUG);
+      //      MSGMODE_OFF(DEBUG);
       ____FUNC_EXIT_VAL____(res);
-      /* mismatch: */
-      /*   lives_proc_thread_error(self, 0, "sync_idx mismatch, wating for %d and found %d\n", sync_idx, osync_idx); */
-      /*   lives_proc_thread_unref(lpt); */
-      /*   return LIVES_RESULT_ERROR; */
     } else d_print_debug("sync with self !\n");
-
     lives_proc_thread_unref(lpt);
-    //MSGMODE_OFF(DEBUG);
+    // MSGMODE_OFF(DEBUG);
     ____FUNC_EXIT_VAL____(LIVES_RESULT_SUCCESS);
   }
-  //MSGMODE_OFF(DEBUG);
+  //y  MSGMODE_OFF(DEBUG);
   ____FUNC_EXIT_VAL____(LIVES_RESULT_FAIL);
 }
 
@@ -2964,9 +3031,9 @@ boolean lives_proc_thread_dispatch(lives_proc_thread_t lpt) {
     return FALSE;
   }
 
-  pthread_mutex_lock(&tcond_mutex);
+  lives_mutex_lock(&tcond_mutex);
   pthread_cond_signal(&tcond);
-  pthread_mutex_unlock(&tcond_mutex);
+  lives_mutex_unlock(&tcond_mutex);
 
   if (attrs & LIVES_THRDATTR_WAIT_START) {
     // WAIT_START: caller waits for thread to run or finish
@@ -2998,8 +3065,6 @@ char *lives_proc_thread_state_desc(uint64_t state) {
     fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is busy");
   if (state & THRD_STATE_WAITING)
     fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is waiting on conditions");
-  if (state & THRD_STATE_SYNC_WAITING)
-    fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is waiting for sync");
   if (state & THRD_STATE_BLOCKED)
     fstr = lives_strdup_concat_sep(fstr, ", ", "%s", "is blocked");
   if (state & THRD_STATE_PAUSE_REQUESTED)
@@ -3034,11 +3099,8 @@ char *lives_proc_thread_state_desc(uint64_t state) {
 //////// worker thread pool //////////////////////////////////////////
 
 ///////// thread pool ////////////////////////
-#ifndef VALGRIND_ON
 #define MINPOOLTHREADS 8
-#else
-#define MINPOOLTHREADS 8
-#endif
+
 // rnpoolthreads is the reserved npoolthreads, npoolthreads is the ctual number, which may be lower because idle
 // threads will time out and exit after a while
 // npoolthreads is the number of available (free) poolthreads, we try to maintain this > ntasks
@@ -3104,15 +3166,15 @@ static pthread_mutex_t blmutex = PTHREAD_MUTEX_INITIALIZER;
 static LiVESList *blocklist = NULL;
 
 static void add_to_blocklist(pthread_t self) {
-  pthread_mutex_lock(&blmutex);
+  lives_mutex_lock(&blmutex);
   blocklist = lives_list_prepend(blocklist, (void *)self);
-  pthread_mutex_unlock(&blmutex);
+  lives_mutex_unlock(&blmutex);
 }
 
 static void rem_from_blocklist(pthread_t self) {
-  pthread_mutex_lock(&blmutex);
+  lives_mutex_lock(&blmutex);
   blocklist = lives_list_remove_data(blocklist, (void *)self, FALSE);
-  pthread_mutex_unlock(&blmutex);
+  lives_mutex_unlock(&blmutex);
 }
 
 static boolean is_in_blocklist(void *self) {
@@ -3254,8 +3316,6 @@ static void *_lives_thread_data_create(void *pslot_id) {
     pthread_condattr_setpshared(&condattr, PTHREAD_PROCESS_SHARED);
     pthread_cond_init(&tdata->vars.var_pcond, &condattr);
 
-    tdata->vars.var_sync_ready = TRUE;
-
     tdata->vars.var_loveliness = AVG_LOVELINESS;
 
     tdata->vars.var_pmsgmode = &prefs->msg_routing;
@@ -3341,9 +3401,9 @@ lives_thread_data_t *get_thread_data(void) {
 
   tdata = pthread_getspecific(tdata_key);
   if (!tdata) {
-    pthread_mutex_lock(&mutex);
+    lives_mutex_lock(&mutex);
     next_extern_tidx--;
-    pthread_mutex_unlock(&mutex);
+    lives_mutex_unlock(&mutex);
     tdata = _lives_thread_data_create(LIVES_INT_TO_POINTER(next_extern_tidx));
   }
   return tdata;
@@ -3462,10 +3522,10 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
   if (tdata->thrd_type != THRD_TYPE_WORKER)
     lives_abort("Invalid worker thread type - internal error");
 
-  pthread_mutex_lock(&twork_mutex);
+  lives_mutex_lock(&twork_mutex);
 
   if (!(list = (LiVESList *)twork_list)) {
-    pthread_mutex_unlock(&twork_mutex);
+    lives_mutex_unlock(&twork_mutex);
     return FALSE;
   }
 
@@ -3479,7 +3539,7 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
     ntasks--;
     list->next = list->prev = NULL;
     lives_thread_free((lives_thread_t *)list);
-    pthread_mutex_unlock(&twork_mutex);
+    lives_mutex_unlock(&twork_mutex);
     return FALSE;
   }
 
@@ -3491,12 +3551,12 @@ static boolean do_something_useful(lives_thread_data_t *tdata) {
       ntasks--;
       list->next = list->prev = NULL;
       lives_thread_free((lives_thread_t *)list);
-      pthread_mutex_unlock(&twork_mutex);
+      lives_mutex_unlock(&twork_mutex);
       return FALSE;
     }
   }
 
-  pthread_mutex_unlock(&twork_mutex);
+  lives_mutex_unlock(&twork_mutex);
   list->next = list->prev = NULL;
 
   if (lpt) {
@@ -3564,7 +3624,7 @@ skip_over:
 
   //mainw->debug_ptr = NULL;
 
-  pthread_mutex_lock(&twork_mutex);
+  lives_mutex_lock(&twork_mutex);
   ntasks--;
 
   if (mywork->flags & LIVES_THRDFLAG_AUTODELETE) {
@@ -3574,7 +3634,7 @@ skip_over:
     else mywork->done = tdata->uid;
   }
 
-  pthread_mutex_unlock(&twork_mutex);
+  lives_mutex_unlock(&twork_mutex);
 
 #if USE_RPMALLOC
   rpmalloc_thread_collect();
@@ -3597,12 +3657,12 @@ static boolean thrdpool(void *arg) {
       clock_gettime(CLOCK_REALTIME, &ts);
       // add random factor so we dont get multiple threads all timing out at once
       ts.tv_sec += lifetime;
-      pthread_mutex_lock(&tcond_mutex);
+      lives_mutex_lock(&tcond_mutex);
       //g_print("thrd %d (0x%lx) WAITING : %d\n", tid, pself, tid);
       // there is no predicate here, since spurious wakeups are not a problem
       // they will just mean that the thread wont age this time
       rc = pthread_cond_timedwait(&tcond, &tcond_mutex, &ts);
-      pthread_mutex_unlock(&tcond_mutex);
+      lives_mutex_unlock(&tcond_mutex);
       //g_print("thrd %d (0x%lx) woke\n", tid, pself);
 #ifndef VALGRIND_ON
       if (rc == ETIMEDOUT) {
@@ -3616,13 +3676,13 @@ static boolean thrdpool(void *arg) {
               npoolthreads--;
               lives_free(myslot);
               tdata->exited = TRUE;
-              pthread_mutex_unlock(&twork_mutex);
-              pthread_mutex_unlock(&pool_mutex);
+              lives_mutex_unlock(&twork_mutex);
+              lives_mutex_unlock(&pool_mutex);
               break;
             } else nthrds_needed--;
-            pthread_mutex_unlock(&twork_mutex);
+            lives_mutex_unlock(&twork_mutex);
           }
-          pthread_mutex_unlock(&pool_mutex);
+          lives_mutex_unlock(&pool_mutex);
         }
       }
 #endif
@@ -3648,7 +3708,10 @@ static boolean thrdpool(void *arg) {
 
 void lives_threadpool_init(void) {
   pthread_rwlock_init(&all_tdata_rwlock, NULL);
-  rnpoolthreads = npoolthreads = nthrds_needed = MINPOOLTHREADS;
+  if (RUNNER_IS(valgrind))
+    rnpoolthreads = npoolthreads = nthrds_needed = 2;
+  else
+    rnpoolthreads = npoolthreads = nthrds_needed = MINPOOLTHREADS;
   if (mainw->debug) rnpoolthreads = npoolthreads = 0;
   if (prefs->nfx_threads > npoolthreads) rnpoolthreads = npoolthreads = prefs->nfx_threads;
   poolthrds = (pthread_t **)lives_calloc(npoolthreads, sizeof(pthread_t *));
@@ -3665,15 +3728,15 @@ void lives_threadpool_init(void) {
 
 void lives_threadpool_finish(void) {
   threads_die = TRUE;
-  pthread_mutex_lock(&tcond_mutex);
+  lives_mutex_lock(&tcond_mutex);
   pthread_cond_broadcast(&tcond);
-  pthread_mutex_unlock(&tcond_mutex);
+  lives_mutex_unlock(&tcond_mutex);
   for (int i = 0; i < rnpoolthreads; i++) {
     lives_thread_data_t *tdata = get_thread_data_by_slot_id(i);
     if (tdata) {
-      pthread_mutex_lock(&tcond_mutex);
+      lives_mutex_lock(&tcond_mutex);
       pthread_cond_broadcast(&tcond);
-      pthread_mutex_unlock(&tcond_mutex);
+      lives_mutex_unlock(&tcond_mutex);
       pthread_join(*(poolthrds[i]), NULL);
     }
   }
@@ -3727,7 +3790,7 @@ void check_pool_threads(boolean important) {
   if (!important && lives_get_relative_ticks_lax(last_check_ticks) < POOL_CHK_THRESH) return;
   last_check_ticks = lives_get_current_ticks_lax();
 
-  pthread_mutex_lock(&pool_mutex);
+  lives_mutex_lock(&pool_mutex);
 
   if (ntasks > nthrds_needed) nthrds_needed = ntasks;
 
@@ -3737,31 +3800,31 @@ void check_pool_threads(boolean important) {
       // relaunch thread, npoolthreads ---> rnpoolthreads
       poolthrds[i] = (pthread_t *)lives_malloc(sizeof(pthread_t));
       npoolthreads++;
-      //pthread_mutex_unlock(&twork_mutex);
-      pthread_mutex_unlock(&pool_mutex);
+      //lives_mutex_unlock(&twork_mutex);
+      lives_mutex_unlock(&pool_mutex);
       pthread_create(poolthrds[i], NULL, _lives_thread_data_create, LIVES_INT_TO_POINTER(i));
       pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, NULL);
-      pthread_mutex_lock(&tcond_mutex);
+      lives_mutex_lock(&tcond_mutex);
       pthread_cond_signal(&tcond);
-      pthread_mutex_unlock(&tcond_mutex);
-      pthread_mutex_lock(&pool_mutex);
-      //pthread_mutex_lock(&twork_mutex);
+      lives_mutex_unlock(&tcond_mutex);
+      lives_mutex_lock(&pool_mutex);
+      //lives_mutex_lock(&twork_mutex);
       break;
     }
   }
 
   if (ntasks <= rnpoolthreads) {
     for (int i = 0; i < ntasks && i < rnpoolthreads; i++) {
-      pthread_mutex_lock(&tcond_mutex);
+      lives_mutex_lock(&tcond_mutex);
       pthread_cond_signal(&tcond);
-      pthread_mutex_unlock(&tcond_mutex);
+      lives_mutex_unlock(&tcond_mutex);
     }
-    //pthread_mutex_unlock(&twork_mutex);
+    //lives_mutex_unlock(&twork_mutex);
   } else {
     // we need more threads to service all tasks
     int extrs = MAX(MINPOOLTHREADS >> 1, ntasks - rnpoolthreads);
     g_print("Adding %d poolthreads\n", extrs);
-    //pthread_mutex_unlock(&twork_mutex);
+    //lives_mutex_unlock(&twork_mutex);
     poolthrds =
       (pthread_t **)lives_realloc(poolthrds, (rnpoolthreads + extrs) * sizeof(pthread_t *));
     for (int i = rnpoolthreads; i < rnpoolthreads + extrs; i++) {
@@ -3770,11 +3833,11 @@ void check_pool_threads(boolean important) {
     }
     rnpoolthreads += extrs;
     npoolthreads = rnpoolthreads;
-    pthread_mutex_lock(&tcond_mutex);
+    lives_mutex_lock(&tcond_mutex);
     pthread_cond_broadcast(&tcond);
-    pthread_mutex_unlock(&tcond_mutex);
+    lives_mutex_unlock(&tcond_mutex);
   }
-  pthread_mutex_unlock(&pool_mutex);
+  lives_mutex_unlock(&pool_mutex);
 }
 
 
@@ -3809,7 +3872,7 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
 
   if (attrs & LIVES_THRDATTR_WAIT_START) work->flags |= LIVES_THRDFLAG_WAIT_START;
 
-  pthread_mutex_lock(&twork_mutex);
+  lives_mutex_lock(&twork_mutex);
 
   if (attrs & LIVES_THRDATTR_PRIORITY) {
     twork_list = lives_list_prepend((LiVESList *)twork_list, (void *)work);
@@ -3825,14 +3888,14 @@ thrd_work_t *lives_thread_create(lives_thread_t **threadptr, lives_thread_attr_t
   ntasks++;
 
   if (ntasks >= npoolthreads) {
-    pthread_mutex_unlock(&twork_mutex);
+    lives_mutex_unlock(&twork_mutex);
     check_pool_threads(TRUE);
   } else {
-    pthread_mutex_unlock(&twork_mutex);
+    lives_mutex_unlock(&twork_mutex);
     if (!(attrs & LIVES_THRDATTR_FAST_QUEUE)) {
-      pthread_mutex_lock(&tcond_mutex);
+      lives_mutex_lock(&tcond_mutex);
       pthread_cond_signal(&tcond);
-      pthread_mutex_unlock(&tcond_mutex);
+      lives_mutex_unlock(&tcond_mutex);
     }
   }
   return work;
@@ -3860,9 +3923,9 @@ uint64_t lives_thread_join(lives_thread_t *thread, void **retval) {
   // thread has been joined, so now it can be freed
   task->flags &= ~LIVES_THRDFLAG_NOFREE_LIST;
 
-  pthread_mutex_lock(&twork_mutex);
+  lives_mutex_lock(&twork_mutex);
   lives_thread_free(thread);
-  pthread_mutex_unlock(&twork_mutex);
+  lives_mutex_unlock(&twork_mutex);
 
 #if USE_RPMALLOC
   // free up some thread memory
@@ -3891,15 +3954,15 @@ LIVES_GLOBAL_INLINE boolean check_refcnt_init(lives_refcounter_t *refcount) {
       // - we do the init, but before get the lock, another thread reaches this point
       // it will init the mutex again
       // so we use global init_mutex to prevent this
-      pthread_mutex_lock(&init_mutex);
+      lives_mutex_lock(&init_mutex);
       if (!refcount->mutex_inited) {
         pthread_mutex_init(&refcount->mutex, NULL);
         refcount->mutex_inited = TRUE;
-        pthread_mutex_lock(&refcount->mutex);
+        lives_mutex_lock(&refcount->mutex);
         refcount->count = 1;
-        pthread_mutex_unlock(&refcount->mutex);
+        lives_mutex_unlock(&refcount->mutex);
       }
-      pthread_mutex_unlock(&init_mutex);
+      lives_mutex_unlock(&init_mutex);
     }
     return TRUE;
   }
@@ -3909,51 +3972,52 @@ LIVES_GLOBAL_INLINE boolean check_refcnt_init(lives_refcounter_t *refcount) {
 
 LIVES_GLOBAL_INLINE int refcount_inc(lives_refcounter_t *refcount) {
   if (check_refcnt_init(refcount)) {
-    int count;
-    pthread_mutex_lock(&refcount->mutex);
-    count = ++refcount->count;
-    pthread_mutex_unlock(&refcount->mutex);
+    int count = 0;
+    lives_mutex_lock(&refcount->mutex);
+    if (refcount->count > 0)
+      count = ++refcount->count;
+    lives_mutex_unlock(&refcount->mutex);
     return count;
   }
-  return 0;
+  return -1;
 }
 
 
 LIVES_GLOBAL_INLINE int refcount_dec(lives_refcounter_t *refcount) {
   if (check_refcnt_init(refcount)) {
     int count;
-    pthread_mutex_lock(&refcount->mutex);
+    lives_mutex_lock(&refcount->mutex);
     count = refcount->count;
     if (count > 0) count = --refcount->count;
     else BREAK_ME("double unref");
-    pthread_mutex_unlock(&refcount->mutex);
+    lives_mutex_unlock(&refcount->mutex);
     return count;
   }
-  return 0;
+  return -1;
 }
 
 
 LIVES_LOCAL_INLINE int refcount_query(obj_refcounter * refcount) {
   if (check_refcnt_init(refcount)) {
     int count;
-    pthread_mutex_lock(&refcount->mutex);
+    lives_mutex_lock(&refcount->mutex);
     count = refcount->count;
-    pthread_mutex_unlock(&refcount->mutex);
+    lives_mutex_unlock(&refcount->mutex);
     return count;
   }
-  return 0;
+  return -1;
 }
 
 
-LIVES_LOCAL_INLINE void *refcount_query_steal(void **objp, obj_refcounter *refcount) {
+LIVES_LOCAL_INLINE void *refcount_query_steal(void **objp, obj_refcounter * refcount) {
   void *ret = NULL;
   if (check_refcnt_init(refcount)) {
     int count;
-    pthread_mutex_lock(&refcount->mutex);
+    lives_mutex_lock(&refcount->mutex);
     ret = *objp;
     count = refcount->count;
     if (count == 1) *objp = NULL;
-    pthread_mutex_unlock(&refcount->mutex);
+    lives_mutex_unlock(&refcount->mutex);
   }
   return ret;
 }

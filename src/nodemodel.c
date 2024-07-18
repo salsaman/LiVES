@@ -3474,11 +3474,11 @@ void display_plan(exec_plan_t *plan) {
     memstr = lives_format_storage_space_string(step->start_res[RES_TYPE_MEM]);
     lives_printerr("\tOn entry: %ld threads, %s OR %ld bigblocks\n",
                    step->start_res[RES_TYPE_THRD], memstr, step->start_res[RES_TYPE_BBLOCK]);
-    lives_free(memstr);
+    if (memstr) lives_free(memstr);
     memstr = lives_format_storage_space_string(step->end_res[RES_TYPE_MEM]);
     lives_printerr("\tOn exit: %ld threads, %s OR %ld bigblocks\n",
                    step->end_res[RES_TYPE_THRD], memstr, step->end_res[RES_TYPE_BBLOCK]);
-    lives_free(memstr);
+    if (memstr) lives_free(memstr);
     lives_printerr("Timing estimates: start time %.4f msec, duration %.4f msec, deadline %.4f msec\n",
                    step->tdata->est_start / TICKS_PER_SECOND_DBL * 1000.,
                    step->tdata->est_duration * 1000.,
@@ -4173,7 +4173,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
       xmaxw = rmaxw;
       xmaxh = rmaxh;
- 
+
       for (ni = 0; ni < nins; ni++) {
         // calculate expanded bounding box
         // find widest and tallest, note opposite directions, we will have rmaxw X xmaxh, xmaxw X rmaxh
@@ -4332,7 +4332,7 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
         }
       }
     }
- 
+
     xopwidth = width;
     xopheight = height;
 
@@ -4499,27 +4499,25 @@ static void calc_node_sizes(lives_nodemodel_t *nodemodel, inst_node_t *n) {
                       no, out->width, out->height);
       }
     }
-  }
-  else {
+  } else {
     if (prefs->pb_quality != PB_QUALITY_HIGH) {
       if (n->n_inputs && !n->n_outputs) {
-	if (prefs->pb_quality == PB_QUALITY_MED) {
-	  opwidth = (opwidth * 3) >> 2;
-	  opheight = (opheight * 3) >> 2;
-	}
-	else {
-	  if (prefs->pb_quality == PB_QUALITY_LOW) {
-	    opwidth = opwidth >> 1;
-	    opheight = opheight >> 1;
-	  }
-	}
-	for (ni = 0; ni < n->n_inputs; ni++) {
-	  in = n->inputs[ni];
-	  if (in->flags & NODEFLAGS_IO_SKIP) continue;
-	  if (in->flags & NODEFLAG_IO_FIXED_SIZE) continue;
-	  in->width = opwidth;
-	  in->height = opheight;
-	}
+        if (prefs->pb_quality == PB_QUALITY_MED) {
+          opwidth = (opwidth * 3) >> 2;
+          opheight = (opheight * 3) >> 2;
+        } else {
+          if (prefs->pb_quality == PB_QUALITY_LOW) {
+            opwidth = opwidth >> 1;
+            opheight = opheight >> 1;
+          }
+        }
+        for (ni = 0; ni < n->n_inputs; ni++) {
+          in = n->inputs[ni];
+          if (in->flags & NODEFLAGS_IO_SKIP) continue;
+          if (in->flags & NODEFLAG_IO_FIXED_SIZE) continue;
+          in->width = opwidth;
+          in->height = opheight;
+        }
       }
     }
   }
@@ -8371,7 +8369,7 @@ void rebuild_nodemodel(void) {
 
     if (lpt) {
       if (!lives_proc_thread_check_finished(lpt))
-	lives_proc_thread_request_cancel(lpt, FALSE);
+        lives_proc_thread_request_cancel(lpt, FALSE);
       if (mainw->plan_cycle) {
         int state = mainw->plan_cycle->state;
         if (state == PLAN_STATE_WAITING ||

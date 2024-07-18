@@ -638,7 +638,8 @@ typedef enum {
 #define MILLIONS_DBL(n) ((double)(n) * 1000000.)
 #define ONE_MILLION_DBL MILLIONS_DBL(1.)
 
-#define _LIVES_ASSERT(cond, fmt, ...) _DW0(if(!(cond))lives_assert_failed(#cond, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__);)
+#define _LIVES_ASSERT(cond, fmt, ...) _DW0(if(!(cond)){BREAK_ME("assert failed");\
+      lives_assert_failed(#cond, __FILE__, __LINE__, fmt __VA_OPT__(,) __VA_ARGS__);})
 #define LIVES_ASSERT(cond, ...) _LIVES_ASSERT(cond __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #define APPLY_BIT_TRANSFORMS(from, to, input, output) APPLY_BIT_X_##from##_##to(input, output)

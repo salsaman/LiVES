@@ -83,6 +83,7 @@ typedef weed_param_t lives_tx_param_t;
 typedef weed_plant_t lives_obj_attr_t;
 typedef weed_plant_t lives_contract_t;
 typedef weed_plant_t lives_attrgrp_t;
+typedef weed_plant_t lives_attribute_t;
 
 #define LIVES_PLANT_BUNDLE 21212
 
@@ -95,32 +96,6 @@ weed_plant_t *valplant_for_struct(const char *stname, void *struc);
 #endif
 
 typedef lives_refcounter_t obj_refcounter;
-
-// lives_object_t // DEPRECATED - new code should use lives_obj_t
-struct _object_t {
-  uint64_t uid; // unique id for this instnace (const)
-  obj_refcounter refcounter;
-  uint64_t type; // object type - from IMkType (const)
-  uint64_t subtype; // object subtype, can change during a transformation
-  int state; // object state
-  lives_intentcap_t icap;
-  lives_obj_attr_t **attributes; // internal parameters (properties)
-  lives_object_transform_t *active_tx; // pointer to currently running transform (or NULL)
-  lives_hook_stack_t *hook_stacks[N_HOOK_POINTS]; /// TODO - these should probably be part of active_tx
-  void *priv; // internal data belonging to the object
-};
-
-// TODO - types should register themselves, and then be queried
-struct _objsubdef {
-  uint64_t subtype; // object subtype, can change during a transformation
-  lives_obj_attr_t **common_attributes; // internal attributes common to all states
-  ////
-  struct _obj_state_details {
-    int *states; // possible object states
-    lives_obj_attr_t **state_attributes; // state specific attributes ???
-    lives_object_transform_t **tx; // array of transform functions for object type / subtype / state
-  } **state_dets;
-};
 
 /////////////
 
@@ -279,9 +254,13 @@ weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *);
 weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t st, weed_size_t ne, ...);
 weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, uint32_t st, weed_funcptr_t func);
 
+boolean is_obj_instance(weed_plant_t *);
+
 lives_hook_stack_t *lives_obj_instance_find_hook_stack(lives_obj_instance_t *, int hstype);
 lives_result_t lives_obj_instance_add_hook_stack(lives_obj_instance_t *, lives_hook_stack_t *);
 lives_index_t *lives_obj_instance_get_hook_stacks(lives_obj_instance_t *);
+
+lives_result_t lives_obj_instance_add_hstype(lives_obj_instance_t *obj, int hstype);
 
 boolean lives_obj_instance_get_active(lives_obj_instance_t *);
 void lives_obj_instance_set_active(lives_obj_instance_t *, const char *desc, boolean active);
@@ -565,16 +544,6 @@ lives_object_transform_t *find_transform_for_intentcaps(lives_obj_t *, lives_int
 
 weed_param_t *weed_param_from_attribute(lives_obj_instance_t *obj, const char *name);
 weed_param_t *weed_param_from_attr(lives_obj_attr_t *);
-
-/* void lives_intentparams_free(lives_intentparams_t *); */
-/* boolean lives_transform_status_free(lives_transform_status_t *); */
-/* void lives_object_transform_free(lives_object_transform_t *); */
-
-typedef lives_hash_store_t lives_objstore_t;
-
-extern lives_objstore_t *main_objstore;
-extern lives_objstore_t *fn_objstore;
-extern lives_objstore_t *bdef_store;
 
 ////////////////// object broker part ///////////
 

@@ -955,7 +955,7 @@ static boolean _lives_buffered_rdonly_slurp(lives_file_buffer_t *fbuff, off_t sk
 #endif
       }
     }
-    if (retval) lives_hook_trigger(self_hook_stacks(DATA_PREVIEW_HOOK), DATA_PREVIEW_HOOK);
+    if (retval) lives_hook_trigger_stack(self_hook_stack(DATA_PREVIEW_HOOK));
   } else {
     // if there is not enough data to even try reading, we set EOF
     fbuff->flags |= FB_FLAG_EOF;

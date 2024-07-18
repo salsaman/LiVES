@@ -74,6 +74,112 @@ static void check_for_surprises(LiVESList **va_magic) {
 }
 
 
+/* lives_condition make_cnf(lives_condition cond) { */
+/*   // convert a condition to conjunctive normal form */
+/*   // the result be expr0 and expr1 and expr2 ... and exprN */
+/*   // where each expr is of the form (a or b or c or d ....) */
+/*   // this can be useful as we do not need to always evaluate expr, as soon as we get a non zero value we can return true */
+
+/*   // the transformation rules: */
+/*   // COND_NOT, COND_POPEN, val0, COND_AND, val1, COND_PCLOSE */
+/*   // -> COND_NOT, val0, COND_OR, COND_NOT, val1 */
+/*   // */
+
+/*   if (!cond) return; */
+/*   allvalues_t *node = cond; */
+
+/*   // Process the left and right subtrees recursively */
+/*   if (!is_final(node)) { */
+/*     for (int i = 0; i < 2; i++) { */
+/*       make_cnf(get_param(finst->params, i)); */
+/*     } */
+
+/*     switch (node->priv->op) { */
+/*     case COND_OP_NOT: */
+/*       negate(node); */
+/*       break; */
+/*     case COND_OP_OR: */
+/*       distribute_or_over_and(node); */
+/*       break; */
+/*     case COND_OP_XOR: */
+/*       // Convert XOR to (A AND NOT B) OR (NOT A AND B) */
+/*       // This might require more steps and additional node creations */
+/*       break; */
+/*     case COND_OP_AND: */
+/*       // AND is already in CNF */
+/*       break; */
+/*     default: */
+/*       break; */
+/*     } */
+/* } */
+
+/* void negate(allvalues_t *node) { */
+/*   if (!node || is_final(node)) return; */
+
+/*   switch (node->priv->op) { */
+/*  case COND_OP_NOT: */
+/*    // Double negation elimination: NOT(NOT(A)) -> A */
+/*    // rpelace node with 1st param */
+/*    *node = get_param(finst->params, 0)); */
+/*    break; */
+/*  case COND_OP_AND: */
+/*    // De Morgan's laws: NOT(A AND B) -> NOT(A) OR NOT(B) */
+/*    subst_op(finst, COND_OP_OR); */
+/*    negate(get_param(finst->params, 0)); */
+/*    negate(get_param(finst->params, 1)); */
+/*    break; */
+/*  case COND_OR: */
+/*    // De Morgan's laws: NOT(A OR B) -> NOT(A) AND NOT(B) */
+/*    subst_op(finst, COND_OP_AND); */
+/*    negate(get_param(finst->params, 0)); */
+/*    negate(get_param(finst->params, 1)); */
+/*    break; */
+/*  default: */
+/*    // For literals, just wrap them in a NOT node */
+/*    /// ALLVALUES from node */
+/*    node->values.funcinst->params[0] = copy_node(param); */
+/*    subst_op(finst, COND_OP_NOT); */
+/*    break; */
+/*  } */
+/* } */
+
+
+/* void distribute_or_over_and(allvalues_t *node) { */
+/*   if (!node || is_final(node)) return; */
+
+/*   allvalues_t *left = node->values.funcinst->params[0]; */
+/*   allvalues_t *right = node->values.funcinst->params[1]; */
+
+/*   if (left->priv->op == COND_AND) { */
+/*     // Distribute OR over AND: A OR (B AND C) -> (A OR B) AND (A OR C) */
+/*     node->priv->op = COND_AND; */
+/*     allvalues_t *newLeft = copy_node(node); */
+/*     newLeft->values.funcinst->params[1] = left->values.funcinst->params[0]; */
+/*     node->values.funcinst->params[0] = newLeft; */
+
+/*     allvalues_t *newRight = copy_node(node); */
+/*     newRight->values.funcinst->params[1] = left->values.funcinst->params[1]; */
+/*     node->values.funcinst->params[1] = newRight; */
+
+/*     distribute_or_over_and(node->values.funcinst->params[0]); */
+/*     distribute_or_over_and(node->values.funcinst->params[1]); */
+/*   } else if (right->priv->op == COND_AND) { */
+/*     // Distribute OR over AND: (A AND B) OR C -> (A OR C) AND (B OR C) */
+/*     node->priv->op = COND_AND; */
+/*     allvalues_t *newLeft = copy_node(node); */
+/*     newLeft->values.funcinst->params[0] = right->values.funcinst->params[0]; */
+/*     node->values.funcinst->params[0] = newLeft; */
+
+/*     allvalues_t *newRight = copy_node(node); */
+/*     newRight->values.funcinst->params[0] = right->values.funcinst->params[1]; */
+/*     node->values.funcinst->params[1] = newRight; */
+
+/*     distribute_or_over_and(node->values.funcinst->params[0]); */
+/*     distribute_or_over_and(node->values.funcinst->params[1]); */
+/*   } */
+/* } */
+
+
 // value funcs :: functions which do not end in _const are he functions
 // added in registration. The real funcs are the ones which do_end in _cost.
 
@@ -783,8 +889,11 @@ lives_condition lives_cond_copy(lives_condition condition) {
   return xcond;
 }
 
+#define IS_CNF 0
 
 static lives_condition _lives_cond_eval(lives_condition condition) {
+  //  static allvalues_t *skipval = NULL;
+
   if (!condition) {
     //g_print("null in condtion !\n");
     return NULL;
@@ -796,6 +905,24 @@ static lives_condition _lives_cond_eval(lives_condition condition) {
     return condition;
   }
   lives_funcinst *finst = condition->funcinst;
+  //lives_funcinst *skipfunc = finst->skipfunc;
+
+  // if we have skipval, we can call skipfunc(skipval)
+  // and this can return NULL or a new skipval
+  // if we get a skipval, we store it and also return it
+  // for example cond or has a skip func that returns true if skipval is true
+  // cond and had a skipfunc that returns false if skipval is false
+  // we check when entering, if skipval is defined,
+  // if skipval is not defined we chack after evaluating each param
+  /* if (skipval) { */
+  /*   if (skipfunc) nskipval = (*skipfunc)(skipval); */
+  /*   frre skipval; */
+  /*   skipval = NULL; */
+  /* } */
+  /* if (nskipval) { */
+  /*   skipval = nskipval; */
+  /*   return copyof skpval; */
+  /* } */
 
   // if we got a va_surprise, the first va_arg will be an args count
   // followed by allvalues_t *, these will be copied into the local databook
@@ -804,24 +931,28 @@ static lives_condition _lives_cond_eval(lives_condition condition) {
   int maxparms = get_funcinst_nparams(finst);
   for (int i = 0; i < maxparms; i++) {
     char *pkey = make_std_pname(i);
-    /* allvalues_t *allvp = (allvalues_t *)weed_get_custom_value(finst->params, */
-    /*                      pkey, LIVES_SEED_ALLVALUES, NULL); */
-    // params here are all values 0 ither holding a final value or a funcinst
-    // if we have a funcinst we eval recursively, which will return an allvalues, which then replaaces
+    // params here are allvalues either holding a final value or a funcinst
+    // if we have a funcinst we eval recursively, which will return an allvalues, which then replaces
     // the original
     allvalues_t *allvp = allvalues_from_leaf(NULL, finst->params, pkey);
-    //if (!is_final(allvp))  {
 
     if (allvp->stype == LIVES_SEED_ALLVALUES) {
       allvp = (allvalues_t *)(allvp->values.V[0]);
     }
     if (allvp->funcinst) {
+      allvalues_t *res = _lives_cond_eval(allvp);
+      /* if (skipfunc) { */
+      /* 	skipval = (*skipfunc)(res); */
+      /* 	if (skipval){*/
+      /* free res */
+      /*  return copy of skpval;  */
+      /* } */
       weed_set_custom_value(finst->params, pkey,
-                            LIVES_SEED_ALLVALUES, _lives_cond_eval(allvp));
+                            LIVES_SEED_ALLVALUES, res);
     }
-    /// hmm..we can get allvaules with stype allvalues !!
     lives_free(pkey);
   }
+
   // after evaluating all funcinst params recursively
   // we execute the funcinst and return the result
   if (finst && finst->funcdef) {

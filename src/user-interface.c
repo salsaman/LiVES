@@ -1272,7 +1272,7 @@ boolean resize_message_area(livespointer data) {
 
 //////////////////// TIMELINE /////////
 
-static void redraw_timeline_inner(int clipno);
+static void redraw_timeline_inner(int clipno, boolean have_lock);
 
 
 // mainw->drawsrc :: cureent clip being drawn / last drawn
@@ -1296,6 +1296,7 @@ void drawtl_cancel(void) {
     lives_proc_thread_join_void(lpt);
     lives_proc_thread_unref(lpt);
   }
+  pthread_mutex_unlock(&tlthread_mutex);
   //else pthread_mutex_unlock(&tlthread_mutex);
   // exit with tlthread_mutex locked !!
 }
@@ -1315,7 +1316,7 @@ void redraw_timeline(int clipno) {
 
   mainw->drawsrc = clipno;
   drawtl_thread = lives_proc_thread_create(LIVES_THRDATTR_START_CANCELLABLE,
-                  redraw_timeline_inner, WEED_SEED_VOID, "i", clipno);
+                  redraw_timeline_inner, WEED_SEED_VOID, "ib", clipno, FALSE);
   pthread_mutex_unlock(&tlthread_mutex);
 }
 
@@ -1339,27 +1340,27 @@ void redraw_timeline_noblock(int clipno) {
   }
   mainw->drawsrc = clipno;
   drawtl_thread = self;
-  redraw_timeline_inner(clipno);
+  redraw_timeline_inner(clipno, TRUE);
   unlock_timeline();
 }
 
 
 boolean get_timeline_lock(void) {
   lives_proc_thread_t lpt = NULL;
-  while (1) {
-    if (!pthread_mutex_trylock(&tlthread_mutex)) return TRUE;
-    if (lpt) break;
-    lives_proc_thread_ref(drawtl_thread);
-    if (drawtl_thread) lpt = drawtl_thread;
-    if (lpt && !lives_proc_thread_check_finished(lpt)
-        && lives_proc_thread_should_cancel(lpt)) {
-      lpt = STEAL_POINTER(drawtl_thread);
-      lives_proc_thread_join_void(lpt);
-      lives_proc_thread_unref(lpt);
-      lives_proc_thread_unref(lpt);
-    } else {
-      lives_proc_thread_unref(lpt);
-      break;
+  lives_proc_thread_ref(drawtl_thread);
+  if (drawtl_thread) {
+    lpt = drawtl_thread;
+    while (1) {
+      if (!pthread_mutex_trylock(&tlthread_mutex)) return TRUE;
+      if (!lives_proc_thread_check_finished(lpt)
+          && lives_proc_thread_should_cancel(lpt)) {
+        lpt = STEAL_POINTER(drawtl_thread);
+        lives_proc_thread_join_void(lpt);
+        lives_proc_thread_unref(lpt);
+        lives_proc_thread_unref(lpt);
+        break;
+      }
+      lives_microsleep;
     }
   }
   return FALSE;
@@ -1372,7 +1373,7 @@ void unlock_timeline(void) {
 }
 
 
-static void redraw_timeline_inner(int clipno) {
+static void redraw_timeline_inner(int clipno, boolean have_lock) {
   // Video bar
   lives_clip_t *sfile = RETURN_VALID_CLIP(clipno);
 
@@ -1380,14 +1381,14 @@ static void redraw_timeline_inner(int clipno) {
 
   mainw->drawsrc = clipno;
 
-  get_timeline_lock();
+  if (!have_lock) get_timeline_lock();
 
   if (!mainw->video_drawable) {
     mainw->video_drawable = lives_widget_create_painter_surface(mainw->video_draw);
   }
   // returns FALSE if cancel requested
   if (!update_timer_bars(clipno, 0, 0, 0, 0, 1)) {
-    unlock_timeline();
+    if (!have_lock) unlock_timeline();
     return;
   }
   // Left / mono audio
@@ -1400,7 +1401,7 @@ static void redraw_timeline_inner(int clipno) {
     mainw->laudio_drawable = sfile->laudio_drawable;
   }
   if (!update_timer_bars(clipno, 0, 0, 0, 0, 2)) {
-    unlock_timeline();
+    if (!have_lock) unlock_timeline();
     return;
   }
   // right audio
@@ -1413,7 +1414,7 @@ static void redraw_timeline_inner(int clipno) {
     mainw->raudio_drawable = sfile->raudio_drawable;
   }
   if (!update_timer_bars(clipno, 0, 0, 0, 0, 3)) {
-    unlock_timeline();
+    if (!have_lock) unlock_timeline();
     return;
   }
 
@@ -1421,5 +1422,5 @@ static void redraw_timeline_inner(int clipno) {
   lives_widget_queue_draw(mainw->laudio_draw);
   lives_widget_queue_draw(mainw->raudio_draw);
   lives_widget_queue_draw(mainw->eventbox2);
-  unlock_timeline();
+  if (!have_lock) unlock_timeline();
 }

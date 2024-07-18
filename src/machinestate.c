@@ -2897,7 +2897,7 @@ boolean parse_valfile(const char *fname, const char delim, const char **keys, ch
       char **array = lives_strsplit(buffer, dstr, ntok);
       for (int i = 0; keys[i]; i++) {
 	if (!lives_strcmp(keys[i], array[0])) {
-	  vals[i] = lives_strdup(lives_strstrip(array[1]));
+	  vals[i] = lives_strstrip(lives_strdup(array[1]));
 	  //if (!i) mainw->debug_ptr = vals[0];
 	}
       }
@@ -2920,7 +2920,7 @@ boolean get_memstatus(void) {
   const char *valx[__NVALS + 1] = {"MemTotal", "MemFree", "MemAvailable", "Mlocked", NULL};
   for (int i = 0; i < __NVALS; i++) rets[i] = NULL;
   if (parse_valfile(PROC_MEMINFO, ':', valx, rets)) {
-    capable->hw.memtotal = lives_strtol(rets[0]) * 1000;
+    if (rets[0]) capable->hw.memtotal = lives_strtol(rets[0]) * 1000;
     capable->hw.memfree = lives_strtol(rets[1]) * 1000;
     capable->hw.memavail = lives_strtol(rets[2]) * 1000;
     capable->hw.memlocked = lives_strtol(rets[3]) * 1000;

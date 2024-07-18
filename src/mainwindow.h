@@ -1063,6 +1063,7 @@ typedef struct {
   double sync_err;
 
   lives_obj_instance_t *aplayer;
+  lives_obj_instance_t *areader;
 
   /// which number file we are playing (or -1) [generally mainw->current_file]
   int playing_file;
@@ -1698,7 +1699,6 @@ typedef struct {
   pthread_mutex_t alarmlist_mutex; /// single access for updating alarm list
   pthread_mutex_t trcount_mutex; /// transition count mutex
   pthread_mutex_t alock_mutex; /// audio lock / unlock
-  pthread_mutex_t all_hstacks_mutex; ///
 
   pthread_mutex_t fx_key_mutex[FX_KEYS_MAX_VIRTUAL];
   int fx_mutex_nlocks[FX_KEYS_MAX_VIRTUAL];

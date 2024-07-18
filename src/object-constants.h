@@ -1286,6 +1286,7 @@ NIRVA_ENUM(_ICAP_IDLE = 0, _ICAP_DOWNLOAD, _ICAP_LOAD, N_STD_ICAPS)
 #define ATTR_AUDIO_DIRECTION				"audio_direction"
 #define ATTR_AUDIO_SEEK_STATE				"audio_seek_state"
 #define ATTR_AUDIO_POSITION				"audio_position"
+#define ATTR_AUDIO_SMPS_PROCESSED			"audio_samps_proc"
 #define ATTR_AUDIO_LIMIT_ACT				"limit_action"
 
 ///// domain VIDEO (incomplete)

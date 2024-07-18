@@ -207,14 +207,13 @@ LIVES_GLOBAL_INLINE int64_t lives_get_session_time_nsec(void) {
       int64_t clock_delta = nsec - last_nsec;
       mainw->time_jump = 0;
       if (LIVES_IS_PLAYING) {
-	if (clock_delta > DELTA_THRESH) {
-	  g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
-	  if (clock_delta > 0) mainw->susp_time += clock_delta;
-	  nsec -= clock_delta;
-	  mainw->time_jump = clock_delta;
-	}
-      }
-      else inited = TRUE;
+        if (clock_delta > DELTA_THRESH) {
+          g_print("TIME JUMP of %.4f sec DETECTED\n", clock_delta / ONE_BILLION_DBL);
+          if (clock_delta > 0) mainw->susp_time += clock_delta;
+          nsec -= clock_delta;
+          mainw->time_jump = clock_delta;
+        }
+      } else inited = TRUE;
       last_nsec = nsec;
     }
   }
@@ -479,22 +478,21 @@ ticks_t lives_get_current_playback_ticks(lives_time_source_t *time_source) {
 
       // if the timecard cannot return current time we get a value of -1 back, and then fall back to system clock
 
-      IF_APLAYER_JACK
-      (if ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use
-            && IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0)
-      || (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use)) {
-      tsource = LIVES_TIME_SOURCE_SOUNDCARD;
-      if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
-          current = lives_jack_get_time(mainw->jackd_read);
-        else
-          current = lives_jack_get_time(mainw->jackd);
-      })
+      /* IF_APLAYER_JACK */
+      /* (if ((prefs->audio_src == AUDIO_SRC_INT && mainw->jackd && mainw->jackd->in_use */
+      /*       && IS_VALID_CLIP(mainw->jackd->playing_file) && mainw->files[mainw->jackd->playing_file]->achans > 0) */
+      /* || (prefs->audio_src == AUDIO_SRC_EXT && mainw->jackd_read && mainw->jackd_read->in_use)) { */
+      /* tsource = LIVES_TIME_SOURCE_SOUNDCARD; */
+      /* if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit) */
+      /*     current = lives_jack_get_time(mainw->jackd_read); */
+      /*   else */
+      /*     current = lives_jack_get_time(mainw->jackd); */
+      /* }) */
 
       IF_APLAYER_PULSE
       (if ((prefs->audio_src == AUDIO_SRC_INT && mainw->pulsed && mainw->pulsed->in_use &&
             ((mainw->multitrack && cfile->achans > 0)
-             || (!mainw->multitrack && IS_VALID_CLIP(mainw->pulsed->playing_file)
-                 && CLIP_HAS_AUDIO(mainw->pulsed->playing_file))))
+             || (!mainw->multitrack && CLIP_HAS_AUDIO(lives_aplayer_get_clip(mainw->aplayer)))))
       || (prefs->audio_src == AUDIO_SRC_EXT && mainw->pulsed_read && mainw->pulsed_read->in_use)) {
       tsource = LIVES_TIME_SOURCE_SOUNDCARD;
       if (prefs->audio_src == AUDIO_SRC_EXT && mainw->agen_key == 0 && !mainw->agen_needs_reinit)
@@ -694,7 +692,8 @@ void update_effort(double impulse) {
   struggling += inertia;
   inertia -= sig(struggling) * (struggling * struggling) / 1000.;
 
-  g_print("eff is %f %d impulse %f inertia = %f struggling = %f, %d %d\n", force->tots[0],  mainw->effort, impulse, inertia, struggling, eff_q, new_eff_q);
+  //g_print("eff is %f %d impulse %f inertia = %f struggling = %f, %d %d\n", force->tots[0],
+  //mainw->effort, impulse, inertia, struggling, eff_q, new_eff_q);
 
   if (mainw->effort > EFFORT_RANGE_MAX) mainw->effort = EFFORT_RANGE_MAX;
   if (mainw->effort < -EFFORT_RANGE_MAX) mainw->effort = -EFFORT_RANGE_MAX;
@@ -707,8 +706,7 @@ void update_effort(double impulse) {
       new_eff_q = PB_QUALITY_MED;
     else if (eff_q == PB_QUALITY_MED)
       new_eff_q = PB_QUALITY_LOW;
-  }
-  else if (struggling <= -EFFORT_LIMIT_MED) {
+  } else if (struggling <= -EFFORT_LIMIT_MED) {
     struggling = -EFFORT_LIMIT_MED;
     if (eff_q == PB_QUALITY_MED)
       new_eff_q = PB_QUALITY_HIGH;
@@ -726,7 +724,7 @@ void update_effort(double impulse) {
     //inertia *= INERTIAL_DAMPING;
     struggling = inertia = 0.;
     eff_q = new_eff_q;
-   }
+  }
   //g_print("STRG %d and %d %d\n", struggling, mainw->effort, prefs->pb_quality);
 }
 

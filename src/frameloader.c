@@ -2535,8 +2535,8 @@ retry:
                                          dplug->cdata->YUV_sampling,
                                          dplug->cdata->YUV_subspace);
 
-	      if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
-		if (weed_layer_get_yuv_subspace(layer) == WEED_YUV_SUBSPACE_BT709) {
+              if (prefs->apply_gamma && prefs->pb_quality != PB_QUALITY_LOW) {
+                if (weed_layer_get_yuv_subspace(layer) == WEED_YUV_SUBSPACE_BT709) {
                   if (layer_gamma != WEED_GAMMA_BT709) {
                     lives_clip_src_t *mysrc = NULL;
                     layer_gamma = WEED_GAMMA_BT709;

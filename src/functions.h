@@ -1287,6 +1287,7 @@ boolean lives_obj_instance_has_hook_cbs(lives_obj_instance_t *, int hstype);
 
 lives_result_t _lives_hook_trigger(lives_hook_stack_t *hstack, const char *args_fmt, ...);
 #define lives_hook_trigger(hstacks, hstype, ...) _lives_hook_trigger(hstacks[hstype] __VA_OPT__(,) __VA_ARGS__, NULL)
+#define lives_hook_trigger_stack(hstack, ...) _lives_hook_trigger(hstack __VA_OPT__(,) __VA_ARGS__, NULL)
 
 lives_result_t _lives_obj_instance_trigger_hook(lives_obj_instance_t *obj, int hstype, const char *args_fmt, ...);
 #define lives_obj_instance_trigger_hook(obj, hstype, ...) \
@@ -1298,7 +1299,8 @@ lives_result_t _lives_proc_thread_trigger_hook(int hstype, const char *args_fmt,
 int _lives_hook_trigger_async(lives_hook_stack_t *hstack, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
 #define lives_hook_trigger_async(hstype, xlpts, ...) _lives_hook_trigger_async(hstype, xlpts __VA_OPT__(,) __VA_ARGS__, NULL)
 
-int _lives_obj_instance_trigger_hook_async(lives_obj_instance_t *, int hstype, lives_proc_thread_t **xlpts, const char *args_fmt, ...);
+int _lives_obj_instance_trigger_hook_async(lives_obj_instance_t *, int hstype, lives_proc_thread_t **xlpts,
+    const char *args_fmt, ...);
 #define lives_obj_instance_trigger_hook_async(obj, hstype, xlpts, ...) _lives_obj_instance_trigger_hook_async(obj, hstype, xlpts __VA_OPT__(,) __VA_ARGS__, NULL)
 
 boolean lives_hook_async_join(int hstype);
@@ -1308,7 +1310,8 @@ boolean lives_obj_instance_async_join(lives_obj_instance_t *, int hstype);
 void lives_obj_instance_async_cancel(lives_obj_instance_t *, int hstype);
 
 lives_hook_stack_t **lives_proc_thread_get_hook_stacks(lives_proc_thread_t);
-lives_hook_stack_t **self_hook_stacks(int hstype);
+
+lives_hook_stack_t *self_hook_stack(int hstype);
 
 ///////////// funcdefs, funcinsts and funcsigs /////
 lives_funcdef_t *create_funcdef(const char *funcname, lives_funcptr_t function,

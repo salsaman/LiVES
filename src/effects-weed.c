@@ -5016,7 +5016,7 @@ void weed_load_all(void) {
 
   lives_strfreev(dirs);
 
-  ncompounds = load_compound_fx();
+  //ncompounds = load_compound_fx();
 
 #if !USE_STD_MEMFUNCS
 #if USE_RPMALLOC
@@ -6906,23 +6906,24 @@ deinit2:
       if (mainw->whentostop == STOP_ON_AUD_END) mainw->whentostop = STOP_ON_VID_END;
       if (prefs->audio_player == AUD_PLAYER_JACK) {
 #ifdef ENABLE_JACK
-        if (mainw->jackd_read && mainw->jackd_read->in_use &&
-            (mainw->jackd_read->playing_file == -1 || mainw->jackd_read->playing_file == mainw->ascrap_file)) {
-          // if playing external audio, switch over to internal for an audio gen
-          jack_time_reset(mainw->jackd, mainw->currticks);
-          // close the reader
-          jack_rec_audio_end(FALSE);
-        }
-        if (mainw->jackd && (!mainw->jackd_read || !mainw->jackd_read->in_use)) {
-          // enable writer
-          mainw->jackd->in_use = TRUE;
-        }
+        /* if (mainw->jackd_read && mainw->jackd_read->in_use && */
+        /*     (mainw->jackd_read->playing_file == -1 || mainw->jackd_read->playing_file == mainw->ascrap_file)) { */
+        /*   // if playing external audio, switch over to internal for an audio gen */
+        /*   jack_time_reset(mainw->jackd, mainw->currticks); */
+        /*   // close the reader */
+        /*   jack_rec_audio_end(FALSE); */
+        /* } */
+        /* if (mainw->jackd && (!mainw->jackd_read || !mainw->jackd_read->in_use)) { */
+        /*   // enable writer */
+        /*   mainw->jackd->in_use = TRUE; */
+        /* } */
 #endif
       }
       if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
         if (mainw->pulsed_read && mainw->pulsed_read->in_use &&
-            (mainw->pulsed_read->playing_file == -1 || mainw->pulsed_read->playing_file == mainw->ascrap_file)) {
+            (lives_aplayer_get_clip(mainw->areader) == -1 ||
+             lives_aplayer_get_clip(mainw->areader) == mainw->ascrap_file)) {
           // if playing external audio, switch over to internal for an audio gen
           ticks_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
           if (audio_ticks == -1) {
@@ -7153,12 +7154,15 @@ boolean weed_deinit_effect(int hotkey) {
             pulse_driver_uncork(mainw->pulsed_read);
             if (mainw->pulsed) {
               pulse_driver_cork(mainw->pulsed);
-              mainw->pulsed->playing_file = -1;
+              lives_aplayer_set_clip(mainw->aplayer, -1);
             }
           }
-          if (mainw->record) mainw->pulsed_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
-          mainw->pulsed_read->is_paused = FALSE;
-          mainw->pulsed_read->in_use = TRUE;
+          if (mainw->record) {
+            // if recording, continue to write to ascrap file
+            lives_aplayer_set_clip(mainw->areader, mainw->ascrap_file);
+            mainw->pulsed_read->is_paused = FALSE;
+            mainw->pulsed_read->in_use = TRUE;
+          }
         }
       }
 #endif
@@ -7172,7 +7176,7 @@ boolean weed_deinit_effect(int hotkey) {
         } else {
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE) {
-            if (mainw->pulsed) mainw->pulsed->playing_file = mainw->pre_src_audio_file;
+            if (mainw->pulsed) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
             if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
               pulse_get_rec_avals(mainw->pulsed);
             }
@@ -7180,7 +7184,7 @@ boolean weed_deinit_effect(int hotkey) {
 #endif
 #ifdef ENABLE_JACK
           if (prefs->audio_player == AUD_PLAYER_JACK) {
-            if (mainw->jackd) mainw->jackd->playing_file = mainw->pre_src_audio_file;
+            if (mainw->jackd) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
             if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
               jack_get_rec_avals(mainw->jackd);
             }
@@ -7409,12 +7413,12 @@ int register_audio_client(void) {
   if (!mainw->afbuffer) {
     lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
     mainw->afbuffer = init_audio_frame_buffers(aplayer);
-    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
-    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
   }
   pthread_mutex_lock(&mainw->afbuffer->nreader_mutex);
   nreaders = ++mainw->afbuffer->readers;
   pthread_mutex_unlock(&mainw->afbuffer->nreader_mutex);
+  if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
+  else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
   return nreaders;
 }
 
@@ -7425,10 +7429,10 @@ int unregister_audio_client(void) {
   nreaders = --mainw->afbuffer->readers;
   pthread_mutex_unlock(&mainw->afbuffer->nreader_mutex);
   if (nreaders <= 0) {
-    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
-    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
     free_audio_frame_buffer(mainw->afbuffer);
     mainw->afbuffer = NULL;
+    if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), FALSE);
+    else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), FALSE);
     return 0;
   }
   return nreaders;
@@ -7446,13 +7450,14 @@ boolean fill_audio_channel(weed_plant_t *filter, weed_plant_t *achan) {
 int register_aux_audio_client(void) {
   int nreaders;
   if (!mainw->aux_afbuffer) {
-    lives_obj_instance_t *aplayer = get_aplayer_instance(AUDIO_SRC_EXT);
+    lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
     mainw->aux_afbuffer = init_audio_frame_buffers(aplayer);
-    update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), TRUE);
   }
   pthread_mutex_lock(&mainw->aux_afbuffer->nreader_mutex);
   nreaders = ++mainw->aux_afbuffer->readers;
   pthread_mutex_unlock(&mainw->aux_afbuffer->nreader_mutex);
+  if (AUD_SRC_EXTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_EXT), TRUE);
+  else if (AUD_SRC_INTERNAL) update_audio_cbs(get_aplayer_instance(AUDIO_SRC_INT), TRUE);
   return nreaders;
 }
 
@@ -7816,6 +7821,7 @@ int weed_generator_start(weed_plant_t *inst, int key) {
   if (prefs->push_audio_to_gens) {
     if ((achan = get_audio_channel_in(inst, 0)) != NULL) {
       if (weed_plant_has_leaf(achan, WEED_LEAF_DISABLED)) weed_leaf_delete(achan, WEED_LEAF_DISABLED);
+      uint64_t new_rte = GU641 << key;
       register_audio_client();
     }
   }

@@ -1244,16 +1244,16 @@ struct XYZ xyzFromWavelength(double freq) {
 }
 
 double srgb_to_xyz[3][3] = {
-    {0.4124564, 0.3575761, 0.1804375},
-    {0.2126729, 0.7151522, 0.0721750},
-    {0.0193339, 0.1191920, 0.9503041}
+  {0.4124564, 0.3575761, 0.1804375},
+  {0.2126729, 0.7151522, 0.0721750},
+  {0.0193339, 0.1191920, 0.9503041}
 };
 
 // Function to multiply a 3x3 matrix with a 3-element vector
 void mat_mult(double out[3], double mat[3][3], double vec[3]) {
-    for (int i = 0; i < 3; ++i) {
-        out[i] = mat[i][0] * vec[0] + mat[i][1] * vec[1] + mat[i][2] * vec[2];
-    }
+  for (int i = 0; i < 3; ++i) {
+    out[i] = mat[i][0] * vec[0] + mat[i][1] * vec[1] + mat[i][2] * vec[2];
+  }
 }
 
 
@@ -1288,29 +1288,29 @@ static void rgb2xyz(uint8_t r, uint8_t g, uint8_t b, double *x, double *y, doubl
 #define Z_N 108.883
 
 double f(double t) {
-    const double delta = 6.0 / 29.0;
-    if (t > pow(delta, 3)) {
-        return cbrt(t);
-    } else {
-        return (t / (3 * pow(delta, 2))) + (4.0 / 29.0);
-    }
+  const double delta = 6.0 / 29.0;
+  if (t > pow(delta, 3)) {
+    return cbrt(t);
+  } else {
+    return (t / (3 * pow(delta, 2))) + (4.0 / 29.0);
+  }
 }
 
 void xyz_to_lab(double xyz[3], double lab[3]) {
-    // Normalize XYZ values by the reference white point
-    double x = xyz[0] / X_N;
-    double y = xyz[1] / Y_N;
-    double z = xyz[2] / Z_N;
+  // Normalize XYZ values by the reference white point
+  double x = xyz[0] / X_N;
+  double y = xyz[1] / Y_N;
+  double z = xyz[2] / Z_N;
 
-    // Apply the f(t) function
-    double fx = f(x);
-    double fy = f(y);
-    double fz = f(z);
+  // Apply the f(t) function
+  double fx = f(x);
+  double fy = f(y);
+  double fz = f(z);
 
-    // Calculate L*, a*, b* values
-    lab[0] = 116 * fy - 16;
-    lab[1] = 500 * (fx - fy);
-    lab[2] = 200 * (fy - fz);
+  // Calculate L*, a*, b* values
+  lab[0] = 116 * fy - 16;
+  lab[1] = 500 * (fx - fy);
+  lab[2] = 200 * (fy - fz);
 }
 
 
@@ -1392,43 +1392,43 @@ double cdist94(uint8_t r0, uint8_t g0, uint8_t b0, uint8_t r1, uint8_t g1, uint8
 
 
 void rgb2hsv(uint8_t r, uint8_t g, uint8_t b, double *h, double *s, double *v) {
-    uint8_t cmax, cmin;
-    uint8_t diff = get_maxmin_diff(r, g, b, &cmax, &cmin);
-    double ddiff = (double)diff, dcmax = (double)cmax;
+  uint8_t cmax, cmin;
+  uint8_t diff = get_maxmin_diff(r, g, b, &cmax, &cmin);
+  double ddiff = (double)diff, dcmax = (double)cmax;
 
-    if (h) { *h = 0.0; }
-    if (s) { *s = 0.0; }
-    if (v) { *v = 0.0; }
+  if (h) { *h = 0.0; }
+  if (s) { *s = 0.0; }
+  if (v) { *v = 0.0; }
 
-    if (v) {
-        *v = dcmax / 255.0;
+  if (v) {
+    *v = dcmax / 255.0;
+  }
+  if (cmax == 0) {
+    if (s) {
+      *s = 0.0;
     }
-    if (cmax == 0) {
-        if (s) {
-            *s = 0.0;
-        }
-        if (h) {
-            *h = 0.0;
-        }
-    } else {
-        if (s) {
-            *s = (ddiff / dcmax) * 100.0;
-        }
-        if (h && diff != 0) {
-            if (cmax == r) {
-                *h = ((double)g - (double)b) / ddiff;
-            } else if (cmax == g) {
-                *h = 2.0 + ((double)b - (double)r) / ddiff;
-            } else {
-                *h = 4.0 + ((double)r - (double)g) / ddiff;
-            }
-            *h = 60.0 * (*h < 0.0 ? (*h + 6.0) : *h);
-        }
+    if (h) {
+      *h = 0.0;
     }
+  } else {
+    if (s) {
+      *s = (ddiff / dcmax) * 100.0;
+    }
+    if (h && diff != 0) {
+      if (cmax == r) {
+        *h = ((double)g - (double)b) / ddiff;
+      } else if (cmax == g) {
+        *h = 2.0 + ((double)b - (double)r) / ddiff;
+      } else {
+        *h = 4.0 + ((double)r - (double)g) / ddiff;
+      }
+      *h = 60.0 * (*h < 0.0 ? (*h + 6.0) : *h);
+    }
+  }
 
 #if CALC_HSL
-    double Y = 0.299 * r + 0.587 * g + 0.114 * b; // RGB to Y component in YUV
-    if (v) *v = Y / 255.0;
+  double Y = 0.299 * r + 0.587 * g + 0.114 * b; // RGB to Y component in YUV
+  if (v) *v = Y / 255.0;
 #endif
 }
 
@@ -1467,7 +1467,7 @@ void hsv2rgb(double h, double s, double v, uint8_t *r, uint8_t *g, uint8_t *b) {
     double p = v * (1.0 - s);
     double q = v * (1.0 - (s * f));
     double t = v * (1.0 - (s * (1.0 - f)));
-        
+
     double dr, dg, db;
     switch (i) {
     case 0: dr = v; dg = t; db = p; break;

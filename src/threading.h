@@ -41,6 +41,13 @@ typedef pthread_attr_t native_attr_t;
 
 #define LIVES_INTERRUPT_SIG SIGRTMIN+6 // 40
 
+#define lives_mutex_lock(m) _lives_mutex_lock(m, #m, __FILE__, __LINE__)
+#define lives_mutex_unlock(m) _lives_mutex_unlock(m, #m, __FILE__, __LINE__)
+
+int _lives_mutex_lock(pthread_mutex_t *, const char *mname, const char *file, int line);
+int _lives_mutex_trylock(pthread_mutex_t *, const char *mname, const char *file, int line);
+int _lives_mutex_unlock(pthread_mutex_t *, const char *mname, const char *file, int line);
+
 void set_interrupt_action(int action);
 lives_result_t lives_proc_thread_try_interrupt(lives_proc_thread_t, weed_plant_t *data);
 boolean lives_proc_thread_can_interrupt(lives_proc_thread_t);
@@ -78,9 +85,10 @@ typedef struct {
 
   char var_origin[128]; // thread descriptive text eg "LiVES Worker Thread"
 
-  lives_proc_thread_t var_proc_thread;
-
-  lives_obj_instance_t *var_obj_instance;
+  union {
+    lives_proc_thread_t var_proc_thread;
+    lives_obj_instance_t *var_obj_instance;
+  };
 
   lives_obj_attr_t **var_attributes; // attributes passed to proc_thread
 
@@ -88,9 +96,6 @@ typedef struct {
 
   // recusrion guard tokens
   LiVESList *var_trest_list;
-
-  // sync related
-  volatile boolean var_sync_ready;
 
   pthread_mutex_t var_pause_mutex;
   pthread_cond_t var_pcond;
@@ -350,8 +355,6 @@ void pthread_cleanup_func(void *args);
 #define THRD_STATE_WILL_DESTROY (THRD_STATE_COMPLETED | THRD_STATE_DESTROYING)
 
 // there are 3 ways a proc_thread can be waiting:
-// - sync_waiting -> thread will continue when another thread calls sync_ready()
-// this can also occur when the thread is queued with the wait_sync attribute
 //
 // - (normal, non sync) waiting - the proc_thread is waiting for self defined condition(s)
 // 	to become true, it may possibly become blocked and / or timeout
@@ -366,8 +369,6 @@ void pthread_cleanup_func(void *args);
 //   If a waiting proc_thread receives a cancel_request, it will resume and then (quickly) be cancelled
 //   and finish.
 //
-// waiting for another thread to call sync_ready(this_proc_thread)
-#define THRD_STATE_SYNC_WAITING 	(1ull << 15)
 
 // temporary states (with PREPARING or RUNNING)
 #define THRD_STATE_BUSY 		(1ull << 16)
@@ -481,6 +482,7 @@ lives_proc_thread_t lives_thread_get_proc_thread(void);
 void lives_thread_set_proc_thread(lives_proc_thread_t lpt);
 
 #define GET_PROC_THREAD_SELF(self) lives_proc_thread_t self = lives_thread_get_proc_thread()
+#define GET_OBJ_INSTANCE_SELF(self) lives_obj_instance_t *self = lives_thread_get_proc_thread()
 
 void lives_proc_thread_set_pthread(lives_proc_thread_t, pthread_t pthread);
 pthread_t lives_proc_thread_get_pthread(lives_proc_thread_t);
@@ -887,8 +889,6 @@ boolean lives_proc_thread_is_unqueued(lives_proc_thread_t);
 boolean lives_proc_thread_is_preparing(lives_proc_thread_t);
 boolean lives_proc_thread_is_running(lives_proc_thread_t);
 
-boolean lives_proc_thread_sync_waiting(lives_proc_thread_t);
-
 //test if lpt is wating for self condition(s)
 boolean lives_proc_thread_is_waiting(lives_proc_thread_t);
 boolean lives_proc_thread_is_busy(lives_proc_thread_t);
@@ -977,6 +977,8 @@ boolean lives_proc_thread_get_ignore_syncpts(lives_proc_thread_t);
 
 void lives_proc_thread_set_cancellable(lives_proc_thread_t);
 boolean lives_proc_thread_get_cancellable(lives_proc_thread_t);
+
+pthread_rwlock_t *lives_proc_thread_get_state_rwlock(lives_proc_thread_t);
 
 // set dontcare if the return result is no longer relevant / needed,
 // otherwise the thread should be joined as normal

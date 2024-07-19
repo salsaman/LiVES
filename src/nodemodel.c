@@ -3720,7 +3720,6 @@ static void align_with_node(lives_nodemodel_t *nodemodel, inst_node_t *n) {
 
       n->cpal = vpp->palette;
       pal = n->pals[n->optimal_pal];
-      __BREAK_ME("ddpdp");
       if (n->cpal != pal && (vpp->capabilities & VPP_CAN_CHANGE_PALETTE)) {
         if ((*vpp->set_palette)(pal)) n->cpal = pal;
 

@@ -10211,7 +10211,7 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
 #endif
 #ifdef HAVE_PULSE_AUDIO
           if (prefs->audio_player == AUD_PLAYER_PULSE) {
-            pulse_set_avel(mainw->pulsed, mainw->playing_file, sfile->pb_fps / sfile->fps);
+            //pulse_set_avel(mainw->pulsed, mainw->playing_file, sfile->pb_fps / sfile->fps);
           }
 #endif
 	  // *INDENT-OFF*

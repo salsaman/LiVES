@@ -86,8 +86,8 @@ int get_swr_fmts(struct SwrContext **ctxp, int out_asampsz, int out_arate, int o
 int sw_resample(void **out_data, int out_samps_per_chan,
                 void **in_data, int in_samps_per_chan,
                 struct SwrContext *swr_ctx) {
-  / g_print("SWR convert %p %p %p   %p %p %p %d -> %d\n",
-            in_data, in_data[0], in_data[1], out_data, out_data[0], out_data[1], in_samps_per_chan, out_samps_per_chan);
+  // g_print("SWR convert %p %p %p   %p %p %p %d -> %d\n",
+  //         in_data, in_data[0], in_data[1], out_data, out_data[0], out_data[1], in_samps_per_chan, out_samps_per_chan);
 
   int ret = swr_convert(swr_ctx, (uint8_t **)out_data, out_samps_per_chan,
                         (const uint8_t **)in_data, in_samps_per_chan);
@@ -3154,14 +3154,13 @@ LIVES_GLOBAL_INLINE boolean avsync_force(lives_obj_instance_t *aplayer) {
     lives_aplayer_set_seek_vals(aplayer, mainw->playing_file, -1.,
                                 sfile->adirection, sfile->avelocity);
 
-    astat = lives_aplayer_get_status(aplayer) & ~3;
-
     lives_aplayer_set_seek_state(aplayer, seek_needstarget);
-
-    lives_aplayer_set_status(aplayer, astat | APLAYER_STATUS_RESYNC);
-    mainw->avsync_time = lives_get_session_time();
-  }
-  return TRUE;
+    lives_aplayer_set_seek_clip(aplayer, lives_aplayer_get_clip(aplayer));
+ 
+    lives_aplayer_set_active_status(aplayer, APLAYER_STATUS_RESYNC);
+     mainw->avsync_time = lives_get_session_time();
+   }
+   return TRUE;
 }
 
 

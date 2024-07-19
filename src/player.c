@@ -3663,11 +3663,10 @@ update_effort:
           double targ_time = 0.;
 
           if (LIVES_UNLIKELY(!drop_off && ((sfile->pb_fps < 0. && !clip_can_reverse(mainw->playing_file)) ||
-                                           sfile->last_req_frame - sfile->last_frameno >= MAX_JMP_THRESH))) {
+                                           dir * (sfile->last_req_frame - sfile->last_frameno) >= MAX_JMP_THRESH))) {
             if ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) || AUD_SRC_EXTERNAL) {
               mainw->startticks = mainw->currticks;
-              g_print("pt 111111111111a1\n");
-              sfile->last_frameno = sfile->last_req_frame = sfile->frameno;
+              sfile->last_frameno = sfile->frameno = sfile->last_req_frame; 
               can_precache = FALSE;
             } else {
               lives_decoder_t *dplug = NULL;

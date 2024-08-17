@@ -172,8 +172,6 @@ typedef struct _lives_jack_driver_t {
   boolean in_use;                        /**< true if this device is currently in use */
   boolean mute;
 
-  volatile aserver_message_t *msgq;          /**< linked list of messages we are sending to the callback process */
-
   ticks_t last_proc_ticks;
 
   off_t seek_pos;
@@ -243,11 +241,10 @@ void jack_close_client(jack_driver_t *);
 
 boolean jack_try_reconnect(void);
 
-void jack_aud_pb_ready(jack_driver_t *, int fileno);
+void jack_aud_pb_ready(jack_driver_t *, boolean realign);
 void jack_pb_end(void);
 
 // utils
-volatile aserver_message_t *jack_get_msgq(jack_driver_t *); ///< pull last msg from msgq, or return NULL
 void jack_time_reset(jack_driver_t *, int64_t offset);
 ticks_t lives_jack_get_time(jack_driver_t *); ///< get time from jack, in 10^-8 seconds
 

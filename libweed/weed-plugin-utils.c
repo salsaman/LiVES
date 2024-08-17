@@ -600,6 +600,86 @@ static weed_plant_t **weed_clone_plants(weed_plant_t **plants) {
   return ret;
 }
 
+#ifdef NEED_MD5
+// MD5SUM functions - adapted from busybox source by Ulrich Drepper <drepper@gnu.ai.mit.edu>
+static const uint8_t padding[64] = {0x80, 0};
+
+static inline void _md5_start(md5priv *priv) {
+  priv->A = 0x67452301; priv->B = 0xefcdab89; priv->C = 0x98badcfe; priv->D = 0x10325476;
+  priv->t[0] = priv->t[1] = 0; priv->bl = 0;
+}
+
+// puts the final value in ret (a 16 byte array of uint8_t - (here cast to uint32_[4])
+static inline  void *_md5_read(md5priv *priv, void *ret) {
+  ((uint32_t *)ret)[0] = priv->A; ((uint32_t *)ret)[1] = priv->B;
+  ((uint32_t *)ret)[2] = priv->C; ((uint32_t *)ret)[3] = priv->D;
+  return ret;
+}
+
+static inline void _md5_proc(const void *p, size_t len, md5priv *priv) {
+  size_t nw = len / sizeof(uint32_t);
+  const uint32_t *w = (const uint32_t *)p, *e = w + nw;
+  uint32_t X[MD5_SIZE], A = priv->A, B = priv->B, C = priv->C, D = priv->D;
+  priv->t[0] += len;
+  if (priv->t[0] < len) priv->t[1]++;
+  while (w < e) {
+    uint32_t *_X = X, _A_ = A, _B_ = B, _C_ = C, _D_ = D;
+    MD5_VALUE_CALCULATION_MAGIC;
+    A += _A_; B += _B_; C += _C_; D += _D_;
+  }
+  priv->A = A; priv->B = B; priv->C = C; priv->D = D;
+}
+
+static void _md5_calc(const void *p, size_t len, md5priv *priv) {
+  if (priv->bl) {
+    size_t rem = priv->bl, extra = 128 - rem > len ? len : 128 - rem;
+    weed_memcpy(&priv->buf[rem], p, extra);
+    priv->bl += extra;
+    rem += extra;
+    if (rem > 64) {
+      _md5_proc(priv->buf, rem & ~63, priv);
+      weed_memcpy(priv->buf, &priv->buf[rem & ~63], rem & 63);
+      priv->bl = rem & 63;
+    }
+    p = (const char *)p + extra;
+    len -= extra;
+  }
+  if (len > 64) {
+    _md5_proc(p, len & ~63, priv);
+    p = (const char *)p + (len & ~63);
+    len &= 63;
+  }
+  if (len > 0) {
+    weed_memcpy(priv->buf, p, len);
+    priv->bl = len;
+  }
+}
+
+static void *_md5_end(md5priv *priv, void *ret) {
+  uint32_t dlen = priv->bl;
+  size_t padsize = dlen >= 56 ? 120 - dlen : 56 - dlen;
+  priv->t[0] += dlen;
+  if (priv->t[0] < dlen) priv->t[1]++;
+  weed_memcpy(&priv->buf[dlen], padding, padsize);
+  dlen += padsize;
+  *(uint32_t *)&priv->buf[dlen] = priv->t[0] << 3;
+  *(uint32_t *)&priv->buf[dlen + 4] = (priv->t[1] << 3) | (priv->t[0] >> 29);
+  _md5_proc(priv->buf, dlen + 8, priv);
+  return _md5_read(priv, ret);
+}
+
+static uint64_t calc_md5(void *data, size_t dsize) {
+  md5priv priv;
+  static union md5conv {
+    uint64_t U[MD5_SIZE >> 3];
+    uint8_t u[MD5_SIZE];
+  } res;
+  _md5_start(&priv); _md5_calc(data, dsize, &priv);
+  _md5_end(&priv, &res.u);
+  return res.U[0] ^ res.U[1];
+}
+#endif
+
 #ifdef NEED_ALPHA_SORT // for wrappers, use this to sort filters alphabetically
 typedef struct dlink_list dlink_list_t;
 struct dlink_list {

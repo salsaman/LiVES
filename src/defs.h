@@ -238,6 +238,16 @@ typedef volatile int lives_sigatomic;
 #define LIVES_RESULT_NOPERM	-5
 #define LIVES_RESULT_BUSY_RETRY	-6
 
+#define lives_result_text(res) ((res) == LIVES_RESULT_SUCCESS ? "LIVES_RESULT_SUCCESS" \
+				: (res) == LIVES_RESULT_FAIL ? "LIVES_RESULT_FAIL" \
+				: (res) == LIVES_RESULT_INVALID ? "LIVES_RESULT_INVALID" \
+				: (res) == LIVES_RESULT_ERROR ? "LIVES_RESULT_ERROR" \
+				: (res) == LIVES_RESULT_CANCELLED ? "LIVES_RESULT_CANCELLED" \
+				: (res) == LIVES_RESULT_TIMEDOUT ? "LIVES_RESULT_TIMEDOUT" \
+				: (res) == LIVES_RESULT_NOPERM ? "LIVES_RESULT_NOPERM" \
+				: (res) == LIVES_RESULT_BUSY_RETRY ? "LIVES_RESULT_BUSY_RETRY"		\
+				: 1 ? "unkown result code" : "LIVES_RESULT_")
+
 // return value that is never returned (WARNING: returning this may lead to undefined behaviour)
 #define LIVES_RESULT_MU	((lives_result_t) (nan("OM")) / 0.)
 
@@ -498,7 +508,8 @@ typedef enum {
 #define LIVES_OUTPUT			2
 #define LIVES_INPUT_OUTPUT		3
 
-#define LIVES_DIRECTION_FWD_OR_REV(dir) ((dir) == LIVES_DIRECTION_BACKWARD ? LIVES_DIRECTION_REVERSE : (dir))
+
+#define LIVES_DIRECTION_INVERT(dir) ((lives_direction_t)(-(int)dir))
 
 /// LIVES_DIRECTION_REVERSE or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_SIG(dir) ((lives_direction_t)sigi((dir)))
@@ -506,15 +517,14 @@ typedef enum {
 /// LIVES_DIRECTION_BACKWARD or LIVES_DIRECTION_FORWARD
 #define LIVES_DIRECTION_PAR(dir) ((lives_direction_t)((abs(dir)) & 1))
 
-#define LIVES_DIRECTION_CONTRARY(dir1, dir2)				\
-  (((dir1) == LIVES_DIR_BACKWARD || (dir1) == LIVES_DIR_REVERSED)	\
-   ? (dir2) == LIVES_DIR_FORWARD :					\
-   ((dir2) == LIVES_DIR_BACKWARD || (dir2) == LIVES_DIR_REVERSED)	\
-   ? (dir1) == LIVES_DIR_FORWARD : (dir1) == LIVES_DIR_LEFT ? (dir2) == LIVES_DIR_RIGHT \
-   : (dir1) == LIVES_DIR_RIGHT ? (dir2) == LIVES_DIR_LEFT : (dir1) == LIVES_DIR_UP \
-   ? (dir2) == LIVES_DIR_DOWN : (dir1) == LIVES_DIR_DOWN ? (dir2) == LIVES_DIR_UP \
-   : (dir1) == LIVES_DIR_IN ? (dir2) == LIVES_DIR_OUT : (dir1) == LIVES_DIR_OUT \
-   ? (dir2) == LIVES_DIR_IN : sig(dir1) != sig(dir2))
+#define LIVES_DIRECTION_CONTRARY(dir1, dir2) ((dir1) == -(dir2))
+
+typedef enum {
+  limit_stop,   /// stop when limit reached
+  limit_rollover, /// continue from opposite limit
+  limit_bounce, /// invert direction
+  limit_ignore, /// continue beyond limit
+} limit_behaviour_t;
 
 typedef enum {
   UNDO_NONE = 0,

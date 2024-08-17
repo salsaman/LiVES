@@ -42,13 +42,6 @@ LIVES_GLOBAL_INLINE void lives_sync_list_set_lilo(lives_sync_list_t *synclist, b
                                     : synclist->flags & ~SYNCLIST_FLAG_LILO;
 }
 
-
-LIVES_GLOBAL_INLINE void lives_sync_list_set_pop_head(lives_sync_list_t *synclist, boolean yes) {
-  if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_POP_HEAD
-                                    : synclist->flags & ~SYNCLIST_FLAG_POP_HEAD;
-}
-
-
 LIVES_GLOBAL_INLINE void lives_sync_list_set_free_priv(lives_sync_list_t *synclist, boolean yes) {
   if (synclist) synclist->flags = yes ? synclist->flags | SYNCLIST_FLAG_FREE_PRIV
                                     : synclist->flags & ~SYNCLIST_FLAG_FREE_PRIV;
@@ -82,7 +75,7 @@ LIVES_GLOBAL_INLINE lives_sync_list_t *lives_sync_list_new(void) {
   LIVES_CALLOC_TYPE(lives_sync_list_t, synclist, 1);
   pthread_rwlock_init(&synclist->lock, NULL);
   pthread_rwlock_init(&synclist->priv_lock, NULL);
-  synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY | SYNCLIST_FLAG_POP_HEAD;
+  synclist->flags = SYNCLIST_FLAG_FREE_ON_EMPTY;
   return synclist;
 }
 
@@ -127,23 +120,13 @@ static lives_sync_list_t *lives_sync_list_prepend(lives_sync_list_t *synclist, v
 
 lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *synclist, void *data) {
   if (!synclist) synclist = lives_sync_list_new();
-  // by default we always pop first, we append for LILO, prepend for LIFO
-  if (synclist->flags & SYNCLIST_FLAG_LILO)
-    synclist = lives_sync_list_append(synclist, data);
-  else
-    synclist = lives_sync_list_prepend(synclist, data);
+  synclist = lives_sync_list_prepend(synclist, data);
   return synclist;
 }
 
 
-lives_sync_list_t *lives_sync_list_push_priority(lives_sync_list_t *synclist, void *data) {
-  if (synclist) {
-    // swap order, we prepend for LILO, append for LIFO
-    if (synclist->flags & SYNCLIST_FLAG_LILO)
-      synclist = lives_sync_list_prepend(synclist, data);
-    else
-      synclist = lives_sync_list_append(synclist, data);
-  }
+lives_sync_list_t *lives_sync_list_push_tail(lives_sync_list_t *synclist, void *data) {
+  if (synclist) synclist = lives_sync_list_append(synclist, data);
   return synclist;
 }
 
@@ -179,7 +162,7 @@ LIVES_GLOBAL_INLINE void *_lives_sync_list_pop(lives_sync_list_t **synclistp) {
   lives_sync_list_t *synclist = *synclistp;
   LiVESList *list;
   void *data;
-  if (synclist->flags & SYNCLIST_FLAG_POP_HEAD) {
+  if (!(synclist->flags & SYNCLIST_FLAG_LILO)) {
     list = synclist->list;
     synclist->list = list->next;
     if (synclist->list) synclist->list->prev = NULL;
@@ -225,11 +208,9 @@ LIVES_GLOBAL_INLINE void *lives_sync_list_pop_to_last(lives_sync_list_t **syncli
 
 LIVES_GLOBAL_INLINE void *_lives_sync_list_peek(lives_sync_list_t *synclist) {
   LiVESList *list;
-  if (synclist->flags & SYNCLIST_FLAG_POP_HEAD) {
+  if (!(synclist->flags & SYNCLIST_FLAG_LILO))
     list = synclist->list;
-  } else {
-    list = synclist->last;
-  }
+  else list = synclist->last;
   return list->data;
 }
 

@@ -1921,9 +1921,13 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
 
   double time_rem, last_time_rem = 10000000.;
 
+
+  
   g_print("TYPE IS %d\n", type);
 
   LIVES_ASSERT(type >= 0 && type <= 2);
+
+  ____FUNC_ENTRY____(load_frame_image, "b", "CiFP");
 
   sfdata.data = stfuncdata;
   sfdata.self = self;
@@ -2032,7 +2036,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
 
   if (WAS_DISPATCHED_HERE(self) && lives_proc_thread_get_cancel_requested(self)) {
     lives_proc_thread_exclude_states(self, THRD_STATE_CANCEL_REQUESTED);
-    return FALSE;
+    ____FUNC_EXIT_VAL____(FALSE);
   }
 
   // get error message (if any)
@@ -2043,7 +2047,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
     if (CURRENT_CLIP_IS_VALID)
       if (!check_storage_space(mainw->current_file, FALSE)) return FALSE;
   }
-  return TRUE;
+  ____FUNC_EXIT_VAL____(TRUE);
 }
 
 

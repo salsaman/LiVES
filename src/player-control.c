@@ -177,22 +177,46 @@ lives_proc_thread_t start_playback_async(int type) {
 
 
 static void prep_audio_player(void) {
+  // set seek clip and time for initial playback
+  // - play current video clip
+  // - set time to (real) pointer time (which can be > video lenght)
+  // --  if playing a selection, audio cannot start before sel start pos
+  // -- if audio start <= video len, we will possibly realign
+  // we first set aseek_pos (bytes) for the file, then convert back to time 
+  boolean realign = TRUE;
+
+  mainw->video_seek_beacon = 0;
+  
   if (!mainw->preview && cfile->achans > 0) {
-    cfile->aseek_pos = (off64_t)(cfile->real_pointer_time * (double)cfile->arate) * cfile->achans * (cfile->asampsize / 8);
+    double xtime = cfile->real_pointer_time;
+    cfile->aseek_pos = (off64_t)(xtime * (double)cfile->arate) * cfile->achans * (cfile->asampsize >> 3);
     if (mainw->playing_sel) {
       off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * (double)cfile->arate) * cfile->achans *
                      (cfile->asampsize / 8);
       if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
     }
+    else if (xtime > cfile->video_time) realign = FALSE;
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
-    if (mainw->current_file == 0 && cfile->arate < 0) cfile->aseek_pos = cfile->afilesize;
-
-    lives_aplayer_set_seek_clip(mainw->aplayer, mainw->current_file);
-    lives_aplayer_set_seek_time(mainw->aplayer, cfile->real_pointer_time);
   }
 
-  // start up our audio player
-  if (CURRENT_CLIP_HAS_AUDIO) lives_aplayer_prepare(mainw->current_file);
+  if (CURRENT_CLIP_HAS_AUDIO) {
+    // set seek values initially in the player
+    pthread_mutex_t *aplayer_seek_mutex =
+      (pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
+    g_print("SETTing initial seek tome to %ld, %f, clip is %d\n", cfile->aseek_pos, BYTES_TO_TIME(cfile, cfile->aseek_pos), mainw->current_file);
+    pthread_mutex_lock(aplayer_seek_mutex);
+    lives_aplayer_set_seek_vals(mainw->aplayer, mainw->current_file,
+				BYTES_TO_TIME(cfile, cfile->aseek_pos),
+				cfile->adirection, 1.);
+    pthread_mutex_unlock(aplayer_seek_mutex);
+
+    // start up our audio player
+    // - we will create a buffer layer (if not already created), set seek values in it
+    // then pre-fill the layer. If realign is set we will fine align with the video player after doing the first fill
+
+    // we have aplayer_prepare -> pulse / jack pb_ready -> 
+    lives_aplayer_do_seek(mainw->aplayer, realign, FALSE);
+  }
 }
 
 
@@ -902,15 +926,12 @@ void play_file(void) {
       }
 
       if (!mainw->foreign) {
-        if (!(AUD_SRC_EXTERNAL &&
-              (audio_player == AUD_PLAYER_JACK ||
-               audio_player == AUD_PLAYER_PULSE || audio_player == AUD_PLAYER_NONE))) {
-          prep_audio_player();
-        }
+        if (AUD_SRC_INTERNAL) prep_audio_player();
       }
 
       if (!mainw->multitrack || !mainw->multitrack->pb_start_event) {
-        begin_playback();
+
+	begin_playback();
 
         // reset audio buffers
         IF_APLAYER_JACK
@@ -1176,6 +1197,15 @@ void play_file(void) {
     aud_lock_act(NULL, LIVES_INT_TO_POINTER(FALSE));
   }
 
+  mainw->video_seek_beacon = -1;
+
+  if (pthread_mutex_trylock(&mainw->avseek_mutex)) {
+    mainw->mark_time = FALSE;
+    if (lives_proc_thread_is_paused(mainw->player_proc))
+      lives_proc_thread_request_resume(mainw->player_proc);
+  }
+  else pthread_mutex_unlock(&mainw->avseek_mutex);
+
   // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) {
     lives_cancel_t cancelled = mainw->cancelled;
@@ -1320,8 +1350,8 @@ void play_file(void) {
   }
 
   if (AUD_SRC_INTERNAL) {
-    if (await_audio_queue(BILLIONS(10)) != LIVES_RESULT_SUCCESS)
-      handle_audio_timeout();
+    /* if (await_audio_queue(BILLIONS(10)) != LIVES_RESULT_SUCCESS) */
+    /*   handle_audio_timeout(); */
 
     /* IF_APLAYER_JACK */
     /* (if (has_audio_buffers) { */

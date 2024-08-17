@@ -3098,6 +3098,7 @@ boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
   double load = 0.;
   uint64_t idlet, sum, tot;
   int xcpun = 0;
+  boolean ret = FALSE;
 
   if (!lives_file_test(CPU_STATS_FILE, LIVES_FILE_TEST_EXISTS)) return -1;
 
@@ -3106,50 +3107,44 @@ boolean get_cpu_loads(cpuloadvals_t *loadvals, int ncpus) {
 
   if (!fgets(buffer, 1024, file)) goto err;
 
-  while (1) {
-    if (xcpun == ncpus && loadvals->boottime) break;
-
-    if (!fgets(buffer, 1024, file)) {
-      if (ferror(file)) goto err;
-      break;
-    }
-    if (xcpun < ncpus) {
-      if (sscanf(buffer,
-		 "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
-		 &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) > 0) {
-	idlet = idle + iowait;
-	sum = user + nice + system + irq + softirq + steal;
-	tot = sum + idlet;
-
-	if (idx_list_get_data(cpuloadlist, xcpun, (void **)&ovals)) {
-	  if (tot != ovals->tot) {
-	    double totd = (double)(tot - ovals->tot);
-	    double idled = (double)(idlet - ovals->idlet);
-	    load = (totd - idled) / totd;
-	  }
-	  else load = ovals->ret;
-	}
-	else ovals = (oldvalues *)lives_malloc(sizeof(oldvalues));
-	ovals->tot = tot;
-	ovals->idlet = idlet;
-	ovals->ret = load;
-	cpuloadlist = idx_list_update(cpuloadlist, xcpun, ovals, FALSE);
-	loadvals->loads[xcpun++] = load * 100.;
-	continue;
-      }
-    }
+  if (xcpun >= ncpus) {
     if (!loadvals->boottime) {
       if (sscanf(buffer, "btime %16llu", &boottime) > 0) {
 	loadvals->boottime = boottime;
       }
     }
+    goto done;
   }
-  fclose(file);
-  return TRUE;
+
+  if (sscanf(buffer,
+	     "cpu  %16llu %16llu %16llu %16llu %16llu %16llu %16llu %16llu %*s %*s\n",
+	     &user, &nice, &system, &idle, &iowait, &irq, &softirq, &steal) > 0) {
+    idlet = idle + iowait;
+    sum = user + nice + system + irq + softirq + steal;
+    tot = sum + idlet;
+
+    if (idx_list_get_data(cpuloadlist, xcpun, (void **)&ovals)) {
+      if (tot != ovals->tot) {
+	double totd = (double)(tot - ovals->tot);
+	double idled = (double)(idlet - ovals->idlet);
+	load = (totd - idled) / totd;
+      }
+      else load = ovals->ret;
+    }
+    else ovals = (oldvalues *)lives_malloc(sizeof(oldvalues));
+    ovals->tot = tot;
+    ovals->idlet = idlet;
+    ovals->ret = load;
+    cpuloadlist = idx_list_update(cpuloadlist, xcpun, ovals, FALSE);
+    loadvals->loads[xcpun++] = load * 100.;
+  }
+
+ done:
+  ret = TRUE;
 
  err:
   fclose(file);
-  return FALSE;
+  return ret;
 }
 
 static cpuloadvals_t *cpu_stats = NULL;

@@ -2202,7 +2202,7 @@ _rpmalloc_allocate_small(heap_t *heap, size_t size) {
   const uint32_t class_idx = (uint32_t)((size + (SMALL_GRANULARITY - 1)) >> SMALL_GRANULARITY_SHIFT);
   heap_size_class_t *heap_size_class = heap->size_class + class_idx;
   _rpmalloc_stat_inc_alloc(heap, class_idx);
-  if (EXPECTED(heap_size_class->free_list != 0))
+  if (EXPECTED(heap_size_class->free_list > 0))
     return free_list_pop(&heap_size_class->free_list);
   return _rpmalloc_allocate_from_heap_fallback(heap, heap_size_class, class_idx);
 }

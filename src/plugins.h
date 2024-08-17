@@ -810,9 +810,11 @@ void rfx_params_store_free(lives_rfx_t *, void **store);
 lives_rfx_t *weed_to_rfx(weed_plant_t *filter_or_inst, boolean show_reinits);
 lives_param_t *weed_params_to_rfx(int npar, weed_plant_t *instance, boolean show_reinits);
 
+lives_rfx_t *obj_attrs_to_rfx(lives_obj_instance_t *, boolean readwrite);
+
 void rfx_clean_exe(lives_rfx_t *rfx);
 
-LiVESWidget *rfx_make_param_dialog(lives_rfx_t *rfx, const char *title, boolean add_cancel);
+LiVESWidget *rfx_make_param_dialog(lives_rfx_t *, const char *title, boolean add_cancel);
 
 char *plugin_run_param_window(const char *scrap_text, LiVESVBox *vbox, lives_rfx_t **ret_rfx);
 

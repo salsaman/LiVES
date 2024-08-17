@@ -2464,7 +2464,6 @@ void switch_to_file(int old_file, int new_file) {
 lives_result_t switch_audio_clip(int new_file, boolean activate) {
   //ticks_t cticks;
   lives_clip_t *sfile;
-  int64_t astat;
   int aplay_file;
 
   if (AUD_SRC_EXTERNAL) return LIVES_RESULT_INVALID;
@@ -2474,22 +2473,22 @@ lives_result_t switch_audio_clip(int new_file, boolean activate) {
 
   aplay_file = get_aplay_clipno();
 
-  if (new_file == aplay_file) {
-    if (prefs->audio_opts & (AUDIO_OPTS_NO_RESYNC_VPOS))
-      return LIVES_RESULT_FAIL;
-    avsync_force(mainw->aplayer);
-    return LIVES_RESULT_SUCCESS;
-  }
-
   if (prefs->audio_opts & AUDIO_OPTS_RESYNC_ACLIP)
     mainw->scratch = SCRATCH_JUMP;
 
-  sfile = RETURN_VALID_CLIP(new_file);
-  if (sfile)
-    lives_aplayer_seek_to(new_file, -1., sfile->adirection,
-                          abs(sfile->pb_fps / sfile->fps), FALSE);
+  if (CLIP_HAS_AUDIO(new_file)) {
+    sfile = RETURN_VALID_CLIP(new_file);
+    // set seek values initially in the player
+    pthread_mutex_t *aplayer_seek_mutex =
+      (pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
+    pthread_mutex_lock(aplayer_seek_mutex);
+    lives_aplayer_set_seek_vals(mainw->aplayer, new_file,
+				BYTES_TO_TIME(sfile, sfile->aseek_pos),
+				sfile->adirection, 1.);
+    pthread_mutex_unlock(aplayer_seek_mutex);
+    lives_aplayer_do_seek(mainw->aplayer, FALSE, FALSE);
+  }
 
-  astat = lives_aplayer_get_status(mainw->aplayer);
   return LIVES_RESULT_SUCCESS;
 }
 

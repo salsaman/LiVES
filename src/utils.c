@@ -231,7 +231,7 @@ void _lives_abort(const char *file, int line, const char *reason) {
   // ignore sigint, sigterm, sigsegv, sigfpe
   ign_signal_handlers();
 
-  if (prefs) MSGMODE_SET(DEBUG_LOG);
+  if (prefs) MSGMODE_SET(CRASH_HANDLER);
 
   if (!reason) reason = _("Aborting");
 

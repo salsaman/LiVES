@@ -8,10 +8,17 @@
 #ifndef _LISTS_H_
 #define _LISTS_H_
 
+// appends elem to array of <size> elements, increments size
+#define lives_dynarray_append(array, size, elem) _DW0			\
+  (array = ((typeof(elem) *)lives_realloc(array, (size + 1) * sizeof(elem))); \
+   array[size++] = elem;)
+
+// versions beginning with underscore should be called if and only if synclist->mutex is locked
+// sync_list
+
 #define SYNCLIST_FLAG_LILO		(1 << 0)
 #define SYNCLIST_FLAG_FREE_ON_EMPTY	(1 << 1)
-#define SYNCLIST_FLAG_POP_HEAD		(1 << 2)
-#define SYNCLIST_FLAG_FREE_PRIV		(1 << 3)
+#define SYNCLIST_FLAG_FREE_PRIV		(1 << 2)
 
 typedef struct {
   pthread_rwlock_t lock;
@@ -23,16 +30,11 @@ typedef struct {
   void *priv;
 } lives_sync_list_t;
 
-// versions beginning with underscore should be called if and only if synclist->mutex is locked
-
-// appends elem to array of <size> elements, increments size
-#define lives_dynarray_append(array, size, elem) _DW0			\
-  (array = ((typeof(elem) *)lives_realloc(array, (size + 1) * sizeof(elem))); \
-   array[size++] = elem;)
-
 // sync_list is a variety of double ended priotity queue; a rwlock ensures data consistency
-// can be created by pushing or adding to a NULL sync_list
-// by default, ehrn the last value is popped or removed, the sync_list is freed, and NULL is returned
+// can be created by pushing to a NULL sync_list. New values are always pushed to head,
+// unles push_tail() is used.
+// In LIFO mode (default) we pop / peek from head. If mode is set to LILO then we pop from tail. 
+// by default, when the last value is popped or removed, the sync_list is freed, and NULL is returned
 
 void lives_sync_list_dump(lives_sync_list_t *);
 
@@ -47,6 +49,7 @@ void lives_sync_list_unlock(lives_sync_list_t *);
 int lives_sync_list_get_nvals(lives_sync_list_t *);
 
 lives_sync_list_t *lives_sync_list_push(lives_sync_list_t *, void *data);
+lives_sync_list_t *lives_sync_list_push_tail(lives_sync_list_t *, void *data);
 
 void *_lives_sync_list_pop(lives_sync_list_t **);
 void *lives_sync_list_pop(lives_sync_list_t **);
@@ -75,6 +78,8 @@ lives_sync_list_t *lives_sync_list_clear(lives_sync_list_t *, boolean free_data)
 
 lives_sync_list_t *_lives_sync_list_free(lives_sync_list_t *, boolean free_data);
 lives_sync_list_t *lives_sync_list_free(lives_sync_list_t *, boolean free_data);
+
+//
 
 LiVESList *array_to_string_list(const char **y, int offset, int len);
 char *lives_list_to_string(LiVESList *, const char *delim);
@@ -160,10 +165,14 @@ boolean lives_list_check_remove_data(LiVESList **, livespointer data, boolean fr
    if (list) {if ((lives_funcptr_t)free_func) (*free_func)((struct_type *)list->data); \
      xlist = lives_list_remove_node(xlist, list, FALSE);})
 
-// idx_list pairs data eith an order value. Values can be unique or multi
+//////
+
+///// idx (deprecated -use lives_index_t) 
+
+// idx_list pairs data with an order value. Values can be unique or multi
 // default order is DESCENDING
 // get and remove operate on the first value encountered in the case of multi
-// get date returns TRUE if therr id data corresponging to val, in returns the data
+// get date returns TRUE if there is data corresponging to val, in returns the data
 // in val_locn is non NULL it will be set to point to data (or NULL if there is no matching data)
 
 typedef struct {
@@ -175,7 +184,7 @@ LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data, boolean allow_m
 LiVESList *idx_list_remove(LiVESList *, int idx, boolean free_data);
 boolean idx_list_get_data(LiVESList *, int idx, void **val_locn);
 
-///// hash stores
+///// hash stores (deprecated -use lives_index_t) 
 
 #ifndef LIVES_LEAF_ID
 #define LIVES_LEAF_ID "identifier"

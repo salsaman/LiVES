@@ -4511,5 +4511,63 @@ prpw_done:
   return res_string;
 }
 
+// objects
 
+LIVES_GLOBAL_INLINE lives_rfx_t *obj_attrs_to_rfx(lives_obj_instance_t *obj, boolean readwrite) {
+  // pass an object instance, and tyhis function will generate an rfx params inteerface from the attributes
+  // attributes will be assigned an empty gui leaf if they do not have one already
+  lives_index_t *attr_grp;
+  lives_obj_attr_t *attr;
+  lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t));
+
+  rfx->status = RFX_STATUS_OBJECT;
+  rfx->source = (void *)obj;
+  rfx->source_type = LIVES_RFX_SOURCE_OBJECT;
+
+  *rfx->delim = '|';
+  lives_snprintf(rfx->rfx_version, 64, "%s", RFX_VERSION);
+
+  attr_grp = lives_obj_instance_get_attr_group(obj);
+
+  if (attr_grp) {
+    int i = 0;
+    const char *key;
+    rfx->num_params = lives_attr_grp_get_nattrs(attr_grp);
+    rfx->params = lives_calloc(rfx->num_params, sizeof(lives_param_t));
+    LIVES_INDEX_FOREACH(attr_grp, key, attr,
+			weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL);
+			char *label = weed_get_string_value(attr, WEED_LEAF_LABEL, NULL);
+			int param_type = weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL);
+			if (!gui) {
+			  gui = weed_plant_new(WEED_PLANT_GUI);
+			  weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui);
+			}
+
+			if (param_type == WEED_PARAM_UNSPECIFIED) {
+			    weed_seed_t st = lives_attr_get_value_type(attr);
+			    switch(st) {
+			    case WEED_SEED_BOOLEAN:
+			      lives_attribute_set_param_type
+				(obj, key, NULL, WEED_PARAM_SWITCH);
+			    case WEED_SEED_FLOAT:
+			    case WEED_SEED_DOUBLE:
+			      lives_attribute_set_param_type(obj, key, NULL, WEED_PARAM_FLOAT);
+			      weed_set_int_value(gui, WEED_LEAF_DECIMALS, 2);
+			      break;
+			    case WEED_SEED_INT64: case WEED_SEED_UINT: case WEED_SEED_UINT64:
+			    case WEED_SEED_INT: 
+			      lives_attribute_set_param_type(obj, key, NULL, WEED_PARAM_INTEGER);
+			      break;
+			    default: break;
+			    }
+			}
+
+			rfx->params[i].source = attr;
+			rfx->params[i].source_type = LIVES_RFX_SOURCE_OBJECT;
+			build_rfx_param(&rfx->params[i], attr, param_type, label, gui, attr);
+			if (!readwrite) rfx->params[i].flags |= PARAM_FLAG_READONLY;
+			i++;);
+  }
+  return rfx;
+}
 

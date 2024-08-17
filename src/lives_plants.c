@@ -153,6 +153,7 @@ void _register_blueprint(uint64_t pltype, const char *regstr, ...) {
   pltypestr = LSPF("%"PRIu64, pltype);
   va_start(va, regstr);
   //
+  weed_error_t err;
   if (generation > 13) {
     val_index = LIVES_MAKE_INDEX(idx_type_values, WEED_SEED_PLANTPTR);
     while (1) {
@@ -168,7 +169,7 @@ void _register_blueprint(uint64_t pltype, const char *regstr, ...) {
           uint64_t pltype2 = va_arg(va, uint64_t);
           char *pltypestr2 = LSPF("%"PRIu64, pltype2);
           // get blueprint for type
-          weed_error_t err = lives_index_get_value(&blup, allblu, pltypestr2);
+          err = lives_index_get_value(&blup, allblu, pltypestr2);
           if (err != WEED_SUCCESS) {
             lives_free(pltypestr2);
             goto baderr;
@@ -176,28 +177,63 @@ void _register_blueprint(uint64_t pltype, const char *regstr, ...) {
           lives_free(pltypestr2);
           if (blup) {
             weed_plant_t *def;
-            char *key;
+            char *key = NULL;
             lives_index_t *validx = weed_get_plantptr_value(blup, LIVES_LEAF_VALUE_DEFS, NULL);
             LIVES_INDEX_FOREACH(validx, key, def,
                                 st = weed_get_int_value(def, LIVES_LEAF_VALUE_TYPE, NULL);
                                 flags = weed_get_uint64_value(def, WEED_LEAF_FLAGS, NULL);
                                 valdef_plant = plant_from_blueprint(LIVES_PLANT_VALUE_DEF,
-                                               LIVES_LEAF_BLUEPRINT_PTR, NULL,
-                                               WEED_LEAF_NAME, NULL,
-                                               LIVES_LEAF_VALUE_TYPE, st,
-                                               WEED_LEAF_FLAGS, flags, NULL);
-                                name = lives_strdup(key);
-                                lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
-                                lives_index_set_autofree(val_index, name, TRUE); lives_free(name););
-            continue;
+								    LIVES_LEAF_BLUEPRINT_PTR, NULL,
+								    WEED_LEAF_NAME, NULL,
+								    LIVES_LEAF_VALUE_TYPE, st,
+								    WEED_LEAF_FLAGS, flags, NULL);
+				if (key) name = lives_strdup(key);
+				lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
+				lives_index_set_autofree(val_index, name, TRUE); lives_free(name););
+
+				continue;
           }
           goto baderr;
         }
+	if (!lives_strcmp(name, "@USES")) {
+	  // just add a placeholder, when we create the blueprint, we call the setter func(blueprint)
+	  // an interface is like a bluprint, but it has const char *ifname, and a funcdef completion fun
+	  uint64_t pltype2 = va_arg(va, uint64_t);
+          char *pltypestr2 = LSPF("%"PRIu64, pltype2);
+
+	  // get blueprint for type
+	  err = lives_index_get_value(&blup, allblu, pltypestr2);
+	  if (err != WEED_SUCCESS) {
+	    lives_free(pltypestr2);
+	    goto baderr;
+	  }
+	  char *iftypename = LSPF("%lu", pltypestr2);
+	  lives_free(pltypestr2);
+	  
+	  // checked now just add placeholder
+
+	  st = weed_get_int_value(blup, LIVES_LEAF_VALUE_TYPE, NULL);
+	  flags = weed_get_uint64_value(blup, WEED_LEAF_FLAGS, NULL);
+
+	  valdef_plant = plant_from_blueprint(LIVES_PLANT_VALUE_DEF,
+					      LIVES_LEAF_BLUEPRINT_PTR, NULL,
+					      WEED_LEAF_NAME, iftypename,
+					      LIVES_LEAF_VALUE_TYPE, st,
+					      WEED_LEAF_FLAGS, flags, NULL);
+	  lives_free(iftypename);
+	  name = lives_strdup(iftypename);
+	  lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
+	  lives_index_set_autofree(val_index, name, TRUE);
+	  lives_free(name);
+	  continue;
+	}
       }
       //
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
-        subtype = va_arg(va, int64_t);
+        //valdef->pl_subtype =
+	  va_arg(va, int64_t);
+        //subtype = va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
@@ -212,7 +248,7 @@ void _register_blueprint(uint64_t pltype, const char *regstr, ...) {
       lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
       lives_index_set_autofree(val_index, name, TRUE);
     }
-    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, ADD_DEF_LEAVES(NULL), LIVES_LEAF_BLUEPRINT_IDX, pltype,
+    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX, pltype,
                                 LIVES_LEAF_VALUE_DEFS, val_index);
     lives_index_set_value(allblu, pltypestr, WEED_SEED_PLANTPTR, blup);
     lives_index_set_autofree(allblu, pltypestr, TRUE);
@@ -278,7 +314,8 @@ baderr:
       if (!name) break;
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
-        va_arg(va, int64_t);
+        //valdef->pl_subtype =
+	va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
@@ -314,7 +351,8 @@ baderr:
       if (!name) break;
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
-        va_arg(va, int64_t);
+	// valdef->pl_subtype =
+	va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
@@ -325,7 +363,7 @@ baderr:
       lives_index_set_autofree(val_index, name, TRUE);
     }
     //
-    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, ADD_DEF_LEAVES(NULL), LIVES_LEAF_BLUEPRINT_IDX,
+    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX,
                                 pltype, LIVES_LEAF_VALUE_DEFS, val_index);
     //
     lives_index_set_value(allblu, pltypestr, WEED_SEED_PLANTPTR, blup);
@@ -339,9 +377,9 @@ baderr:
     lives_index_get_value(&blup, allblu, bltypestr);
     //
     if (generation > 8) {
-      val_index = PLANT_FROM_BLUEPRINT(INDEX, ADD_DEF_LEAVES(NULL), LIVES_LEAF_INDEX_TYPE,
+      val_index = PLANT_FROM_BLUEPRINT(INDEX, LIVES_LEAF_INDEX_TYPE,
                                        idx_type_values, LIVES_LEAF_PREFIX, IDX_PREFIX,
-                                       LIVES_LEAF_ITEM_TYPE, WEED_SEED_PLANTPTR, NULL);
+                                       LIVES_LEAF_ITEM_TYPE, WEED_SEED_PLANTPTR);
     } else {
       lives_index_get_value(&tmppl, allblu, idxtypestr);
       idxtmpl = (bootstrap_template *)weed_get_voidptr_value(tmppl, WEED_LEAF_VALUE, NULL);
@@ -355,10 +393,12 @@ baderr:
       if (!name) break;
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
-        va_arg(va, int64_t);
+        //valdef->pl_subtype =
+	va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
+
       flags = va_arg(va, uint64_t) | xflags;
       valdef_plant = plant_from_blueprint(LIVES_PLANT_VALUE_DEF, LIVES_LEAF_BLUEPRINT_PTR, NULL, WEED_LEAF_NAME, name,
                                           LIVES_LEAF_VALUE_TYPE, st, WEED_LEAF_FLAGS, flags, NULL);
@@ -368,16 +408,16 @@ baderr:
     }
     //
     lives_index_get_value(&blup, allblu, bltypestr);
-    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, ADD_DEF_LEAVES(NULL), LIVES_LEAF_BLUEPRINT_IDX,
+    blup = PLANT_FROM_BLUEPRINT(BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX,
                                 pltype, LIVES_LEAF_VALUE_DEFS, val_index);
     //
     lives_index_set_value(allblu, pltypestr, WEED_SEED_PLANTPTR, blup);
     //
     if (generation == 8 || generation == 9 || generation == 12) {
       weed_plant_t *blup2, *allblu_nu;
-      allblu_nu = PLANT_FROM_BLUEPRINT(INDEX, ADD_DEF_LEAVES(NULL), LIVES_LEAF_INDEX_TYPE,
+      allblu_nu = PLANT_FROM_BLUEPRINT(INDEX, LIVES_LEAF_INDEX_TYPE,
                                        lookup_type_blueprints, LIVES_LEAF_PREFIX, IDX_PREFIX,
-                                       LIVES_LEAF_ITEM_TYPE, WEED_SEED_PLANTPTR, NULL);
+                                       LIVES_LEAF_ITEM_TYPE, WEED_SEED_PLANTPTR);
       lives_index_get_value(&blup2, allblu, valdtypestr);
       lives_index_set_value(allblu_nu, valdtypestr, WEED_SEED_PLANTPTR, blup2);
       //
@@ -414,40 +454,40 @@ void register_blueprints(void) {
   //
   BOOTSTRAP_BLUEPRINTS;
   //
-  register_blueprint(INDEX, LIVES_DEF_BLUEPRINT, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE,
-                     LIVES_LEAF_PREFIX, LIVES_SEED_CONST_CHARPTR,
-                     BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE);
+  register_blueprint(INDEX, LIVES_DEF_BLUEPRINT, LIVES_LEAF_PREFIX, LIVES_SEED_CONST_CHARPTR,
+                     BLU_FLAGS_NONE, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE,
+		     LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, NULL);
   //
   register_blueprint(VALUE_DEF, LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR,
                      BLU_FLAGS_NONE, WEED_LEAF_NAME, LIVES_SEED_CONST_CHARPTR,
                      BLU_FLAGS_NONE, LIVES_LEAF_VALUE_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE,
                      WEED_LEAF_FLAGS, WEED_SEED_UINT64, BLU_FLAGS_NONE,
-                     WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, BLU_FLAG_OPTIONAL);
+                     WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, BLU_FLAG_OPTIONAL, NULL);
 
   //
   register_blueprint(BLUEPRINT, LIVES_DEF_BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX,
                      WEED_SEED_UINT64, BLU_FLAGS_NONE, LIVES_LEAF_VALUE_DEFS, LIVES_SEED_LIVES_PLANT,
-                     LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF);
+                     LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF, NULL);
   //
   register_blueprint(INDEX, LIVES_DEF_BLUEPRINT, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE,
                      LIVES_LEAF_PREFIX, LIVES_SEED_CONST_CHARPTR,
-                     BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE);
+                     BLU_FLAGS_NONE, LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, NULL);
   //
   register_blueprint(VALUE_DEF, LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR,
                      BLU_FLAGS_NONE, WEED_LEAF_NAME, LIVES_SEED_CONST_CHARPTR,
                      BLU_FLAGS_NONE, LIVES_LEAF_VALUE_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE,
                      WEED_LEAF_FLAGS, WEED_SEED_UINT64, BLU_FLAGS_NONE,
-                     WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, BLU_FLAG_OPTIONAL);
+                     WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, BLU_FLAG_OPTIONAL, NULL);
   //
   register_blueprint(BLUEPRINT, LIVES_DEF_BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX,
                      WEED_SEED_UINT64, BLU_FLAGS_NONE, LIVES_LEAF_VALUE_DEFS, LIVES_SEED_LIVES_PLANT,
-                     LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF);
+                     LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF, NULL);
 
   /// boostrap types now defined
 
   //
-  register_blueprint(DATA_BOOK, "@EXTENDS", LIVES_PLANT_INDEX, LIVES_LEAF_SCOPE, WEED_SEED_INT, BLU_FLAG_READWRITE);
-  register_blueprint(LOOKUP, "@EXTENDS", LIVES_PLANT_INDEX);
+  register_blueprint(DATA_BOOK, "@EXTENDS", LIVES_PLANT_INDEX, LIVES_LEAF_SCOPE, WEED_SEED_INT, BLU_FLAG_READWRITE, NULL);
+  register_blueprint(LOOKUP, "@EXTENDS", LIVES_PLANT_INDEX, NULL);
   //
   // al bootstrap done
 
@@ -461,7 +501,7 @@ void register_blueprints(void) {
 #endif
                      WEED_LEAF_VALUE, LIVES_SEED_ALLTYPES, BLU_FLAGS_NONE,
                      LIVES_LEAF_PLANT_TYPE, WEED_SEED_INT, BLU_FLAG_OPTIONAL,
-                     LIVES_LEAF_EXT_TYPE, LIVES_SEED_CONST_CHARPTR, BLU_FLAG_OPTIONAL);
+                     LIVES_LEAF_EXT_TYPE, LIVES_SEED_CONST_CHARPTR, BLU_FLAG_OPTIONAL, NULL);
 
   /*   /\* LIVES_LEAF_FUNCINST, LIVES_SEED_FUNCINST, BLU_FLAG_OPTIONAL, *\/ */
   /*   /\* LIVES_LEAF_CONTINGENCIES, LIVES_SEED_FUNCINST, *\/ */
@@ -470,7 +510,7 @@ void register_blueprints(void) {
 
   /*   // update script will ensure default and value types align with value type */
   register_blueprint(ATTRIBUTE, "@EXTENDS", LIVES_PLANT_VALUE,
-                     WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, BLU_FLAG_OPTIONAL);
+                     WEED_LEAF_DEFAULT, LIVES_SEED_ALLTYPES, BLU_FLAG_OPTIONAL, NULL);
 
   /*   register_blueprint(VARIABLE, "EXTENDS", VALUE, */
   /*                      LIVES_LEAF_OLDVAL, WEED_SEED_PLANTPTR, BLU_FLAG_OPTIONAL, */
@@ -483,7 +523,7 @@ void register_blueprints(void) {
                      LIVES_LEAF_OBJ_SUBTYPE, WEED_SEED_UINT64, BLU_FLAGS_NONE,
                      LIVES_LEAF_STATUS, WEED_SEED_UINT64, BLU_FLAG_READWRITE | BLU_FLAG_HAS_DEFAULT, 0,
                      LIVES_LEAF_HOOK_STACKS, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF | BLU_FLAG_OPTIONAL,
-                     LIVES_LEAF_ATTR_GRP, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF | BLU_FLAG_OPTIONAL);
+                     LIVES_LEAF_ATTR_GRP, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_INDEX, BLU_FLAG_AUTOUNREF | BLU_FLAG_OPTIONAL, NULL);
 }
 
 
@@ -495,6 +535,7 @@ static weed_plant_t *plant_from_template_va(bootstrap_template *templ, va_list v
     uint64_t flags = 0;
     char *name = va_arg(va, char *);
     if (!name) break;
+    g_print("nmm id %s\n", name);
     bootstrap_valdef *valdef;
     // search for "name" in value_defs
     LiVESList *list;
@@ -538,6 +579,21 @@ static weed_plant_t *plant_from_template(bootstrap_template *templ, ...) {
   opl = plant_from_template_va(templ, va);
   va_end(va);
   return opl;
+}
+
+
+void add_blueprint_interface(weed_plant_t *pl, lives_blueprint_t *blup, uint64_t iftype) {
+  switch (iftype) {
+  case LIVES_DEF_INTERFACE:
+    // add bluprint_ptr
+    // add uid
+    break;
+  case LIVES_REFCOUNTER_INTERFACE:
+    // add weed_refcouter
+    weed_refcount_inc(pl);
+    break;
+  default: break;
+  }
 }
 
 
@@ -604,6 +660,7 @@ weed_plant_t *plant_from_blueprint(int pltype, ...) {
       // if flags said array then we read num_elems
       if (flags & BLU_FLAG_ARRAY) ne = va_arg(va, weed_size_t);
     }
+
     weed_leaf_from_varg(opl, name, st, ne, va);
     if (!lives_strcmp(name, LIVES_LEAF_BLUEPRINT_PTR)) {
       if (!foundbptr) {
@@ -814,7 +871,7 @@ boolean remove_from_lookup_table(lives_lookup_t *lookup, const char *name) {
 lives_lookup_t *lives_make_lookup(lookup_type ltype) {
   //  lives_condition add_cond = lives_cond_create("!", "(",  $(target_object), "COND_HAS_LEAF", $(target_item), ")");
   //
-  lives_lookup_t *lookup = PLANT_FROM_BLUEPRINT(LOOKUP, ADD_DEF_LEAVES(NULL), LIVES_LEAF_LOOKUP_TYPE,
+  lives_lookup_t *lookup = PLANT_FROM_BLUEPRINT(LOOKUP, LIVES_LEAF_LOOKUP_TYPE,
                            ltype, LIVES_LEAF_PREFIX, LOOKUP_PREFIX,
                            LIVES_LEAF_ITEM_TYPE, LIVES_SEED_ALLVALUES);
   //						LIVES_LEAF_UPDATE_COND, upd_cond);

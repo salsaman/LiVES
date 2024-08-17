@@ -51,7 +51,7 @@ extern weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *,
 #if WEED_ABI_CHECK_VERSION(203)
 // library only functions to lock / unlock leaves for atomic operations
 extern weed_leaf_t *_weed_intern_freeze(weed_plant_t *, const char *);
-extern weed_error_t _weed_intern_unfreeze(weed_leaf_t *);
+extern weed_error_t _weed_intern_unfreeze(weed_plant_t *, weed_leaf_t *);
 // library only functions to avoid finding a leaf multiple times
 extern weed_seed_t _weed_intern_seed_type(weed_leaf_t *);
 extern weed_size_t _weed_intern_num_elems(weed_leaf_t *);

@@ -205,10 +205,10 @@ int lives_object_instance_ref(lives_obj_instance_t *);
 #define OBJ_TYPE_PLAYER		2
 ///
 
-#define lives_object_include_states(o, s) lives_proc_thread_include_states(o, s)
-#define lives_object_exclude_states(o, s) lives_proc_thread_exclude_states(o, s)
-#define lives_object_set_state(o, s) lives_proc_thread_set_state(o, s)
+#define lives_object_include_states(o, s) lives_obj_instance_include_states(o, s)
+#define lives_object_exclude_states(o, s) lives_obj_instance_exclude_states(o, s)
 
+#define lives_object_set_state(o, s) lives_proc_thread_set_state(o, s)
 #define lives_object_get_state(o) lives_proc_thread_get_state(o)
 
 uint64_t lives_object_get_type(lives_obj_t *);
@@ -249,6 +249,8 @@ void lives_object_attributes_unref_all(lives_obj_t *);
 ///////////// get values
 char *lives_attr_get_name(lives_obj_attr_t *);
 weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *);
+
+int lives_attr_grp_get_nattrs(lives_index_t *);
 
 // implementation helper funcs
 weed_error_t set_plant_leaf_any_type(weed_plant_t *, const char *key, uint32_t st, weed_size_t ne, ...);

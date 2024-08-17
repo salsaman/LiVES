@@ -1470,10 +1470,10 @@ char *args_fmt_from_funcsig(funcsig_t funcsig);
 uint8_t symname_to_sigbits(const char *symname);
 
 funcsig_t short_params_to_funcsig(int nvals, const char **symnames);
+
 char *funcsig_to_symstring(funcsig_t);
-char *funcsig_to_string(funcsig_t);
+
 char *funcsig_to_param_string(funcsig_t);
-char *funcsig_to_short_param_string(funcsig_t);
 
 char *args_fmt_to_param_string(const char *args_fmt);
 

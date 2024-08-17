@@ -11056,7 +11056,6 @@ boolean storeclip_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
     return TRUE;
   }
 
-
   g_print("storeclip, key %d\n", fnkey);
   g_print("got clip %d, frame %d\n", mainw->clipstore[fnkey][0], mainw->clipstore[fnkey][1]);
 

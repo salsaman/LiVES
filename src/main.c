@@ -411,6 +411,8 @@ static int sigsrc = SIG_SRC_KERNEL;
 
 //#define QUICK_EXIT
 void catch_sigint(int signum, siginfo_t *si, void *uc) {
+  // want to make sure d_print no longer outputs to gui msg_area, otherwise
+  // we start getting into scrolling and so on
   static int printed = 0;
   int only_print = 0;
   int sev = LPT_ERR_CRITICAL;
@@ -418,7 +420,7 @@ void catch_sigint(int signum, siginfo_t *si, void *uc) {
 
   if (mainw && mainw->foreign) _exit(signum);
 
-  if (prefs) MSGMODE_SET(DEBUG_LOG);
+  if (prefs) MSGMODE_SET(CRASH_HANDLER);
 
   fflush(stderr);
 

@@ -124,11 +124,11 @@ static inline weed_error_t weed_value_get(weed_plant_t *plant, const char *key, 
   weed_leaf_t *leaf = _weed_intern_freeze(plant, key);
   if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
   if (_weed_intern_seed_type(leaf) != seed_type) {
-    _weed_intern_unfreeze(leaf);
+    _weed_intern_unfreeze(plant, leaf);
     return WEED_ERROR_WRONG_SEED_TYPE;
   }
   error = _weed_intern_get(leaf, 0, retval);
-  _weed_intern_unfreeze(leaf);
+  _weed_intern_unfreeze(plant, leaf);
   return error;
 }
 
@@ -191,7 +191,7 @@ char *weed_get_string_value(weed_plant_t *plant, const char *key, weed_error_t *
     }
  exit:
   if (error) *error = err;
-  if (leaf) _weed_intern_unfreeze(leaf);
+  if (leaf) _weed_intern_unfreeze(plant, leaf);
 #endif
   return retval;
 }
@@ -257,7 +257,7 @@ static inline weed_voidptr_t weed_get_arrayxy(weed_plant_t *plant, const char *k
   }
 
  exit:
-  if (leaf) _weed_intern_unfreeze(leaf);
+  if (leaf) _weed_intern_unfreeze(plant, leaf);
   if (sizes) (*_free_func)(sizes);
   if (elems) *elems = (err == WEED_SUCCESS) ? num_elems : 0;
   if (tot_size) *tot_size = (err == WEED_SUCCESS) ? totsize : 0;
@@ -440,12 +440,12 @@ weed_error_t weed_leaf_copy_nth(weed_plant_t *dst, const char *keyt, weed_plant_
   if (!leaf) return WEED_ERROR_NOSUCH_LEAF;
   num = _weed_intern_num_elems(leaf);
   if (n >= num) {
-    _weed_intern_unfreeze(leaf);
+    _weed_intern_unfreeze(src, leaf);
     return WEED_ERROR_NOSUCH_ELEMENT;
   }
 
   seed_type = _weed_intern_seed_type(leaf);
-  _weed_intern_unfreeze(leaf);
+  _weed_intern_unfreeze(src, leaf);
 
   if (!num) err = weed_leaf_set(dst, keyt, seed_type, 0, NULL);
   else switch (seed_type) {

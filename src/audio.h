@@ -42,23 +42,101 @@ typedef struct {
   boolean asigned;
   int endian;
   float vol;
-  double vel;
-  size_t dlen;
-  void **data;
+  volatile double vel;
+  /* size_t dlen; */
+  /* void **data; */
+  lives_direction_t dirn;
+  int64_t ext_offset;
+  void *intermediary; // eg. abuffer
 } audio_dtls;
 
+// we thogh 3 or 4 stages
+// (needstarget)
+// seek target locked in, or bb_pos shifted
+// exact_target or approx -> conv, conv approx
+// 
+// (layer filled at new pos)
+
+// cbuffer filled after search or shif
+//exact > not seeking
+// approx -> approxim.
+// resync ->ready
+
+// for exact seek - exact _target -> AC:converging -> AC:not seeking
+// for approx needs_target -> (get beacon) -> approx_target -> AC: converging_approx -> AC: approx -> get beacon, realign -> AC: ready or convergin_approx
+// realign -> AC: ready - av sync
+
+// P = player set state, C = cache set state
 typedef enum {
-  not_seeking,
-  seek_needstarget,
-  seek_active,
-  seek_converging,
-  seek_approximate,
-  seek_ready,
+	      not_seeking,
+	      // player sets seek
+	      
+	      // for resync
+	      seek_needstarget, //P
+	      // if we get video beacon
+	      seek_targetA, //P
+	      // seek to a time, ignoring video beacon
+	      seek_targetE, //P
+
+	      // cacher gets target values
+	      
+	      // cache thread sets this for approx target after confirming seek target
+	      seek_convergingA, // C
+	      // cache thread sets this for exact target
+	      // then after seek, resets to not_seeking
+	      seek_convergingE, // C
+
+	      // converging && seek done and load
+	      // (or only offset)
+	      seek_loadedE, // C
+	      
+	      // vidplayer freezes
+	      seek_approximate, // C
+
+	      // loaded && cbuffer filled
+	      // seek_loadedE -> not_seeking
+
+	      // seek_approximate && vidplayer frozen
+	      // player  sets final seek
+	      seek_realign, // P ?
+
+	      // realign && cbuffer load
+	      // avsync, the not_seeking
+	      seek_ready, // P
 } seek_phase;
 
-#define LIVES_LEAF_AUDIO_SOURCE 	"audio_source"
+#define Q_SAMPLE(sfile, bytes) ((int64_t)((double)bytes / (double)((sfile)->asampsize >> 3) \
+					  / (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) \
+				* ((sfile)->asampsize >> 3) * (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.))
+
+#define BYTES_TO_SAMPS(sfile, bytes) ((sfile) ? ((double)(bytes) / (double)((sfile)->asampsize >> 3) \
+						 / (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.) 
+
+#define SAMPS_TO_BYTES(sfile, samps)  ((sfile) ? ((double)(bytes) / (double)((sfile)->asampsize >> 3) \
+						  / (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.)
+
+#define BYTES_TO_TIME(sfile, bytes) ((sfile) ? ((double)(bytes) / (double)((sfile)->arate) \
+						/ (double)((sfile)->asampsize >> 3) \
+						/ (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.) 
+#define TIME_TO_BYTES(sfile, time) ((sfile) ? Q_SAMPLE((sfile), (time) * (double)((sfile)->arate) \
+						       * (double)((sfile)->asampsize >> 3) \
+						       * (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0) 
+
+#define BYTES_TO_FRAME(sfile, bytes) (TIME_TO_FRAME(BYTES_TO_TIME(sfile, bytes)))
+#define FRAME_TO_BYTES(sfile, frame) (TIME_TO_BYTES(FRAME_TO_TIME(sfile, frame)))
+
+#define SAMPS_TO_TIME(sfile, samps) (BYTES_TO_TIME(SAMPS_TO_BYTES(sfile, samps))
+#define TIME_TO_SAMPS(sfile, time) ((sfile) ? (time) * (sfile)->arate : 0)
+
+#define SAMPS_TO_FRAME(sfile, samps) (TIME_TO_FRAME(SAMPS_TO_TIME(sfile, samps)))
+#define FRAME_TO_SAMPS(sfile, frame) (TIME_TO_SAMPS(FRAME_TO_TIME(sfile, frame)))
+
+#define FRAME_TO_TIME(sfile, frame) (((sfile) && (sfile)->fps) ? (double)((frame) - 1.) / (sfile)->fps : 0.)
+#define TIME_TO_FRAME(sfile, time) ((sfile) ? (time) * (sfile)->fps + 1. : 0) 
+
 #define LIVES_LEAF_AUDIO_INTERLEAVED 	"audio_inter"
 #define LIVES_LEAF_AUDIO_SAMPS 		"audio_samps"
+
 #define LIVES_LEAF_OFFSET 		"offset"
 #define LIVES_LEAF_AUDIO_DIRECTION 	"adirection"
 #define LIVES_LEAF_AUDIO_VEL	 	"avelocity"
@@ -70,56 +148,71 @@ typedef enum {
 #define LIVES_LEAF_SEEK_DIR		"_aseek_dir"
 #define LIVES_LEAF_SEEK_VEL		"_aseek_vel"
 //
-void lives_aplayer_prepare(int clip);
+void lives_aplayer_prepare(boolean realign);
 //
 
+typedef struct {
+  int64_t out_smp_pos, in_smp_pos;
+  lives_direction_t read_dirn;
+} buffmap_t;
+
 // must be bytes per channel (divide by nchans if interleaved)
-#define bytes_to_time(sfile, bytes)			\
+#define bytes_to_time(sfile, bytes)					\
   !sfile || !sfile->asampsize || !sfile->fps ?  -1.			\
   : (double)bytes / sfile->fps / (double)(sfile->asampsize >> 3)
 
-
 lives_obj_instance_t *get_aplayer_instance(int source);
-weed_error_t lives_aplayer_set_limit_behavior(lives_obj_t *aplayer,
-    limit_behaviour_t low,
-    limit_behaviour_t high);
-int lives_aplayer_get_source(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_source(lives_obj_t *aplayer, int source);
-int lives_aplayer_get_arate(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_arate(lives_obj_t *aplayer, int arate);
-int lives_aplayer_get_achans(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_achans(lives_obj_t *aplayer, int achans);
-int lives_aplayer_get_sampsize(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_sampsize(lives_obj_t *aplayer, int asamps);
-boolean lives_aplayer_get_signed(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_signed(lives_obj_t *aplayer, boolean asigned);
-int lives_aplayer_get_endian(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_endian(lives_obj_t *aplayer, int aendian);
-boolean lives_aplayer_get_float(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_float(lives_obj_t *aplayer, boolean is_float);
-boolean lives_aplayer_get_interleaved(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_interleaved(lives_obj_t *aplayer, boolean ainter);
+weed_error_t lives_aplayer_set_limit_behaviour(lives_obj_instance_t *aplayer,
+					      limit_behaviour_t low, limit_behaviour_t high);
+limit_behaviour_t lives_aplayer_get_limit_behaviour_high(lives_obj_instance_t *aplayer);
+limit_behaviour_t lives_aplayer_get_limit_behaviour_low(lives_obj_instance_t *aplayer);
+int lives_aplayer_get_source(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_source(lives_obj_instance_t *aplayer, int source);
+int lives_aplayer_get_arate(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_arate(lives_obj_instance_t *aplayer, int arate);
+int lives_aplayer_get_achans(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_achans(lives_obj_instance_t *aplayer, int achans);
+int lives_aplayer_get_sampsize(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_sampsize(lives_obj_instance_t *aplayer, int asamps);
+boolean lives_aplayer_get_signed(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_signed(lives_obj_instance_t *aplayer, boolean asigned);
+int lives_aplayer_get_endian(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_endian(lives_obj_instance_t *aplayer, int aendian);
+boolean lives_aplayer_get_float(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_float(lives_obj_instance_t *aplayer, boolean is_float);
+boolean lives_aplayer_get_interleaved(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_interleaved(lives_obj_instance_t *aplayer, boolean ainter);
 //
-uint64_t lives_aplayer_get_status(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, uint64_t status);
+uint64_t lives_aplayer_get_status(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_status(lives_obj_instance_t *aplayer, uint64_t status);
 
-uint64_t lives_aplayer_get_active_status(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_active_status(lives_obj_t *aplayer, uint64_t astatus);
+uint64_t lives_aplayer_get_active_status(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_active_status(lives_obj_instance_t *aplayer, uint64_t astatus);
 
-int lives_aplayer_get_clip(lives_obj_t *aplayer);
+int lives_aplayer_get_clip(lives_obj_instance_t *aplayer);
 
-lives_direction_t lives_aplayer_get_direction(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_direction(lives_obj_t *aplayer, lives_direction_t dir);
+lives_direction_t lives_aplayer_get_direction(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_direction(lives_obj_instance_t *aplayer, lives_direction_t dir);
 
-int64_t lives_aplayer_get_pos(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_pos(lives_obj_t *aplayer, int64_t pos);
+int64_t lives_aplayer_get_pos(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_pos(lives_obj_instance_t *aplayer, int64_t pos);
 
-int64_t lives_aplayer_get_tot_samps(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_add_nsamps(lives_obj_t *aplayer, int64_t nsamps);
-weed_error_t lives_aplayer_reset_nsamps(lives_obj_t *aplayer);
+int64_t lives_aplayer_get_tot_samps(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_add_nsamps(lives_obj_instance_t *aplayer, int64_t nsamps);
+weed_error_t lives_aplayer_reset_nsamps(lives_obj_instance_t *aplayer);
 
-double lives_aplayer_get_velocity(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_velocity(lives_obj_t *aplayer, double velocity);
+double lives_aplayer_get_velocity(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_velocity(lives_obj_instance_t *aplayer, double velocity);
+
+// future: the audio player will have one or more input clip_srcs and one or more output sinks
+// these will model for example a PCM audio file for a clip or the sc driver API
+// clip srcs / sinks will both be types of "attachment". an attachment will be similar to an object but will
+// intreface with external components. It will be presented as an attr_grp + collection of callbacks, control, status
+
+
+
+/* lives_clip_src_t lives_aplayer_get_clip_src(lives_obj_instance_t *aplayer); */
+/* weed_error_t lives_aplayer_set_clip_src(lives_obj_instance_t *aplayer, lives_clip_src_t *); */
 
 #if HAVE_SWRESAMPLE
 #include <libswresample/swresample.h>
@@ -134,56 +227,61 @@ int sw_resample(void **out_data, int out_samps_per_chan,
 
 ///
 
-weed_error_t lives_aplayer_set_seek_state(lives_obj_t *aplayer, seek_phase state);
-seek_phase lives_aplayer_get_seek_state(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_seek_state(lives_obj_instance_t *aplayer, seek_phase state);
+seek_phase lives_aplayer_get_seek_state(lives_obj_instance_t *aplayer);
 
-int lives_aplayer_get_seek_clip(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_seek_clip(lives_obj_t *aplayer, int clip);
+int lives_aplayer_get_seek_clip(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_seek_clip(lives_obj_instance_t *aplayer, int clip);
 
-weed_error_t lives_aplayer_set_seek_time(lives_obj_t *aplayer, double xtime);
-double lives_aplayer_get_seek_time(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_seek_time(lives_obj_instance_t *aplayer, double xtime);
+double lives_aplayer_get_seek_time(lives_obj_instance_t *aplayer);
 
-lives_direction_t lives_aplayer_get_seek_direction(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_seek_direction(lives_obj_t *aplayer, lives_direction_t dir);
+lives_direction_t lives_aplayer_get_seek_direction(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_seek_direction(lives_obj_instance_t *aplayer, lives_direction_t dir);
 
-weed_error_t lives_aplayer_set_seek_velocity(lives_obj_t *aplayer, double vel);
-weed_error_t lives_aplayer_get_seek_velocity(lives_obj_t *aplayer);
+weed_error_t lives_aplayer_set_seek_velocity(lives_obj_instance_t *aplayer, double vel);
+weed_error_t lives_aplayer_get_seek_velocity(lives_obj_instance_t *aplayer);
 
-void lives_aplayer_set_seek_vals(lives_obj_t *aplayer, int clip, double xtime,
+void lives_aplayer_set_seek_vals(lives_obj_instance_t *aplayer, int clip, double xtime,
                                  lives_direction_t dir, double vel);
 
-int lives_aplayer_get_data_len(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_data_len(lives_obj_t *aplayer, int alength);
+int lives_aplayer_get_data_len(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_data_len(lives_obj_instance_t *aplayer, int alength);
 
-void **lives_aplayer_get_data(lives_obj_t *aplayer);
-weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
+void **lives_aplayer_get_data(lives_obj_instance_t *aplayer);
+weed_error_t lives_aplayer_set_data(lives_obj_instance_t *aplayer, void **data);
 
 #define AUD_SRC_EXTERNAL (prefs->audio_src == AUDIO_SRC_EXT)
 #define AUD_SRC_INTERNAL (prefs->audio_src == AUDIO_SRC_INT)
 #define AUD_SRC_REALTIME (get_aplay_clipno() != -1)
 #define AV_CLIPS_EQUAL (get_aplay_clipno() == mainw->playing_file)
 
+#define IF_APLAY_TYPE_NULL(...)DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
 #define IF_APLAYER_NULL(...)_DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
 #define IF_AREADER_NULL(...)_DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
 #define IF_AUDIO_NULL(...)_DW0(if(prefs->audio_player==AUD_PLAYER_NULL)_DW0(__VA_ARGS__););
 
 #ifdef HAVE_PULSE_AUDIO
+#define IF_APLAY_TYPE_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE)_DW0(__VA_ARGS__););
 #define IF_APLAYER_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed)_DW0(__VA_ARGS__););
 #define IF_AREADER_PULSE(...)_DW0(if(prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read)_DW0(__VA_ARGS__););
 #define IF_AUDIO_PULSE(...)_DW0(if((prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed) \
 				   || (prefs->audio_player==AUD_PLAYER_PULSE&&mainw->pulsed_read))_DW0(__VA_ARGS__););
 #else
+#define IF_APLAY_TYPE_PULSE(...)if(0);
 #define IF_APLAYER_PULSE(...)if(0);
 #define IF_AREADER_PULSE(...)if(0);
 #define IF_AUDIO_PULSE(...)if(0);
 #endif
 
 #ifdef ENABLE_JACK
+#define IF_APLAY_TYPE_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK)_DW0(__VA_ARGS__););
 #define IF_APLAYER_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd)_DW0(__VA_ARGS__););
 #define IF_AREADER_JACK(...)_DW0(if(prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read)_DW0(__VA_ARGS__););
 #define IF_AUDIO_JACK(...)_DW0(if((prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd) \
-				   || (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read))_DW0(__VA_ARGS__););
+				  || (prefs->audio_player==AUD_PLAYER_JACK&&mainw->jackd_read))_DW0(__VA_ARGS__););
 #else
+#define IF_APLAY_TYPE_JACK(...)if(0);
 #define IF_APLAYER_JACK(...)if(0);
 #define IF_AREADER_JACK(...)if(0);
 #define IF_AUDIO_JACK(...)if(0);
@@ -211,7 +309,7 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 #define DEFAULT_AUDIO_SIGNED16 (AUDIO_SIGNED)
 #define DEFAULT_AUDIO_SIGNED DEFAULT_AUDIO_SIGNED16
 #define DEFAULT_AUDIO_ENDIAN (capable->hw.byte_order == LIVES_LITTLE_ENDIAN \
-			       ? AUDIO_LE : AUDIO_BE)
+			      ? AUDIO_LE : AUDIO_BE)
 // internal fmt is the same, but in 32 bit float (currently)
 
 // for afbuffer
@@ -251,28 +349,12 @@ weed_error_t lives_aplayer_set_data(lives_obj_t *aplayer, void **data);
 #define WEED_LEAF_HOST_KEEP_ADATA "keep_adata" /// set to WEED_TRUE in layer if doing zero-copy audio processing
 
 /////////////////////////////////////
-/// asynch msging
-
-#define ASERVER_CMD_PROCESSED 0
-#define ASERVER_CMD_FILE_OPEN 1
-#define ASERVER_CMD_FILE_CLOSE 2
-#define ASERVER_CMD_FILE_SEEK 3
-#define ASERVER_CMD_FILE_SEEK_ADJUST 4
-
-/* message passing structure */
-typedef struct _aserver_message_t {
-  volatile int command;
-  ticks_t tc;
-  volatile char *data;
-  char *extra;
-  volatile struct _aserver_message_t *next;
-} aserver_message_t;
 
 typedef enum {
-  LIVES_NOP_OPERATION = 0,
-  LIVES_READ_OPERATION,
-  LIVES_WRITE_OPERATION,
-  LIVES_CONVERT_OPERATION
+	      LIVES_NOP_OPERATION = 0,
+	      LIVES_READ_OPERATION,
+	      LIVES_WRITE_OPERATION,
+	      LIVES_CONVERT_OPERATION
 } lives_operation_t;
 
 typedef struct {
@@ -355,7 +437,7 @@ typedef struct {
 
 //////////////////////////////////////////
 
-void lives_aplayer_update_loop_mode(lives_obj_t *aplayer);
+void lives_aplayer_update_loop_mode(lives_obj_instance_t *aplayer);
 
 float get_float_audio_val_at_time(int fnum, int afd, double secs, int chnum, int chans) GNU_HOT;
 float audiofile_get_maxvol(int fnum, double start, double end, float thresh);
@@ -412,15 +494,15 @@ boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup);
 lives_result_t await_audio_queue(uint64_t nsec);
 
 typedef enum {
-  RECA_MONITOR = 0,
-  RECA_WINDOW_GRAB,
-  RECA_DESKTOP_GRAB_INT,
-  RECA_DESKTOP_GRAB_EXT,
-  RECA_NEW_CLIP,
-  RECA_EXISTING,
-  RECA_EXTERNAL,
-  RECA_GENERATED,
-  RECA_MIXED
+	      RECA_MONITOR = 0,
+	      RECA_WINDOW_GRAB,
+	      RECA_DESKTOP_GRAB_INT,
+	      RECA_DESKTOP_GRAB_EXT,
+	      RECA_NEW_CLIP,
+	      RECA_EXISTING,
+	      RECA_EXTERNAL,
+	      RECA_GENERATED,
+	      RECA_MIXED
 } lives_rec_audio_type_t;
 
 
@@ -439,7 +521,6 @@ typedef enum {
 // active status is either inactive, standby,
 
 #define APLAYER_ASTATUS_MASK 		0x3
-
 
 #define APLAYER_STATUS_PROCESSING	(1ull << 2)
 
@@ -479,8 +560,7 @@ int get_aplay_clipno(void);
 int get_aplay_rate(void);
 off_t get_aplay_offset(void);
 
-lives_result_t lives_aplayer_seek_to(int clip, double xtime,
-                                     lives_direction_t dir, double vel, boolean block);
+lives_result_t lives_aplayer_do_seek(lives_obj_instance_t *aplayer, boolean ils, boolean block);
 
 boolean avsync_force(lives_obj_instance_t *aplayer);
 
@@ -489,7 +569,7 @@ lives_result_t audio_sync_ready(lives_obj_instance_t *aplayer);
 void freeze_unfreeze_audio(boolean is_frozen);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-    weed_timecode_t fill_tc, int what_to_get, boolean exact, int *ntracks);
+							  weed_timecode_t fill_tc, int what_to_get, boolean exact, int *ntracks);
 
 boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps, boolean is_audio_thread);
 void reinit_audio_gen(void);
@@ -500,8 +580,8 @@ void free_jack_audio_buffers(void);
 void init_pulse_audio_buffers(int achans, int arate, boolean exact);
 void free_pulse_audio_buffers(void);
 
-int lives_aplayer_get_clip(lives_obj_t *aplayer);
-void lives_aplayer_set_clip(lives_obj_t *aplayer, int clipno);
+int lives_aplayer_get_clip(lives_obj_instance_t *aplayer);
+void lives_aplayer_set_clip(lives_obj_instance_t *aplayer, int clipno);
 
 void audio_free_fnames(void);
 

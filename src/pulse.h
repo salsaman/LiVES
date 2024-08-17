@@ -54,6 +54,8 @@ typedef struct {
 
   pa_stream_state_t state;
 
+  audio_dtls attached;
+  
   // app side
   volatile int in_arate; /**< samples(frames) per second */
   int in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */
@@ -86,9 +88,6 @@ typedef struct {
   pa_operation *paop;
 
   lives_rfx_t *interface;
-
-  /**< linked list of messages we are sending to the callback process */
-  volatile aserver_message_t   *msgq;
 
   volatile int samples_written;
 
@@ -132,21 +131,12 @@ void pulse_close_client(pulse_driver_t *);
 
 void pulse_shutdown(void); ///< shudown server, mainloop, context
 
-void pulse_aud_pb_ready(pulse_driver_t *, int fileno);
-
 void pulse_driver_uncork(pulse_driver_t *);
 void pulse_driver_cork(pulse_driver_t *);
 
 boolean pulse_try_reconnect(void);
 
-// utils
-volatile aserver_message_t *pulse_get_msgq(pulse_driver_t *); ///< pull last msg from msgq, or return NULL
-
-off_t pulse_audio_seek_bytes(pulse_driver_t *, off_t bytes, lives_clip_t *);
-off_t pulse_audio_seek_bytes_velocity(pulse_driver_t *, off_t bytes, lives_clip_t *, double vel);
-
 boolean pa_time_reset(pulse_driver_t *, int64_t offset);
-void pulse_tscale_reset(pulse_driver_t *);
 
 int64_t lives_pulse_get_time(pulse_driver_t *); ///< get time from pa, in 10^-8 seconds
 
@@ -160,7 +150,7 @@ size_t pulse_get_buffsize(pulse_driver_t *);
 
 int64_t lives_pulse_get_read_offset(pulse_driver_t *);
 
-lives_result_t lives_pulse_seek(pulse_driver_t *, boolean block);
+lives_result_t lives_pulse_seek(pulse_driver_t *, boolean ils, boolean block);
 
 /* void pulse_audio_seek_frame(pulse_driver_t *, int clip, frames_t frame);  ///< seek to (video) frame */
 /* boolean pulse_audio_seek_frame_velocity(pulse_driver_t *, double frame, double vel); */

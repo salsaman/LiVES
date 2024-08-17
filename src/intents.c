@@ -32,6 +32,7 @@ LIVES_LOCAL_INLINE lives_index_t *lives_obj_instance_ensure_attr_grp(lives_obj_i
     lives_index_t *attr_group = weed_get_plantptr_value(loi, LIVES_LEAF_ATTR_GRP, NULL);
     if (!attr_group) {
       attr_group = LIVES_MAKE_INDEX(idx_type_attr_grp, WEED_SEED_PLANTPTR);
+      add_blueprint_interface(attr_group, NULL, LIVES_REFCOUNTER_INTERFACE);
       lives_obj_instance_set_attr_group(loi, attr_group);
     }
     return attr_group;
@@ -332,6 +333,7 @@ lives_obj_attr_t *lives_obj_instance_declare_attribute(lives_obj_instance_t *loi
   attr = lives_obj_attr_new(name, st);
 
   lives_index_set_value(attr_grp, name, WEED_SEED_PLANTPTR, attr);
+  weed_refcount_inc(attr_grp);
 
   return attr;
 }
@@ -364,6 +366,11 @@ weed_error_t lives_obj_instance_set_attr_array(lives_obj_instance_t *loi, const 
 LIVES_GLOBAL_INLINE weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *attr) {
   return weed_get_int_value(attr, LIVES_LEAF_VALUE_TYPE, NULL);
 }
+
+
+LIVES_GLOBAL_INLINE int lives_attr_grp_get_nattrs(lives_index_t *attrgrp) {
+  return attrgrp ? weed_refcount_query(attrgrp) : 0;
+} 
 
 ///
 
@@ -449,17 +456,12 @@ LIVES_GLOBAL_INLINE uint64_t lives_obj_instance_get_uid(lives_obj_t *obj) {
 }
 
 
-LIVES_GLOBAL_INLINE weed_plant_t **lives_obj_instance_get_attrs(lives_obj_t *obj) {
-  return obj ? weed_get_plantptr_array(obj, "attrs", NULL) : 0;
-}
-
-
-
 size_t weigh_object(lives_obj_instance_t *obj) {
-  lives_obj_attr_t **attrs = lives_obj_instance_get_attrs(obj);
+  lives_index_t *attr_grp = lives_obj_instance_get_attr_group(obj);
   size_t tot = weed_plant_weigh(obj);
-  for (int i = 0; attrs[i]; i++) tot += weed_plant_weigh(attrs[i]);
-  lives_free(attrs);
+  const char *key;
+  weed_plant_t * val;
+  LIVES_INDEX_FOREACH(attr_grp, key, val, tot += weed_plant_weigh(val););
   return tot;
 }
 
@@ -501,15 +503,14 @@ weed_error_t set_plant_leaf_any_type_funcret(weed_plant_t *pl, const char *key, 
 
 
 char *lives_obj_instance_dump_attributes(lives_obj_t *obj) {
-  lives_obj_attr_t **attrs;
+  lives_index_t *attr_grp;
   //lives_obj_attr_t *attr;
   char *out = lives_strdup(""), *tmp;
   char *thing, *what;
   uint64_t uid;
-  int count = 0;
   if (obj) {
     //lives_strdup_concat_sep(out, NULL, "\n", obtag);
-    attrs = lives_obj_instance_get_attrs(obj);
+    attr_grp = lives_obj_instance_get_attr_group(obj);
     if (lives_obj_instance_get_type(obj) == OBJECT_TYPE_DICTIONARY
         && lives_obj_instance_get_subtype(obj) == DICT_SUBTYPE_WEED_PLANT) {
       thing = "Weed plant";
@@ -520,26 +521,28 @@ char *lives_obj_instance_dump_attributes(lives_obj_t *obj) {
     }
     uid = lives_obj_instance_get_uid(obj);
   } else {
-    attrs = THREADVAR(attributes);
-    thing = "Thread";
-    what = "attributes";
-    uid = THREADVAR(uid);
+    return NULL;
+    /* attrs = THREADVAR(attributes); */
+    /* thing = "Thread"; */
+    /* what = "attributes"; */
+    /* uid = THREADVAR(uid); */
   }
   out = lives_strdup_concat_sep(out, NULL, "%s with UID 0X%016lX ", thing, uid);
-  if (attrs) {
+  if (attr_grp) {
+    const char *key;
+    lives_attribute_t * attr;
     tmp = lives_strdup_printf("%s the following %s:", out, what);
     lives_free(out);
     out = tmp;
-    for (; attrs[count]; count++) {
+
+    LIVES_INDEX_FOREACH(attr_grp, key, attr,
       const char *notes, *obs;
       char *valstr = NULL;
-      weed_size_t ne = weed_leaf_num_elements(attrs[count], WEED_LEAF_VALUE);
-      char *pname = weed_get_string_value(attrs[count], WEED_LEAF_NAME, NULL);
-      uint32_t st = weed_leaf_seed_type(attrs[count], WEED_LEAF_VALUE);
-      int type = 0;
-      int64_t subtype = 0;
+      weed_size_t ne = weed_leaf_num_elements(attr, WEED_LEAF_VALUE);
+      const char *pname = weed_get_const_string_value(attr, WEED_LEAF_NAME, NULL);
+      uint32_t st = weed_leaf_seed_type(attr, WEED_LEAF_VALUE);
       if (ne) {
-        if (weed_get_int_value(attrs[count], WEED_LEAF_FLAGS, NULL) & PARAM_FLAG_READONLY)
+        if (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) & PARAM_FLAG_READONLY)
           notes = " (readonly)";
         else notes = "";
         obs = "";
@@ -548,37 +551,29 @@ char *lives_obj_instance_dump_attributes(lives_obj_t *obj) {
         notes = "";
       }
       if (st == WEED_SEED_INT && ne == 1) {
-        int ival = lives_attribute_get_value_int(attrs[count]);
+        int ival = lives_attribute_get_value_int(attr);
         valstr = lives_strdup_printf("%d", ival);
-        if (!strcmp(pname, WEED_LEAF_TYPE)) type = ival;
-        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = ival;
+        /* if (!strcmp(pname, WEED_LEAF_TYPE)) type = ival; */
+        /* if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = ival; */
       }
       if (st == WEED_SEED_INT64 && ne == 1) {
-        int64_t i64val = lives_attribute_get_value_int64(attrs[count]);
+        int64_t i64val = lives_attribute_get_value_int64(attr);
         valstr = lives_strdup_printf("%ld", i64val);
-        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = i64val;
+	//        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = i64val;
       }
 
       out = lives_strdup_concat_sep(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
-                                    weed_seed_to_ctype(weed_leaf_seed_type(attrs[count],
+                                    weed_seed_to_ctype(weed_leaf_seed_type(attr,
                                         WEED_LEAF_VALUE), FALSE), obs, valstr);
       if (valstr) lives_free(valstr);
-      lives_free(pname);
-      if (type) {
+			//if (type) {
         /* char *ptyp = ptype_to_string(type); */
         /* if (ptyp) { */
         /*   out = lives_strdup_concat_sep(out, NULL, "Plant type identifed as %s\n", prtyp); */
         /*   lives_free(ptyp); */
         /* } */
-      }
-      if (subtype) {
-        //char *ptyp = psubtype_to_string(type);
-        /* if (ptyp) { */
-        /*   out = lives_strdup_concat_sep(out, NULL, "Plant subtype identifed as %s\n", prtyp); */
-        /*   lives_free(ptyp); */
-        /* } */
-      }
-    }
+			//      }
+			);
   } else {
     tmp = lives_strdup_printf("%s no attributes", out);
     lives_free(out);

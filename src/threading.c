@@ -1504,6 +1504,7 @@ LIVES_GLOBAL_INLINE boolean lives_proc_thread_set_interruptable(boolean state) {
     thrd_signal_block(LIVES_INTERRUPT_SIG);
     THREADVAR(thrdnative_flags) &= ~THRDNATIVE_CAN_INTERRUPT;
   }
+  return state;
 }
 
 
@@ -1697,6 +1698,24 @@ LIVES_GLOBAL_INLINE boolean lives_obj_instance_resume(lives_obj_instance_t *self
 LIVES_GLOBAL_INLINE boolean lives_proc_thread_request_pause(lives_proc_thread_t lpt) {
   if (!lives_proc_thread_is_paused(lpt))
     lives_proc_thread_include_states(lpt, THRD_STATE_PAUSE_REQUESTED);
+  return TRUE;
+}
+
+
+LIVES_GLOBAL_INLINE boolean lives_proc_thread_ensure_pause(lives_proc_thread_t lpt) {
+  // calling this after  ensure_resume will brielfy pause then resume
+  boolean stopstart = FALSE;
+  while (!lives_proc_thread_is_paused(lpt)) {
+    if (lives_proc_thread_get_resume_requested(lpt)) {
+      lives_proc_thread_exclude_states(lpt, THRD_STATE_RESUME_REQUESTED);
+      stopstart = TRUE;
+    }
+    if (!lives_proc_thread_get_pause_requested(lpt)) {
+      lives_proc_thread_include_states(lpt, THRD_STATE_PAUSE_REQUESTED);
+    }
+    lives_microsleep;
+  }
+  if (stopstart) lives_proc_thread_request_resume(lpt);
   return TRUE;
 }
 

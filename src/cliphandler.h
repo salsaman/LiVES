@@ -452,6 +452,10 @@ typedef union _binval {
   size_t size;
 } binval;
 
+
+typedef uint32_t zboolean;
+#define boolean zboolean
+
 //CLIP_BINFMT_CHECK == 'LiVESXXX'
 typedef struct _lives_clip_t {
   binval binfmt_check, binfmt_version, binfmt_bytes;
@@ -564,6 +568,8 @@ typedef struct _lives_clip_t {
   double pb_fps;  ///< current playback rate, may vary from fps, can be 0. or negative
 
   double target_framerate; ///< display rate we are trying to reach, may affect pb_fps
+
+  boolean aplanar;
   /////
   // binfmt fields may be added here:
   ///
@@ -586,6 +592,8 @@ typedef struct _lives_clip_t {
   ///////////////////////////////////////////////////////////////////////////
   // fields after here can be removed or changed or added to
 
+#undef boolean
+  
   boolean has_binfmt;
 
   // TODO - this will change soon. In the future, we can have multiple clip_srcs per clip

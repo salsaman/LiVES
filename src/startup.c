@@ -30,7 +30,7 @@ mainwindow *mainw;
 
 #ifndef DISABLE_DIAGNOSTICS
 #include "diagnostics.h"
-uint64_t test_opts = TEST_WEED_UTILS | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
+uint64_t test_opts = TEST_WEED | ABORT_AFTER;//TEST_PROCTHRDS | TEST_POINT_2 | ABORT_AFTER;
 #endif
 
 #ifdef ENABLE_OSC
@@ -1392,6 +1392,7 @@ boolean lives_startup(livespointer data) {
   // set up capable->known_funcsigs
   reg_known_funcsigs();
 
+  //do_startup_diagnostics(test_opts);
   // now we can register specialised plants created from blueprints
   register_blueprints();
 
@@ -1456,7 +1457,6 @@ boolean lives_startup(livespointer data) {
   show_timing_subsys();
 
   // late tests (has prefs, has threadpool, has random, has gtk)
-  //do_startup_diagnostics(test_opts);
   /* do_startup_diagnostics(test_opts); */
 
   /* if (!font_configured) { */

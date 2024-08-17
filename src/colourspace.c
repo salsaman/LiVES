@@ -34,7 +34,7 @@
 #include "nodemodel.h"
 
 #ifdef MEM_USE_BIGBLOCKS
-#define malloc_bigblock(s) _malloc_bigblock(s)
+#define malloc_bigblock(s) _calloc_bigblock(s)
 #endif
 
 boolean weed_palette_is_sane(int pal);

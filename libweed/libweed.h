@@ -169,7 +169,7 @@ typedef weed_hash_t (*weed_hash_f)(const char *key, ...);
 struct _weed_leaf_nopadding {
   weed_hash_t	key_hash;
   weed_size_t num_elements;
-  weed_leaf_t *next;
+  weed_leaf_t *next, *prev, *quick;
   weed_seed_t seed_type;
   weed_flags_t flags;
   weed_data_t **data;
@@ -182,7 +182,7 @@ struct _weed_leaf_nopadding {
 struct _weed_leaf {
   weed_hash_t	key_hash;
   weed_size_t num_elements;
-  weed_leaf_t *next;
+  weed_leaf_t *next, *prev, *quick;
   weed_seed_t seed_type;
   weed_flags_t flags;
   weed_data_t *data;

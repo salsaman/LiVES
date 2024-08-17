@@ -697,7 +697,7 @@ static boolean open_vdev_inner(unicap_device_t *device, lives_match_t matmet, bo
   // lives_attribute_set_readonly(obj, VDEV_PROP_PALETTE, TRUE);
 
   //
-  rfx = obj_attrs_to_rfx(obj, FALSE);
+  rfx = obj_attrs_to_rfx(obj, TRUE);
 
   rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p0|p1|"));
   rfx->gui_strings = lives_list_append(rfx->gui_strings, lives_strdup("layout|p2|"));

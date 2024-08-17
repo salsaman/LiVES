@@ -370,7 +370,7 @@ void pthread_cleanup_func(void *args);
 //   and finish.
 //
 
-// temporary states (with PREPARING or RUNNING)
+// temporary states (with RUNNING)
 #define THRD_STATE_BUSY 		(1ull << 16)
 // waiting for condition(s) to become TRUE
 #define THRD_STATE_WAITING 		(1ull << 17)
@@ -1002,6 +1002,8 @@ boolean lives_proc_thread_get_pauseable(lives_proc_thread_t);
 // once paused, the paused hooks will be called, only once these have returned and unpause has been called
 // will processing continue (after calling and returning from any unpaused hook callbacks)
 boolean lives_proc_thread_request_pause(lives_proc_thread_t);
+boolean lives_proc_thread_ensure_pause(lives_proc_thread_t);
+
 boolean lives_proc_thread_pause(void);
 boolean _lives_proc_thread_pause(lives_proc_thread_t self, boolean have_lock);
 // cf. is_paused

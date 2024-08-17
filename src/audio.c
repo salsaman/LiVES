@@ -14,7 +14,7 @@ static char *storedfnames[NSTOREDFDS];
 static int storedfds[NSTOREDFDS];
 static boolean storedfdsset = FALSE;
 static const int std_arates[] =
-{8000, 11025, 22050, 32000, 44100, 48000, 88200, 96000, 128000, 256000, 0};
+  {8000, 11025, 22050, 32000, 44100, 48000, 88200, 96000, 128000, 192000, 256000, 350000, 0};
 
 static arec_details *rec_ext_dets = NULL;
 
@@ -686,7 +686,7 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
 
   if ((off_t)((fabs(scale) * (double)nsamples)) * nSrcChannels * 2 > tbytes)
     scale = scale > 0. ? ((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples
-            :  -(((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples);
+      :  -(((double)(tbytes  / nSrcChannels / 2)) / (double)nsamples);
 
   while (nsamples--) {
     if (src_offset_i * 2 > tbytes || src_offset_i < 0) break;
@@ -721,13 +721,13 @@ void sample_move_d16_d16(int16_t *dst, int16_t *src,
         } else if (swap_endian == SWAP_X_TO_L) {
           if (!swap_sign) *(dst++) = (((*ptr) & 0x00FF) << 8) + ((*ptr) >> 8);
           else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) = (uint16_t)(((*ptr & 0x00FF) << 8) + (*ptr >> 8)
-                + SAMPLE_MAX_16BITI_P);
+									       + SAMPLE_MAX_16BITI_P);
           else *(dst++) = ((*ptr & 0x00FF) << 8) + (*ptr >> 8) - SAMPLE_MAX_16BITI_N;
         } else {
           if (!swap_sign) *(dst++) = (((*ptr) & 0x00FF) << 8) + ((*ptr) >> 8);
           else if (swap_sign == SWAP_S_TO_U) *((uint16_t *)dst++) =
-              (uint16_t)(((((uint16_t)(*ptr + SAMPLE_MAX_16BITI_P)) & 0x00FF) << 8) +
-                         (((uint16_t)(*ptr + SAMPLE_MAX_16BITI_P)) >> 8));
+					       (uint16_t)(((((uint16_t)(*ptr + SAMPLE_MAX_16BITI_P)) & 0x00FF) << 8) +
+							  (((uint16_t)(*ptr + SAMPLE_MAX_16BITI_P)) >> 8));
           else *(dst++) = ((((int16_t)(*ptr - SAMPLE_MAX_16BITI_N)) & 0x00FF) << 8) + (((int16_t)(*ptr - SAMPLE_MAX_16BITI_N)) >> 8);
         }
 
@@ -1646,7 +1646,7 @@ int64_t render_audio_segment(int nfiles, int *from_files, int to_file, double *a
       }
 
       fromtime[track] = (double)lives_buffered_offset(in_fd[track])
-                        / (double)(in_asamps[track] * in_achans[track] * in_arps[track]);
+	/ (double)(in_asamps[track] * in_achans[track] * in_arps[track]);
 
       if (from_files[track] == mainw->ascrap_file) {
         // be forgiving with the ascrap file
@@ -2125,7 +2125,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
       outfile->achans = mainw->pulsed_read->in_achans;
       outfile->asampsize = mainw->pulsed_read->in_asamps;
       outfile->signed_endian = get_signed_endian(mainw->pulsed_read->in_signed != AFORM_UNSIGNED,
-                               mainw->pulsed_read->in_endian != AFORM_BIG_ENDIAN);
+						 mainw->pulsed_read->in_endian != AFORM_BIG_ENDIAN);
 
       mainw->pulsed_read->samples_written = fsize / (outfile->achans * (outfile->asampsize >> 3));
     } else {
@@ -2134,7 +2134,7 @@ void pulse_rec_audio_to_clip(int clipno, int old_file, lives_rec_audio_type_t re
       outfile->achans = mainw->pulsed->out_achans;
       outfile->asampsize = mainw->pulsed->out_asamps;
       outfile->signed_endian = get_signed_endian(mainw->pulsed->out_signed != AFORM_UNSIGNED,
-                               mainw->pulsed->out_endian != AFORM_BIG_ENDIAN);
+						 mainw->pulsed->out_endian != AFORM_BIG_ENDIAN);
     }
     save_clip_audio_values(clipno);
   } else {
@@ -2189,7 +2189,6 @@ void pulse_rec_audio_end(boolean close_fd) {
   if (mainw->pulsed_read) {
     pthread_mutex_lock(&mainw->audio_filewriteend_mutex);
     mainw->pulsed_read->in_use = FALSE;
-    //mainw->pulsed_read->playing_file = -1;
     pthread_mutex_unlock(&mainw->audio_filewriteend_mutex);
   }
 
@@ -2231,8 +2230,8 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
     mainw->rec_aclip = mainw->ascrap_file;
     mainw->rec_avel = 1.;
     mainw->rec_aseek = (double)mainw->files[mainw->ascrap_file]->aseek_pos /
-                       (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
-                                mainw->files[mainw->ascrap_file]->asampsize >> 3);
+      (double)(mainw->files[mainw->ascrap_file]->arps * mainw->files[mainw->ascrap_file]->achans *
+	       mainw->files[mainw->ascrap_file]->asampsize >> 3);
   }
 
   lives_header = lives_build_filename(prefs->workdir, mainw->files[mainw->ascrap_file]->handle,
@@ -2241,40 +2240,40 @@ lives_proc_thread_t start_audio_rec(lives_obj_instance_t *aplayer) {
   lives_free(lives_header);
 
   IF_APLAYER_JACK
-  (if (!mainw->agen_key && !mainw->agen_needs_reinit) {
-  if (aud_src == AUD_SRC_EXTERNAL) {
-      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-      mainw->jackd_read->is_paused = FALSE;
-      mainw->jackd_read->in_use = TRUE;
-    } else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
-  } else {
-    if (mainw->jackd) {
-      jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-    }
-  })
+    (if (!mainw->agen_key && !mainw->agen_needs_reinit) {
+      if (aud_src == AUD_SRC_EXTERNAL) {
+	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	mainw->jackd_read->is_paused = FALSE;
+	mainw->jackd_read->in_use = TRUE;
+      } else jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
+    } else {
+      if (mainw->jackd) {
+	jack_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+      }
+    })
 
-  IF_APLAYER_PULSE
-  (if (mainw->agen_key && !mainw->agen_needs_reinit) {
-  if (aud_src == AUD_SRC_EXTERNAL) {
-      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
-      mainw->pulsed_read->is_paused = FALSE;
-      mainw->pulsed_read->in_use = TRUE;
-    } else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
-  } else {
-    if (mainw->pulsed) {
-      pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
-    }
-  })
+    IF_APLAYER_PULSE
+    (if (mainw->agen_key && !mainw->agen_needs_reinit) {
+      if (aud_src == AUD_SRC_EXTERNAL) {
+	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_EXTERNAL);
+	mainw->pulsed_read->is_paused = FALSE;
+	mainw->pulsed_read->in_use = TRUE;
+      } else pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_MIXED);
+    } else {
+      if (mainw->pulsed) {
+	pulse_rec_audio_to_clip(mainw->ascrap_file, -1, RECA_GENERATED);
+      }
+    })
 
-  if (mainw->clip_header) fclose(mainw->clip_header);
+    if (mainw->clip_header) fclose(mainw->clip_header);
   mainw->clip_header = NULL;
 
   if (aud_src == AUD_SRC_INTERNAL) {
     if (prefs->rec_opts & REC_AUDIO) {
       // recording INTERNAL audio
       IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd);)
-      IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
-    }
+	IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
+	}
   }
 
   dets = (arec_details *)lives_calloc(1, sizeof(arec_details));
@@ -2550,8 +2549,8 @@ void update_audio_cbs(lives_obj_instance_t *aplayer, boolean is_aux) {
     if (LIVES_IS_PLAYING && has_audio_filters(AF_TYPE_A)) {
       if (!ana_fx_rcpt)
         ana_fx_rcpt = lives_obj_instance_add_hook_cb_full
-                      (aplayer, DATA_READY_HOOK, 0, send_audio_to_fx, WEED_SEED_VOID,
-                       "i", AF_TYPE_A);
+	  (aplayer, DATA_READY_HOOK, 0, send_audio_to_fx, WEED_SEED_VOID,
+	   "i", AF_TYPE_A);
     } else {
       if (ana_fx_rcpt) {
         lives_hook_cb_remove(ana_fx_rcpt);
@@ -2569,8 +2568,6 @@ void update_audio_cbs(lives_obj_instance_t *aplayer, boolean is_aux) {
                                               "i", AF_TYPE_NONA);
     }
 
-
-
     /// to generators
     if (LIVES_IS_PLAYING && mainw->afbuffer && (!mainw->event_list || mainw->record || mainw->record_paused))  {
       if (!afbuffer_rcpt)
@@ -2584,10 +2581,6 @@ void update_audio_cbs(lives_obj_instance_t *aplayer, boolean is_aux) {
         afbuffer_rcpt = NULL;
       }
     }
-
-
-
-
   } else {
     if (LIVES_IS_PLAYING && is_aux && mainw->aux_afbuffer) {
       if (!afbuffer_aux_rcpt)
@@ -2677,7 +2670,7 @@ LIVES_GLOBAL_INLINE lives_audio_track_state_t *audio_frame_to_atstate(weed_event
    similar to quantise_events(), except we don't produce output samples
 */
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-    weed_timecode_t fill_tc, int what_to_get, boolean exact, int *xntracks) {
+							  weed_timecode_t fill_tc, int what_to_get, boolean exact, int *xntracks) {
   // if exact is set, we must rewind back to first active stateful effect,
   // and play forwards from there (not yet implemented - TODO)
   lives_audio_track_state_t *atstate = NULL, *audstate = NULL;
@@ -2708,7 +2701,7 @@ lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_li
   while ((st_event && event != st_event) || (!st_event && get_event_timecode(event) < fill_tc)) {
     etype = weed_event_get_type(event);
     if (what_to_get == LIVES_PREVIEW_TYPE_VIDEO_AUDIO || (etype != WEED_EVENT_TYPE_FRAME
-        && (!event_list || etype != WEED_EVENT_TYPE_PARAM_CHANGE))) {
+							  && (!event_list || etype != WEED_EVENT_TYPE_PARAM_CHANGE))) {
       switch (etype) {
       case WEED_EVENT_TYPE_FILTER_MAP:
         if (what_to_get != LIVES_PREVIEW_TYPE_AUDIO_ONLY)
@@ -3106,7 +3099,8 @@ void freeze_unfreeze_audio(boolean is_frozen) {
           if (is_frozen) {
             if (!mainw->mute) {
               weed_plant_t *event = get_last_frame_event(mainw->event_list);
-              insert_audio_event_at(event, -1, lives_aplayer_get_clip(mainw->aplayer), 0., 0.); // audio switch off
+	      // audio switch off
+              insert_audio_event_at(event, -1, lives_aplayer_get_clip(mainw->aplayer), 0., 0.);
             }
           } else {
             pulse_get_rec_avals(mainw->pulsed);
@@ -3139,12 +3133,15 @@ LIVES_GLOBAL_INLINE boolean avsync_force(lives_obj_instance_t *aplayer) {
 
   //= get_aplayer_instance(prefs->audio_src);
 
-  uint64_t astat;
   if (!LIVES_CE_PLAYBACK || AUD_SRC_EXTERNAL || mainw->foreign) return FALSE;
   lives_clip_t *sfile = RETURN_NORMAL_CLIP(mainw->playing_file);
   if (!sfile) return FALSE;
 
   g_print("avsync\n");
+
+  pthread_mutex_t *aplayer_seek_mutex =
+    (pthread_mutex_t *)weed_get_voidptr_value(aplayer, "seekmutex", NULL);
+  pthread_mutex_lock(aplayer_seek_mutex);
 
   if (lives_aplayer_get_seek_state(aplayer) == not_seeking) {
     if (sfile->pb_fps > 0.) sfile->adirection = LIVES_DIRECTION_FORWARD;
@@ -3155,41 +3152,14 @@ LIVES_GLOBAL_INLINE boolean avsync_force(lives_obj_instance_t *aplayer) {
                                 sfile->adirection, sfile->avelocity);
 
     lives_aplayer_set_seek_state(aplayer, seek_needstarget);
+    g_print("need taarget\n");
     lives_aplayer_set_seek_clip(aplayer, lives_aplayer_get_clip(aplayer));
  
     lives_aplayer_set_active_status(aplayer, APLAYER_STATUS_RESYNC);
-     mainw->avsync_time = lives_get_session_time();
-   }
-   return TRUE;
-}
-
-
-lives_result_t audio_sync_ready(lives_obj_instance_t *aplayer) {
-  while (LIVES_IS_PLAYING && !pthread_mutex_trylock(&mainw->avseek_mutex))
-    pthread_mutex_unlock(&mainw->avseek_mutex);
-
-  if (LIVES_IS_PLAYING) {
-    uint64_t astat = lives_aplayer_get_status(aplayer) & ~3;
-    astat |= APLAYER_STATUS_RUNNING;
-    lives_aplayer_set_status(aplayer, astat);
-    if (lives_aplayer_get_seek_state(aplayer) == seek_ready) {
-      IF_APLAYER_JACK
-      (if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
-           && mainw->rec_aclip != mainw->ascrap_file)
-       jack_get_rec_avals(mainw->jackd);)
-
-        IF_APLAYER_PULSE
-        (if ((prefs->rec_opts & REC_AUDIO) && AUD_SRC_INTERNAL
-             && mainw->rec_aclip != mainw->ascrap_file)
-         pulse_get_rec_avals(mainw->pulsed);
-         mainw->pulsed->in_use = TRUE;
-        )
-        }
-    lives_aplayer_set_seek_state(aplayer, not_seeking);
-    lives_obj_instance_trigger_hook(aplayer, SEEK_READY_HOOK);
-    return LIVES_RESULT_SUCCESS;
+    mainw->avsync_time = lives_get_session_time();
   }
-  return LIVES_RESULT_FAILED;
+  pthread_mutex_unlock(aplayer_seek_mutex);
+  return TRUE;
 }
 
 
@@ -3208,21 +3178,6 @@ LIVES_GLOBAL_INLINE int get_aplay_rate(void) {
 }
 
 
-lives_result_t lives_aplayer_do_seek(lives_obj_instance_t *obj, boolean block) {
-  // seek to values set with lives_aplayer_set_seek_values
-  lives_result_t res = LIVES_RESULT_SUCCESS;
-
-  /* IF_APLAYER_JACK(//jack_audio_seek_frame(mainw->jackd, clip, target); */
-  /* 		  if (mainw->jackd_trans && (prefs->jack_opts & JACK_OPTS_ENABLE_TCLIENT) */
-  /* 		      && (prefs->jack_opts & JACK_OPTS_TIMEBASE_LSTART)) */
-  /* 		    jack_transport_update(mainw->jackd_trans, xtime);) */
-
-  IF_APLAYER_PULSE(res = lives_pulse_seek(mainw->pulsed, block);)
-
-  return res;
-}
-
-
 /**
    @brief resync audio playback to a target clip / frame
 
@@ -3238,9 +3193,13 @@ lives_result_t lives_aplayer_do_seek(lives_obj_instance_t *obj, boolean block) {
    if the frame target is <= 0. if the clip is not specified, the seek will synchronis with the video player
    if the clip is to a different clip, audio will firstr seek to the aseek_pos
 
-   in all cases an approximate seek is followed by an exact seek for fine adjustment
-   - the video stream is only paused briefly while the exact seekk is done, and during this momentary period
+   if ils (instrument landing system) is set,  an approximate seek is followed by an exact seek to video_seek_beacon
+   for fine adjustment. The video player sets the beacon to the current video frame and, pauses  momentarily to allow the audio
+   to realign with half frame precision.
+
+   - the video stream is only paused briefly while the exact seek is done, and during this momentary period
    the playback clock juat marks time.
+   if ils is disabled the audio seeks to the target time, with no fine adjustment
 
    to resync to the current video frame, it may be preferrable to call avsync_force()
    directly instead.
@@ -3249,17 +3208,29 @@ lives_result_t lives_aplayer_do_seek(lives_obj_instance_t *obj, boolean block) {
    be algned alongside the audio.
 */
 
-lives_result_t lives_aplayer_seek_to(int clip, double xtime,
-                                     lives_direction_t dir, double vel, boolean block) {
+lives_result_t lives_aplayer_do_seek(lives_obj_instance_t *aplayer, boolean ils, boolean block) {
   lives_result_t res = LIVES_RESULT_FAILED;
-
-  if (!LIVES_CE_PLAYBACK || AUD_SRC_EXTERNAL) return LIVES_RESULT_INVALID;
   // if we are playing an event_list, then resync is meaningless
+  if (!LIVES_CE_PLAYBACK || AUD_SRC_EXTERNAL) return LIVES_RESULT_INVALID;
   if (mainw->event_list && !mainw->record && !mainw->record_paused) return LIVES_RESULT_ERROR;
 
-  lives_aplayer_set_seek_vals(mainw->aplayer, clip, xtime, dir, vel);
+  char *tmpfilename = NULL;
+  lives_clip_t *sfile;
+  int clipno = lives_aplayer_get_seek_clip(aplayer);
+  
+  if (!aplayer || !IS_VALID_CLIP(clipno)) return res;
+  sfile = mainw->files[clipno];
 
-  res = lives_aplayer_do_seek(mainw->aplayer, block);
+  if ((!mainw->multitrack || mainw->multitrack->is_rendering) &&
+      (!mainw->event_list || mainw->record || (mainw->preview && mainw->is_processing))) {
+    // tell pulse server to open audio file and start playing it
+    if (sfile->achans > 0 && (!mainw->preview || (mainw->preview && mainw->is_processing)) &&
+        (sfile->laudio_time > 0. || sfile->opening ||
+         (mainw->multitrack && mainw->multitrack->is_rendering &&
+          lives_file_test((tmpfilename = lives_get_audio_file_name(clipno)), LIVES_FILE_TEST_EXISTS)))) {
+      IF_APLAYER_PULSE(res = lives_pulse_seek(mainw->pulsed, ils, block););
+    }
+  }
   return res;
 }
 
@@ -3275,6 +3246,8 @@ static pthread_mutex_t cond_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void fill_layer(weed_layer_t *layer) {
 
+  int64_t pb_start = 0, pb_end;
+  
 #define maxtime 60.
 #define mintime 20.
 
@@ -3288,7 +3261,11 @@ static void fill_layer(weed_layer_t *layer) {
 
   ____FUNC_ENTRY____(fill_layer, "", "P");
 
+  lives_obj_instance_t *aplayer = (lives_obj_instance_t *)
+    weed_get_voidptr_value(layer, "aplayer", NULL);
+
   int clip = lives_layer_get_clip(layer);
+
   lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
   if (!sfile)
     ____FUNC_EXIT____;
@@ -3307,23 +3284,70 @@ static void fill_layer(weed_layer_t *layer) {
   int out_inter = weed_layer_get_audio_interleaved(layer);
 
   static size_t bufsz = 0, minbufsz;
+  static lives_direction_t read_dirn = LIVES_NO_DIRECTION;
+
+  LiVESList *buffmap_list = (LiVESList *)weed_get_voidptr_value(layer, "buffmap_list", NULL);
 
   int fd = weed_get_int_value(layer, "abuff_id", NULL);
 
   int64_t bb_size = weed_get_int64_value(layer, "bb_size", NULL);
-
+  int64_t new_seek_smps;
   int new_clip;
+  lives_direction_t new_dirn = LIVES_NO_DIRECTION;
+  pthread_mutex_t *bufmutex;
+  void **bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
+  int64_t bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
+  int64_t bb_in_pos = weed_get_int64_value(layer, "bb_in_pos", NULL);
+  int64_t bb_in_size = weed_get_int64_value(layer, "bb_in_size", NULL);
 
-  GET_SELF_VALUE(new_clip, "new_clip");
+  seek_phase skstate = lives_aplayer_get_seek_state(aplayer);
 
-  if (new_clip != clip) {
-    if (fd > 0) {
-      lives_close_buffered(fd);
-      fd = -1;
-      weed_set_int_value(layer, "abuff_id", fd);
-      bb_size = 0;
+  boolean do_seek = FALSE;
+
+  if (skstate == seek_convergingA || skstate == seek_convergingE) {
+    lives_list_free_all(&buffmap_list);
+    weed_set_voidptr_value(layer, "buffmap_list", NULL);
+    GET_SELF_VALUE(new_seek_smps, "new_seek_smps");
+    bb_offs = bb_in_pos = 0;
+    bb_size = bb_in_size = 0;
+    bb_offs = 0;
+    do_seek = TRUE;
+  }
+
+  pb_end = sfile->afilesize;
+  
+  lives_result_t res = GET_SELF_VALUE(new_clip, "new_clip");
+  if (res == LIVES_RESULT_SUCCESS) {
+    DEL_SELF_VALUE("new_clip");
+    g_print("zzzzneclp is %d, res was %s\n", new_clip, lives_result_text(res));
+    GET_SELF_VALUE(new_dirn, "new_dirn");
+    if (new_dirn != LIVES_NO_DIRECTION) read_dirn = new_dirn;
+    if (new_clip != clip) {
+      if (fd > 0) {
+	lives_close_buffered(fd);
+	fd = -1;
+	weed_set_int_value(layer, "abuff_id", fd);
+	bb_size = 0;
+      }
+      clip = new_clip;
     }
-    clip = new_clip;
+  }
+
+  if (clip <= 0) {
+    // should never happen, caught in audio_cache
+    //pthread_mutex_lock(bufmutex);
+    /* if (bb_buff) { */
+    /*   for (int i = 0; i < out_nchans; i++) */
+    /* 	if (bb_buff[i]) lives_free(bb_buff[i]); */
+    /*   lives_free(bb_buff); */
+    /* } */
+
+    /* weed_set_voidptr_value(layer, "bb_buff", NULL); */
+    /* //pthread_mutex_unlock(bufmutex); */
+
+    /* lives_aplayer_set_seek_state(aplayer, not_seeking); */
+    //g_print("filled layer, size = %ld, buff == %p\n", new_bb_size, tmpbufs);
+    return;
   }
 
   if (fd <= 0) {
@@ -3361,18 +3385,29 @@ static void fill_layer(weed_layer_t *layer) {
   // k) unlock mutex, free old bb_buffs
   // l) real_bb_size = new_bb_size
 
-  void **bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
   int64_t needed = 0, used = 0, unused, mv = 0;
   int64_t in_bytes, max_in_bytes, target;;
-  int64_t bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
-  int64_t bb_in_offs;
-  int64_t bb_in_pos = weed_get_int64_value(layer, "bb_in_pos", NULL);
-  int64_t bb_in_size = weed_get_int64_value(layer, "bb_in_size", NULL);
   int64_t new_bb_size;
 
   boolean is_preload = FALSE;
 
-  int64_t xseek = bb_in_pos + bb_in_size;
+  int64_t xseek = 0.;
+
+  if (!do_seek) {
+    if (buffmap_list) {
+      buffmap_t *last_bmap = (buffmap_t *)lives_list_last(buffmap_list)->data;
+      xseek = last_bmap->in_smp_pos * (in_asamps >> 3) * (in_inter ? in_achans : 1);
+      //g_print("lsampos was %ld\n", last_bmap->in_smp_pos);
+      read_dirn = last_bmap->read_dirn;
+    }
+  }
+  else {
+    g_print("VALLS %ld %d %d %d\n", new_seek_smps, in_asamps, in_inter, in_achans);
+    xseek = new_seek_smps * (in_asamps >> 3) * (in_inter ? in_achans : 1);
+    if (buffmap_list) lives_list_free_all(&buffmap_list);
+    bb_offs = bb_size = 0;
+    weed_set_int64_value(layer, "bb_offs", 0);
+  }
 
   if (!bb_size) {
     needed = target = bufsz >> 2;
@@ -3433,92 +3468,228 @@ static void fill_layer(weed_layer_t *layer) {
   double reticence = THREADVAR(loveliness) / AVG_LOVELINESS;
   if (is_preload) reticence = 0.;
 
-  //////
+  size_t in_offs = 0;
+  ssize_t read_bytes;
+  ssize_t rem_bytes = in_bytes;
+
+  inbuffs = LIVES_CALLOC_SIZEOF(void *, in_achans);
+
+  g_print("pt xx\n");
+  
   if (in_inter) {
-    ssize_t read_bytes;
-    ssize_t rem_bytes = in_bytes, in_offs = 0;
-
-
-
-    inbuffs = LIVES_CALLOC_SIZEOF(void *, in_achans);
     inbuffs[0] = lives_malloc(in_bytes);
-    if (weed_layer_get_audio_vel(layer) < 1.0)
-      lives_buffered_rdonly_set_reversed(fd, TRUE);
-    else lives_buffered_rdonly_set_reversed(fd, FALSE);
-    lives_lseek_buffered_rdonly_absolute(fd, xseek);
+    while (1) {
+      boolean got_eof = FALSE;
+      if (read_dirn == LIVES_DIRECTION_REVERSE)
+	lives_buffered_rdonly_set_reversed(fd, TRUE);
+      else lives_buffered_rdonly_set_reversed(fd, FALSE);
+      g_print("SEEK to %ld\n", xseek);
+      lives_lseek_buffered_rdonly_absolute(fd, xseek);
 
-    do {
-      if (lives_proc_thread_get_pause_requested(self)) return;
+      if (!buffmap_list) {
+	// add initial point
+	LIVES_CALLOC_TYPE(buffmap_t, buffmap, 1);
+	buffmap->in_smp_pos = xseek / (in_asamps >> 3) / in_inter ? in_achans : 1;
+	buffmap->read_dirn = read_dirn;
 
-      read_bytes = lives_read_buffered(fd, inbuffs[0] + in_offs, rem_bytes, TRUE);
-      if (read_bytes < 0) {
-        // throw err
-
+	// insert at bb_size is correct, as we will adjuist bb
+	buffmap->out_smp_pos = bb_size / (out_asamps >> 3);
+	buffmap_list = lives_list_append(buffmap_list, buffmap);
+	weed_set_voidptr_value(layer, "buffmap_list", buffmap_list);
       }
-      rem_bytes -= read_bytes;
-      in_offs += read_bytes;
-      // check for EOF and set direction or reseek
-      if (lives_read_buffered_eof(fd)) {
+      
+      do {
+	if (lives_proc_thread_get_pause_requested(self)) {
+	  // this happens when we get a new seek time / clip
+	  // we need to clean up any temp buffers and return
+	  // inbuffs,
+	  if (inbuffs) {
+	    for (int i = 0; i < in_achans; i++) if (inbuffs[i]) lives_free(inbuffs[i]);
+	    lives_free(inbuffs);
+	  }
+	  return;
+	}
 
+	read_bytes = lives_read_buffered(fd, inbuffs[0] + in_offs, rem_bytes, TRUE);
+	if (read_bytes < 0) {
+	  // throw err
+	}
+	rem_bytes -= read_bytes;
+	in_offs += read_bytes;
+	xseek += read_bytes;
+
+	// check for EOF and set direction or reseek
+	if (lives_read_buffered_eof(fd)) {
+	  got_eof = TRUE;
+	  break;
+	}
+      } while (rem_bytes >= 65536);
+
+      if (lives_proc_thread_get_pause_requested(self)) {
+	// this happens when we get a new seek time / clip
+	// we need to clean up any temp buffers and return
+	// inbuffs,
+	if (inbuffs) {
+	  for (int i = 0; i < in_achans; i++) if (inbuffs[i]) lives_free(inbuffs[i]);
+	  lives_free(inbuffs);
+	}
+	return;
       }
-    } while (rem_bytes >= 65536);
 
-    in_bytes -= rem_bytes;
-    in_smps = in_bytes / (in_asamps >> 3) / in_achans;
+      in_bytes -= rem_bytes;
+      in_smps = in_bytes / (in_asamps >> 3) / in_achans;
 
 #if HAVE_SWRESAMPLE
-    // in_smps fixed, get max out
-    out_smps = get_swr_fmts(&swr_ctx, xin_asamps, in_arate, in_achans, in_inter, &in_smps,
-                            -out_asamps, out_arate, out_nchans, FALSE, &infmt, &outfmt, TRUE);
+      // in_smps fixed, get max out
+      out_smps = get_swr_fmts(&swr_ctx, xin_asamps, in_arate, in_achans, in_inter, &in_smps,
+			      -out_asamps, out_arate, out_nchans, FALSE, &infmt, &outfmt, TRUE);
 #endif
-    // max
-    out_bytes = out_smps * (out_asamps >> 3);
-    new_bb_size = bb_size - mv + out_bytes;
-    //////////////////////////////////////////////////
+      // max
+      out_bytes = out_smps * (out_asamps >> 3);
+      new_bb_size = bb_size - mv + out_bytes;
+      //////////////////////////////////////////////////
 
-    // pointer refs
-    xbufs = LIVES_CALLOC_SIZEOF(void *, out_nchans);
-    // construction buffers
-    tmpbufs = LIVES_CALLOC_SIZEOF(void *, out_nchans);
-    // out buffers
-    if (!bb_buff) bb_buff = LIVES_CALLOC_SIZEOF(void *, out_nchans);
-    for (int i = 0; i < out_nchans; i++) {
-      ///
-      tmpbufs[i] = lives_malloc(new_bb_size);
-      ///
-      if (!bb_buff[i]) xbufs[i] = tmpbufs[i];
-      else {
-        lives_memcpy(tmpbufs[i], bb_buff[i] + mv, bb_size - mv);
-        xbufs[i] = tmpbufs[i] + bb_size - mv;
+      // pointer refs
+      xbufs = LIVES_CALLOC_SIZEOF(void *, out_nchans);
+      // construction buffers
+      tmpbufs = LIVES_CALLOC_SIZEOF(void *, out_nchans);
+      // out buffers
+      //if (!bb_buff) bb_buff = LIVES_CALLOC_SIZEOF(void *, out_nchans);
+      for (int i = 0; i < out_nchans; i++) {
+	///
+	tmpbufs[i] = lives_malloc(new_bb_size);
+	///
+	if (!bb_buff || !bb_buff[i]) xbufs[i] = tmpbufs[i];
+	else {
+	  lives_memcpy(tmpbufs[i], bb_buff[i] + mv, bb_size - mv);
+	  xbufs[i] = tmpbufs[i] + bb_size - mv;
+	}
       }
-    }
 
-    /////////////////////////////////////////////////
+      /////////////////////////////////////////////////
 
-    //g_print("reading in %ld %ld %d %ld (%ld) bytes\n", needed, out_bytes, in_smps, in_bytes, read_bytes);
+      //g_print("reading in %ld %ld %d %ld (%ld) bytes\n", needed, out_bytes, in_smps, in_bytes, read_bytes);
 
-    // lock buffer
-    if (in_asamps != out_asamps || in_arate != out_arate || out_inter || in_achans != out_nchans) {
+      // lock buffer
+      if (in_asamps != out_asamps || in_arate != out_arate || out_inter || in_achans != out_nchans) {
 #if HAVE_SWRESAMPLE
-      out_smps = sw_resample(xbufs, out_smps, inbuffs, in_smps, swr_ctx);
-      /* g_print("RES %p, %d, %d, %d, %d ==  %d, %p %d %d %d %d ==  %d\n", */
-      /*         inbuffs, in_smps, in_achans, in_arate, infmt, AV_SAMPLE_FMT_S16, */
-      /*         xbufs, out_smps, out_nchans, out_arate, outfmt, AV_SAMPLE_FMT_FLTP); */
+	out_smps = sw_resample(xbufs, out_smps, inbuffs, in_smps, swr_ctx);
+	/* g_print("RES %p, %d, %d, %d, %d ==  %d, %p %d %d %d %d ==  %d\n", */
+	/*         inbuffs, in_smps, in_achans, in_arate, infmt, AV_SAMPLE_FMT_S16, */
+	/*         xbufs, out_smps, out_nchans, out_arate, outfmt, AV_SAMPLE_FMT_FLTP); */
 #else
 
 #endif
-    }
-  }
+      }
 
-  if (lives_proc_thread_get_pause_requested(self)) return;
+      if (lives_proc_thread_get_pause_requested(self)) {
+	// this happens when we get a new seek time / clip
+	// we need to clean up any temp buffers and return
+	// inbuffs,
+	if (inbuffs) {
+	  for (int i = 0; i < in_achans; i++) if (inbuffs[i]) lives_free(inbuffs[i]);
+	  lives_free(inbuffs);
+	}
+	if (xbufs) lives_free(xbufs);
+	if (tmpbufs) lives_free(tmpbufs);
+	if (bb_buff) lives_free(bb_buff);
+	return;
+      }
+      // add buffmap for end pos
+
+      g_print("XSEEK %ld\n", xseek);
+      
+      LIVES_CALLOC_TYPE(buffmap_t, buffmap, 1);
+      buffmap->in_smp_pos = xseek / (in_asamps >> 3) / (in_inter ? in_achans : 1);
+      buffmap->read_dirn = read_dirn;
+      buffmap->out_smp_pos = bb_size / (out_asamps >> 3);
+      buffmap_list = lives_list_append(buffmap_list, buffmap);
+      weed_set_voidptr_value(layer, "buffmap_list", buffmap_list);
+
+      g_print("here,  xseek is %ld, isp is %ld bufmp = %p, bfmp list = %p, bfmpllast = %p, bfll ip is %ld\n",
+	      xseek, buffmap->in_smp_pos, buffmap, buffmap_list, lives_list_last(buffmap_list)->data,
+	      ((buffmap_t *)(lives_list_last(buffmap_list)->data))->in_smp_pos);
+
+      // eof
+      if (got_eof) {
+	if (read_dirn == LIVES_DIRECTION_FORWARD) {
+	  limit_behaviour_t beh = lives_aplayer_get_limit_behaviour_high(aplayer);
+	  if (beh == limit_bounce)
+	    read_dirn = LIVES_DIRECTION_INVERT(read_dirn);
+	  if (beh == limit_rollover) xseek = pb_start;
+
+	  LIVES_CALLOC_TYPE(buffmap_t, buffmap, 1);
+	  buffmap->in_smp_pos = xseek / (in_asamps >> 3) / in_inter ? in_achans : 1;
+	  buffmap->read_dirn = read_dirn;
+	  buffmap->out_smp_pos = bb_size / (out_asamps >> 3);
+	  buffmap_list = lives_list_append(buffmap_list, buffmap);
+	  weed_set_voidptr_value(layer, "buffmap_list", buffmap_list);
+	}
+	else {
+	  limit_behaviour_t beh = lives_aplayer_get_limit_behaviour_low(aplayer);
+	  if (beh == limit_bounce)
+	    read_dirn = LIVES_DIRECTION_INVERT(read_dirn);
+	  if (beh == limit_rollover) xseek = pb_end;
+
+	  LIVES_CALLOC_TYPE(buffmap_t, buffmap, 1);
+	  buffmap->in_smp_pos = xseek / (in_asamps >> 3) / in_inter ? in_achans : 1;
+	  buffmap->read_dirn = read_dirn;
+	  buffmap->out_smp_pos = bb_size / (out_asamps >> 3);
+	  buffmap_list = lives_list_append(buffmap_list, buffmap);
+	  weed_set_voidptr_value(layer, "buffmap_list", buffmap_list);
+	  // *INDENT-OFF*
+	}}
+      if (rem_bytes < 65536) break;
+    }}
+  // *INDENT-ON*
 
   // recalculate
   out_bytes = out_smps * (out_asamps >> 3);
   new_bb_size = bb_size - mv + out_bytes;
 
-  pthread_mutex_t *bufmutex =
-    (pthread_mutex_t *)weed_get_voidptr_value(layer, "bufmutex", NULL);
-  if (!bufmutex) {
+  /////////
+    
+  // update buffer mapping - subtract mv from all out_posn.
+  // the in_posn remains unaltered
+  int64_t last_offs = 0;
+
+  LiVESList *last_buffmap = NULL;
+  for (LiVESList *list = buffmap_list; list; list = list->next) {
+    buffmap_t *bmap = (buffmap_t *)list->data;
+    int64_t out_smp_pos = bmap->out_smp_pos;
+    out_smp_pos -= mv;
+
+    if (out_smp_pos > 0) {
+      if (last_offs) {
+	buffmap_t *xbmap = (buffmap_t *)last_buffmap->data;
+	int64_t diff = -xbmap->out_smp_pos;
+	int64_t xdiff = (double)diff / (double)out_arate * (double)in_arate;
+	xbmap->out_smp_pos = 0;
+
+	if (xbmap->read_dirn == LIVES_DIRECTION_FORWARD)
+	  xbmap->in_smp_pos += xdiff;
+	else xbmap->in_smp_pos -= xdiff;
+
+	last_offs = 0;
+	last_buffmap = NULL;
+      }
+    }
+
+    if (last_buffmap)
+      buffmap_list = lives_list_remove(buffmap_list, last_buffmap);
+
+    if (out_smp_pos < 0) {
+      last_buffmap = list;
+      last_offs = bmap->out_smp_pos;
+    }
+  }
+  //
+  // loaded and converted, check if we got eof
+  // if so get new pos anew direction
+  bufmutex = (pthread_mutex_t *)
+    weed_get_voidptr_value(layer, "bufmutex", NULL);
+
+if (!bufmutex) {
     pthread_mutexattr_t mattr;
     pthread_mutexattr_init(&mattr);
     pthread_mutexattr_setpshared(&mattr, PTHREAD_PROCESS_SHARED);
@@ -3527,17 +3698,15 @@ static void fill_layer(weed_layer_t *layer) {
     weed_set_voidptr_value(layer, "bufmutex", bufmutex);
   }
 
-  /////////////////////
+  ///////////////////// 
   pthread_mutex_lock(bufmutex);
   ///////////////////////////////
 
   // position in input file
   weed_set_int64_value(layer, "bb_in_pos", xseek);
+
   weed_set_int64_value(layer, "bb_in_size", in_bytes);
   weed_set_int64_value(layer, "bb_max_in_samps", max_in_smps);
-
-  bb_in_offs = weed_get_int64_value(layer, "bb_in_offs", NULL);
-  weed_set_int64_value(layer, "bb_in_offs", bb_in_offs - bb_in_size);
 
   weed_set_voidptr_array(layer, "bb_buff", out_nchans, tmpbufs);
 
@@ -3547,16 +3716,27 @@ static void fill_layer(weed_layer_t *layer) {
   weed_set_int64_value(layer, "bb_size", new_bb_size);
   weed_set_voidptr_array(layer, "bb_buff", out_nchans, tmpbufs);
 
+  skstate = lives_aplayer_get_seek_state(aplayer);
+
+  if (skstate == seek_convergingA)
+    lives_aplayer_set_seek_state(aplayer, seek_approximate);
+  else if (skstate == seek_convergingE)
+    lives_aplayer_set_seek_state(aplayer, seek_loadedE);
+
   pthread_mutex_unlock(bufmutex);
 
   //g_print("filled layer, size = %ld, buff == %p\n", new_bb_size, tmpbufs);
 
-  for (int i = 0; i < out_nchans; i++)
-    if (bb_buff[i]) lives_free(bb_buff[i]);
+  if (bb_buff) {
+    for (int i = 0; i < out_nchans; i++)
+      if (bb_buff[i]) lives_free(bb_buff[i]);
+  }
 
-  for (int i = 0; i < in_achans; i++)
-    if (inbuffs[i]) lives_free(inbuffs[i]);
-
+  if (inbuffs) {
+    for (int i = 0; i < in_achans; i++)
+      if (inbuffs[i]) lives_free(inbuffs[i]);
+    lives_free(inbuffs);
+  }
   if (xbufs) lives_free(xbufs);
   if (tmpbufs) lives_free(tmpbufs);
   if (bb_buff) lives_free(bb_buff);
@@ -3565,11 +3745,58 @@ static void fill_layer(weed_layer_t *layer) {
 }
 
 
+
+static int64_t src_pos_from_bb_pos(LiVESList *bufmap_list, int64_t bb_offs) {
+  buffmap_t *prev_bmap = NULL;
+  int64_t seek_pos = 0;
+  LiVESList *list;
+  int out_asamps = 32;
+  int64_t bpos = bb_offs / (out_asamps >> 3); 
+  for (list = bufmap_list; list; list = list->next) {
+    buffmap_t *bmap = (buffmap_t *)list->data;
+    if (bmap->out_smp_pos == bpos) return bmap->in_smp_pos;
+    //
+    if (bmap->out_smp_pos > bpos) {
+      double odelta = (double)(bmap->out_smp_pos - prev_bmap->out_smp_pos);
+      double idelta = (double)(bmap->in_smp_pos - prev_bmap->in_smp_pos);
+      double propn = (double)(bpos - prev_bmap->out_smp_pos) / odelta;
+      seek_pos = prev_bmap->in_smp_pos + (idelta * propn);
+      break;
+    }
+    prev_bmap = bmap;
+  }
+  return seek_pos;
+}
+
+
+static int64_t bb_smps_from_seek_smps(LiVESList *bufmap_list, int64_t bpos, int64_t seek_smps) {
+  buffmap_t *prev_bmap = NULL;
+  LiVESList *list;
+  for (list = bufmap_list; list; list = list->next) {
+    buffmap_t *bmap = (buffmap_t *)list->data;
+    if (bmap->out_smp_pos > bpos) {
+      double odelta = (double)(bmap->out_smp_pos - prev_bmap->out_smp_pos);
+      double idelta = (double)(bmap->in_smp_pos - prev_bmap->in_smp_pos);
+      if ((prev_bmap->read_dirn == LIVES_DIRECTION_FORWARD &&
+	  (seek_smps < prev_bmap->in_smp_pos || seek_smps > bmap->in_smp_pos))
+	  || (prev_bmap->read_dirn == LIVES_DIRECTION_REVERSE &&
+	      (seek_smps < prev_bmap->in_smp_pos || seek_smps > bmap->in_smp_pos)))
+	return -1;
+      double propn = (double)(seek_smps - prev_bmap->in_smp_pos) / idelta;
+      bpos = prev_bmap->out_smp_pos + (odelta * propn);
+      break;
+    }
+    prev_bmap = bmap;
+  }
+  return bpos;
+}
+
+
 static boolean fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
-                            double vel, double clip_vol) {
+			    double vel, double clip_vol) {
   if (!layer || !aplayer) return TRUE;
   pthread_mutex_t *bufmutex = (pthread_mutex_t *)
-                              weed_get_voidptr_value(layer, "bufmutex", NULL);
+    weed_get_voidptr_value(layer, "bufmutex", NULL);
   if (!bufmutex) return FALSE;
 
   void **bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
@@ -3587,7 +3814,7 @@ static boolean fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
 
   int64_t sbf_size = weed_get_int64_value(layer, "sbf_size", NULL);
 
-  int64_t bb_offs, bb_in_offs;
+  int64_t bb_offs;
 
   void **sbf_buff = weed_get_voidptr_array(layer, "sbf_buff", NULL);
   void **in_datap = NULL, **out_datap = NULL;
@@ -3595,6 +3822,7 @@ static boolean fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
   size_t in_bytes, src_bytes;
   size_t out_bytes = nsamples * 4;
   int out_smps = nsamples;
+  seek_phase skstate;
 
   if (!sbf_buff) {
     sbf_buff = LIVES_CALLOC_SIZEOF(void *, out_nchans);
@@ -3615,11 +3843,11 @@ static boolean fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
   // xnsamples is at least nsamples, insamples is exact
   int xnsamples = nsamples;
   int zinsamples = get_swr_fmts(&smbuf_ctx, -out_asamps, out_arate, out_nchans, FALSE, &xnsamples,
-                                -in_asamps, in_arate, in_achans, FALSE, &outfmt, &infmt, FALSE);
+				-in_asamps, in_arate, in_achans, FALSE, &outfmt, &infmt, FALSE);
   //g_print("XNSMPS is %d\n", xnsamples);
   int Xnsamples = xnsamples;
   zinsamples = get_swr_fmts(&smbuf_ctx, -out_asamps, out_arate, out_nchans, FALSE, &Xnsamples,
-                            -in_asamps, in_arate, in_achans, FALSE, &outfmt, &infmt, FALSE);
+			    -in_asamps, in_arate, in_achans, FALSE, &outfmt, &infmt, FALSE);
   // g_print("XNSMPS2 is %d\n", Xnsamples);
   //g_print("zin is %d\n", zinsamples);
 
@@ -3642,14 +3870,18 @@ static boolean fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
   lives_clip_t *sfile = RETURN_VALID_CLIP(clip);
 
   src_bytes = (int64_t)((double)(xinsamples * (sfile->asampsize >> 3)
-                                 * (double)sfile->achans));
+				 * (double)sfile->achans));
+
+  // critical section start
+  pthread_mutex_lock(bufmutex);
+  bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
+  bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
+
   if (in_arate == out_arate) {
-    pthread_mutex_lock(bufmutex);
-    bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
-    bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
     out_bytes = xnsamples * (out_asamps >> 3);
     for (int i = 0; i < out_nchans; i++)
       lives_memcpy(sbf_buff[i] + sbf_size, bb_buff[i] + bb_offs, out_bytes);
+    pthread_mutex_unlock(bufmutex);
     goto done;
   }
 
@@ -3658,41 +3890,31 @@ static boolean fill_cbuffer(weed_layer_t *layer, lives_obj_instance_t *aplayer,
 
   for (int i = 0; i < out_nchans; i++) out_datap[i] = sbf_buff[i] + sbf_size;
 
-  pthread_mutex_lock(bufmutex);
-
-  bb_buff = weed_get_voidptr_array(layer, "bb_buff", NULL);
-  bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
-
   for (int i = 0; i < in_achans; i++)
     if (bb_buff[i]) in_datap[i] = bb_buff[i] + bb_offs;
 
+  weed_set_int64_value(layer, "bb_offs", bb_offs + in_bytes);
+  
 #if HAVE_SWRESAMPLE
-
   //g_print("doing %d and %d\n", zinsamples, nsamples);
   out_smps = sw_resample(out_datap, xnsamples, in_datap, zinsamples + 1, smbuf_ctx);
-
   out_bytes = out_smps * 4;
 #else
 
 #endif
 
-done:
-
-  bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
-  weed_set_int64_value(layer, "bb_offs", bb_offs + in_bytes);
-
-  bb_in_offs = weed_get_int64_value(layer, "bb_in_offs", NULL);
-  weed_set_int64_value(layer, "bb_in_offs", bb_in_offs + src_bytes);
-
   pthread_mutex_unlock(bufmutex);
+  // critical section end
+
+ done:
 
   // apply clip volume
   if (clip_vol != 1.) {
     for (int i = 0; i < out_nchans; i++) {
       if (sbf_buff[i]) {
-        void *start = sbf_buff[i] + sbf_size;
-        void *end = start + out_bytes;
-        for (float *smp = (float *)start; smp < (float *)end; smp++) *smp *= clip_vol;
+	void *start = sbf_buff[i] + sbf_size;
+	void *end = start + out_bytes;
+	for (float *smp = (float *)start; smp < (float *)end; smp++) *smp *= clip_vol;
       }
     }
   }
@@ -3706,9 +3928,29 @@ done:
   if (in_datap) lives_free(in_datap);
   if (sbf_buff) lives_free(sbf_buff);
   if (bb_buff) lives_free(bb_buff);
+
+  // finally we want to get the posiiton in the original input
+  // to do this we look in bufmap_list and find the prev and next alignment points for
+  // the current offset. Then we use a somple ratio calculation to find the ruivaalnt offset in the
+  // original source
+
+  LiVESList *buffmap_list =
+    (LiVESList *)weed_get_voidptr_value(layer, "buffmap_list", NULL);
+
+  bb_offs = weed_get_int64_value(layer, "bb_offs", NULL);
+
+  int64_t seek_pos = src_pos_from_bb_pos(buffmap_list, bb_offs);
+  lives_aplayer_set_pos(aplayer, seek_pos);
+
+  skstate = lives_aplayer_get_seek_state(aplayer);
+
+  if (skstate == seek_loadedE)
+    lives_aplayer_set_seek_state(aplayer, not_seeking);
+  else if (skstate == seek_realign)
+    lives_aplayer_set_seek_state(aplayer, seek_ready);
+
   return TRUE;
 }
-
 
 
 static void cache_audio(void) {
@@ -3730,10 +3972,9 @@ static void cache_audio(void) {
   weed_layer_t **layers = NULL, **xlayers;
   int nlayers = 0, xnlayers, i, op;
 
-  GET_PROC_THREAD_SELF(self);
-
   while (1) {
     lives_proc_thread_pause();
+    GET_PROC_THREAD_SELF(self);
     if (lives_proc_thread_get_cancel_requested(self)) {
       lives_proc_thread_cancel();
     }
@@ -3754,9 +3995,9 @@ static void cache_audio(void) {
 
     if (nlayers) {
       for (i = 0; i < nlayers; i++) {
-        //g_print("will fill layer %d\n", i);
-        fill_layer(layers[i]);
-        if (lives_proc_thread_get_pause_requested(self)) break;
+	//g_print("will fill layer %d\n", i);
+	fill_layer(layers[i]);
+	if (lives_proc_thread_get_pause_requested(self)) break;
       }
     }
 
@@ -3767,8 +4008,6 @@ static void cache_audio(void) {
     /* 	if (i == nlayers) nlayers++; */
     /*   } */
     /* } */
-
-
   }
 }
 
@@ -3785,7 +4024,7 @@ lives_result_t audio_cache(int op, ...) {
 
   if (!caud_lpt)
     caud_lpt = lives_proc_thread_create(LIVES_THRDATTR_NO_GUI,
-                                        cache_audio, WEED_SEED_VOID, "");
+					cache_audio, WEED_SEED_VOID, "");
 
   if (op == -1) {
     // cancel
@@ -3808,20 +4047,25 @@ lives_result_t audio_cache(int op, ...) {
     double clip_vol = params[1]->values.d[0];
     T_ARRAY_FREE(params);
 
+    boolean can_fill = TRUE;
+
     for (int i = 0; i < nlayers; i++) {
-      if (!fill_cbuffer(layers[i], aplayer, vel, clip_vol))
-        res = LIVES_RESULT_BUSY_RETRY;
+      if (!fill_cbuffer(layers[i], aplayer, vel, clip_vol)) {
+	res = LIVES_RESULT_BUSY_RETRY;
+	can_fill = FALSE;
+      }
     }
-
-
-    if (lives_proc_thread_is_paused(caud_lpt)) {
-      SET_LPT_ARRAY(caud_lpt, WEED_SEED_VOIDPTR, "layers", nlayers, layers);
-      lives_proc_thread_request_resume(caud_lpt);
+    if (can_fill) {
+      if (lives_proc_thread_is_paused(caud_lpt)) {
+	SET_LPT_ARRAY(caud_lpt, WEED_SEED_VOIDPTR, "layers", nlayers, layers);
+	lives_proc_thread_request_resume(caud_lpt);
+      }
     }
-
     return res;
-  } else {
-    // big buffer fill
+  }
+
+  else {
+    // big buffer fill or fine adjustment
     T_array params;
     VA_TO_T_ARRAY(params, op, "iVP");
     nlayers = params[0]->values.i[0];
@@ -3829,24 +4073,25 @@ lives_result_t audio_cache(int op, ...) {
     layers = (weed_layer_t **)params[1]->values.V[0];
     aplayer = (lives_obj_instance_t *)params[2]->values.P[0];
     T_ARRAY_FREE(params);
-    // do we need to seek ?
+
+    SET_LPT_ARRAY(caud_lpt, WEED_SEED_VOIDPTR, "layers", nlayers, layers);
 
     pthread_mutex_t *aplayer_seek_mutex =
       (pthread_mutex_t *)weed_get_voidptr_value(aplayer, "seekmutex", NULL);
 
     pthread_mutex_lock(aplayer_seek_mutex);
 
-    SET_LPT_ARRAY(caud_lpt, WEED_SEED_VOIDPTR, "layers", nlayers, layers);
-
     seek_phase skstate = lives_aplayer_get_seek_state(aplayer);
 
-    if (skstate == seek_active || skstate == seek_ready) {
+    // do we need to seek ?
+    if (skstate == seek_targetA || skstate == seek_targetE) {
       int new_clip = lives_aplayer_get_seek_clip(aplayer);
       double new_time  = lives_aplayer_get_seek_time(aplayer);
       lives_direction_t new_dir = lives_aplayer_get_seek_direction(aplayer);
-      // get vals from aplayer
-
       pthread_mutex_unlock(aplayer_seek_mutex);
+
+      g_print("NNNCLIP is %d\n", new_clip);
+
       // get clip number if invalid we maintain old value
       // if new clip does not have audio, we clean up
       //
@@ -3858,84 +4103,147 @@ lives_result_t audio_cache(int op, ...) {
       // if not, we set bb_in_pos, set bb_in_size to 0, bb_offs
       //  set bb_buff / bb_size
 
-      lives_clip_t *sfile = RETURN_VALID_CLIP(new_clip);
-      if (sfile && CLIP_HAS_AUDIO(new_clip)) {
-        int clip = lives_layer_get_clip(layers[0]);
-        int in_arate = sfile->arate;
-        int in_achans = sfile->achans;
-        int in_asamps = sfile->asampsize;
-        int new_smp_pos = new_time * in_arate;
-        int64_t new_in_pos = new_smp_pos * (in_asamps >> 3) * in_achans;
-        pthread_mutex_t *bufmutex =
-          (pthread_mutex_t *)weed_get_voidptr_value(layers[0], "bufmutex", NULL);
-        lives_proc_thread_request_pause(caud_lpt);
-        lives_microsleep_while_false(lives_proc_thread_is_paused(caud_lpt));
+      if (CLIP_HAS_AUDIO(new_clip)) {
+	int old_clip = lives_layer_get_clip(layers[0]);
+	lives_clip_t *sfile = RETURN_VALID_CLIP(new_clip);
+	int in_arate = sfile->arate;
+	int in_achans = sfile->achans;
+	int in_asamps = sfile->asampsize;
+	int64_t new_seek_smps = TIME_TO_SAMPS(sfile, new_time);
+	g_print("seek to time %.4f, samp pos %ld\n", new_time, new_seek_smps);
 
-        if (new_clip == clip) {
-          int64_t bb_in_pos = weed_get_int64_value(layers[0], "bb_in_pos", NULL);
-          int64_t bb_in_size = weed_get_int64_value(layers[0], "bb_in_size", NULL);
-          int64_t bb_max_in_samps = weed_get_int64_value(layers[0], "bb_max_in_samps", NULL);
-          int in_smp_pos = bb_in_pos / (in_asamps >> 3) / in_achans;
+	pthread_mutex_t *bufmutex =
+	  (pthread_mutex_t *)weed_get_voidptr_value(layers[0], "bufmutex", NULL);
+	lives_proc_thread_request_pause(caud_lpt);
+	lives_microsleep_while_false(lives_proc_thread_is_paused(caud_lpt));
 
-          if (new_smp_pos > in_smp_pos + (bb_max_in_samps >> 3)
-              && new_smp_pos < in_smp_pos + bb_max_in_samps - (bb_max_in_samps >> 3)) {
-            int out_arate = weed_layer_get_audio_rate(layers[0]);
-            int out_asamps = weed_layer_get_audio_asamps(layers[0]);
-            int64_t bb_in_offs = new_in_pos - bb_in_pos;
-            int64_t bb_offs = (double)bb_in_offs * (double)out_arate / (double)in_arate / in_achans;
-            bb_offs /= (out_asamps >> 3);
-            bb_offs *= (out_asamps >> 3);
-            if (bufmutex) pthread_mutex_lock(bufmutex);
-            weed_set_int64_value(layers[0], "bb_in_offs", bb_in_offs);
-            weed_set_int64_value(layers[0], "bb_offs", bb_offs);
-            if (bufmutex) pthread_mutex_unlock(bufmutex);
-            lives_proc_thread_ensure_resume(caud_lpt);
-            return LIVES_RESULT_SUCCESS;
-          }
-        } else {
-          int nchans = weed_layer_get_naudchans(layers[0]);
-          if (bufmutex) pthread_mutex_lock(bufmutex);
-          void **bb_buff = weed_get_voidptr_value(layers[0], "bb_buff", NULL);
-          if (bb_buff) {
-            for (int i = 0; i < nchans; i++) {
-              if (bb_buff[i]) lives_free(bb_buff[i]);
-              if (bb_buff[i]) lives_free(bb_buff[i]);
-            }
-          }
+	if (bufmutex) pthread_mutex_lock(bufmutex);
 
-          weed_set_voidptr_value(layers[0], "bb_buff", NULL);
-          weed_set_int64_value(layers[0], "bb_size", 0);
+	if (new_clip == old_clip) {
+	  // check if we can seek with bb_buf
+	  // we have bb_buf and bb_offs, bb_size and bb_maxsize - this is at the out sample rate / sampsize / chans,interleaf
+	  // however, the seek poisiton is in the input - in rate, sampsize, chans,  interleaf
 
-          weed_set_int64_value(layers[0], "bb_in_pos", new_in_pos);
-          weed_set_int64_value(layers[0], "bb_in_size", 0);
-          if (bufmutex) pthread_mutex_unlock(bufmutex);
-        }
+	  // because of eof. looping the bb_buff position needs some handling to find the input position
+	  // recall what we do - 1) seek to the initial position - load in the prebuffer amount - 2) fill up to maxsize
+	  // 3 - shift buffer left, fill up to max size. If we hit EOF - jump and / or dirchange
+	  // - we will maintain a linked list alongside the buffer.
+	  // 1 - clear the list - add a node with out offs (0) / in offs (pos), direction
+	  // 2 - fill to max - no new node
+	  // 3 - shift left - go through list, subtract shift
+	  // - find in pos of bb_pos, shift left of n output bytes, calc shift / out arate * in arate
+	  // add node 0, in pos.
+	  // calc in pos of bb_offs
+	  // walk list, find node b4 offs find input pos, add bb_offs / out_rate * in_arate.
+	  // calc bracketting input pos, if between calc out offs.
+	  // when rev / jump at eof, add anothe node,
+	  // we can only do this if bb_in_pos has been set - else bb_offs is not valid - ie.
+	  // we must seek to target, load the data, and keep bb_offs at 0
+	  LiVESList *buffmap_list = (LiVESList *)weed_get_voidptr_value(layers[0], "buffmap_list", NULL);
+	  if (buffmap_list && weed_plant_has_leaf(layers[0], "bb_in_pos")) {
+	      int64_t bb_in_pos = weed_get_int64_value(layers[0], "bb_in_pos", NULL);
 
-        SET_LPT_VALUE(caud_lpt, WEED_SEED_INT, "new_clip", new_clip);
-        lives_proc_thread_ensure_resume(caud_lpt);
-        return LIVES_RESULT_SUCCESS;
-      } else {
-        // switch to clip with no audio -- close buffers and free
-        int fd = weed_get_int_value(layers[0], "abuff_id", NULL);
-        if (fd > 0) {
-          lives_close_buffered(fd);
-          fd = -1;
-          weed_set_int_value(layers[0], "abuff_id", fd);
-        }
-        // free layers + buffers
-        pthread_mutex_t *bufmutex = (pthread_mutex_t *)
-                                    weed_get_voidptr_value(layers[0], "bufmutex", NULL);
-        if (bufmutex) pthread_mutex_lock(bufmutex);
-        void **bb_buff = weed_get_voidptr_array(layers[0], "bb_buff", NULL);
-        int nchans = weed_layer_get_naudchans(layers[0]);
-        for (int i = 0; i < nchans; i++)
-          if (bb_buff[i]) lives_free(bb_buff[i]);
-        weed_set_voidptr_value(layers[0], "bb_buff", NULL);
-        weed_set_int64_value(layers[0], "bb_size", 0);
-        if (bufmutex) pthread_mutex_unlock(bufmutex);
+	      int out_arate = weed_layer_get_audio_rate(layers[0]);
+	      int out_asamps = weed_layer_get_audio_asamps(layers[0]);
+	      int64_t bufsz = (size_t)(maxtime * out_arate) * (out_asamps >> 3);
+	      int64_t bb_size = weed_get_int64_value(layers[0], "bb_size", NULL);
+
+	      g_print("SSSEK %ld\n", bb_in_pos);
+
+	      int64_t bb_in_size = weed_get_int64_value(layers[0], "bb_in_size", NULL);
+	      int64_t bb_max_in_samps = weed_get_int64_value(layers[0], "bb_max_in_samps", NULL);
+	      int in_smp_pos = bb_in_pos / (in_asamps >> 3) / in_achans;
+	      LiVESList *last_bmap = NULL;
+	      int64_t bb_offs = weed_get_int64_value(layers[0], "bb_offs", NULL);
+	      int64_t bb_smps = bb_offs / (out_asamps >> 3);
+	      int64_t xbb_offs;
+	      // find the range we can insta seek in - between the previous and next buffer_map nodes
+	      // assume we just did approx seek to X/ bb_pos == 0, in_smps = X0
+	      // then next bmap will have bb_offs, in_smp_pos
+	      // check delta in_smps
+
+	      bb_smps = bb_smps_from_seek_smps(buffmap_list, bb_smps, new_seek_smps);
+	      if (bb_smps >= 0) {
+		xbb_offs = bb_smps * (out_asamps >> 3);
+		if ((bb_size < bufsz || xbb_offs > (bufsz >> 3)) && xbb_offs < (bufsz - (bufsz >> 3))) {
+		  //////////////
+		  weed_set_int64_value(layers[0], "bb_offs", xbb_offs);
+
+		  if (xbb_offs < bb_size - (bufsz >> 3)) {
+		    if (skstate == seek_targetA)
+		      lives_aplayer_set_seek_state(aplayer, seek_approximate);
+		    else lives_aplayer_set_seek_state(aplayer, seek_loadedE);
+		    if (bufmutex) pthread_mutex_unlock(bufmutex);
+
+		    // don't cancel any current read
+		    lives_proc_thread_ensure_resume(caud_lpt);
+		    g_print("insta seek on\n");
+		    return LIVES_RESULT_SUCCESS;
+	      // *INDENT-OFF*
+	      }}}}}
+	// *INDENT-ON*
+
+	// cancel any in progress fill operation
+	lives_proc_thread_ensure_pause(caud_lpt);
+	
+	SET_LPT_VALUE(caud_lpt, WEED_SEED_INT, "new_clip", new_clip);
+	g_print("NOOCLP is %d\n", new_clip);
+
+	SET_LPT_VALUE(caud_lpt, WEED_SEED_INT, "new_dirn", new_dir);
+	SET_LPT_VALUE(caud_lpt, WEED_SEED_INT64, "new_seek_smps", new_seek_smps);
+	if (skstate == seek_targetA)
+	  lives_aplayer_set_seek_state(aplayer, seek_convergingA);
+	else lives_aplayer_set_seek_state(aplayer, seek_convergingE);
+
+	if (bufmutex) pthread_mutex_unlock(bufmutex);
+
+	lives_proc_thread_ensure_resume(caud_lpt);
+	return LIVES_RESULT_SUCCESS;
       }
+
+      // switch to clip with no audio -- close buffers and free
+
+      pthread_mutex_lock(aplayer_seek_mutex);
+      lives_aplayer_set_seek_state(aplayer, not_seeking);
+      mainw->video_seek_beacon = -1;
+      pthread_mutex_unlock(aplayer_seek_mutex);
+
+      // cancel any in progress fill operation
+      lives_proc_thread_ensure_pause(caud_lpt);
+      
+      int fd = weed_get_int_value(layers[0], "abuff_id", NULL);
+      if (fd > 0) {
+	lives_close_buffered(fd);
+	fd = -1;
+	weed_set_int_value(layers[0], "abuff_id", fd);
+      }
+
+      //free layers + buffers
+      int nchans = weed_layer_get_naudchans(layers[0]);
+      pthread_mutex_t *bufmutex = (pthread_mutex_t *)
+	weed_get_voidptr_value(layers[0], "bufmutex", NULL);
+      if (bufmutex) pthread_mutex_lock(bufmutex);
+      LiVESList *buffmap_list =
+	(LiVESList *)weed_get_voidptr_value(layers[0], "buffmap_list", NULL);
+      lives_list_free_all(&buffmap_list);
+
+      void **bb_buff = weed_get_voidptr_array(layers[0], "bb_buff", NULL);
+      if (bb_buff) {
+	for (int i = 0; i < nchans; i++)
+	  if (bb_buff[i]) lives_free(bb_buff[i]);
+	weed_set_voidptr_value(layers[0], "bb_buff", NULL);
+      }
+
+      weed_leaf_delete(layers[0], "bb_in_pos");
+      weed_set_int64_value(layers[0], "bb_size", 0);
+      weed_set_int64_value(layers[0], "bb_in_size", 0);
+      weed_set_voidptr_value(layers[0], "buffmap_list", NULL);
+      if (bufmutex) pthread_mutex_unlock(bufmutex);
+      return LIVES_RESULT_SUCCESS;
     }
+
     pthread_mutex_unlock(aplayer_seek_mutex);
+
     lives_proc_thread_ensure_resume(caud_lpt);
     return LIVES_RESULT_SUCCESS;
   }
@@ -4026,21 +4334,21 @@ void audio_cache_end(void) {
       if (!c) cache_buffer = cache_buffera;
       else cache_buffer = cache_bufferb;
       if (cache_buffer) {
-        for (int i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
-          /* if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]); */
-          if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
-          /* if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]); */
-          /* if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]); */
-          if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
-        }
+	for (int i = 0; i < (cache_buffer->_cin_interleaf ? 1 : cache_buffer->_cachans); i++) {
+	  /* if (cache_buffer->buffer8 && cache_buffer->buffer8[i]) lives_free(cache_buffer->buffer8[i]); */
+	  if (cache_buffer->buffer16 && cache_buffer->buffer16[i]) lives_free(cache_buffer->buffer16[i]);
+	  /* if (cache_buffer->buffer24 && cache_buffer->buffer24[i]) lives_free(cache_buffer->buffer24[i]); */
+	  /* if (cache_buffer->buffer32 && cache_buffer->buffer32[i]) lives_free(cache_buffer->buffer32[i]); */
+	  if (cache_buffer->bufferf && cache_buffer->bufferf[i]) lives_free(cache_buffer->bufferf[i]);
+	}
 
-        /* if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8); */
-        if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
-        /* if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24); */
-        /* if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32); */
-        if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
+	/* if (cache_buffer->buffer8) lives_free(cache_buffer->buffer8); */
+	if (cache_buffer->buffer16) lives_free(cache_buffer->buffer16);
+	/* if (cache_buffer->buffer24) lives_free(cache_buffer->buffer24); */
+	/* if (cache_buffer->buffer32) lives_free(cache_buffer->buffer32); */
+	if (cache_buffer->bufferf) lives_free(cache_buffer->bufferf);
 
-        if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
+	if (cache_buffer->_filebuffer) lives_free(cache_buffer->_filebuffer);
       }
     }
 
@@ -4056,7 +4364,7 @@ void audio_cache_end(void) {
       cache_buffer = cache_bufferb;
       cache_bufferb = NULL;
       if (cache_buffer->_fd != -1 && (!cache_buffera || cache_buffer->_fd != cache_buffera->_fd))
-        lives_close_buffered(cache_buffer->_fd);
+	lives_close_buffered(cache_buffer->_fd);
       pthread_mutex_destroy(&cache_buffer->atomic_mutex);
       lives_free(cache_buffer);
     }
@@ -4110,7 +4418,7 @@ boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps
   if (flags & WEED_FILTER_AUDIO_RATES_MAY_VARY) rvary = TRUE;
   if (flags & WEED_FILTER_CHANNEL_LAYOUTS_MAY_VARY) lvary = TRUE;
 
-getaud1:
+ getaud1:
 
   channel = get_enabled_channel(inst, 0, FALSE);
   if (channel) {
@@ -4129,7 +4437,7 @@ getaud1:
       return FALSE;
     }
     if (weed_get_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, NULL) != nchans
-        && (cflags & WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE))
+	&& (cflags & WEED_CHANNEL_REINIT_ON_LAYOUT_CHANGE))
       mainw->agen_needs_reinit = TRUE;
     else weed_set_int_value(channel, WEED_LEAF_AUDIO_CHANNELS, nchans);
 
@@ -4145,7 +4453,7 @@ getaud1:
 
     if (weed_get_int_value(channel, WEED_LEAF_AUDIO_RATE, NULL) != arate) {
       if (cflags & WEED_CHANNEL_REINIT_ON_RATE_CHANGE) {
-        mainw->agen_needs_reinit = TRUE;
+	mainw->agen_needs_reinit = TRUE;
       }
     }
 
@@ -4167,12 +4475,12 @@ getaud1:
     // chain any data pipelines
     if (!filter_mutex_trylock(mainw->agen_key - 1)) {
       mainw->agen_needs_reinit =
-        pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key), is_audio_thread);
+	pconx_chain_data(mainw->agen_key - 1, rte_key_getmode(mainw->agen_key), is_audio_thread);
       filter_mutex_unlock(mainw->agen_key - 1);
       if (mainw->agen_needs_reinit) {
-        // allow main thread to complete the reinit so we do not delay; just return silence
-        weed_instance_unref(orig_inst);
-        return FALSE;
+	// allow main thread to complete the reinit so we do not delay; just return silence
+	weed_instance_unref(orig_inst);
+	return FALSE;
       }
     }
   }
@@ -4252,7 +4560,7 @@ boolean apply_rte_audio_init(void) {
   if (audio_pos > cfile->afilesize) {
     off64_t audio_end_pos = (double)((cfile->start - 1) * cfile->arate * cfile->achans * cfile->asampsize / 8) / cfile->fps;
     append_silence(audio_fd, NULL, audio_pos, audio_end_pos, cfile->asampsize, cfile->signed_endian & AFORM_UNSIGNED,
-                   cfile->signed_endian & AFORM_BIG_ENDIAN);
+		   cfile->signed_endian & AFORM_BIG_ENDIAN);
   } else lives_lseek_buffered_writer(audio_fd, audio_pos);
 
   aud_tc = 0;
@@ -4291,7 +4599,7 @@ boolean apply_rte_audio(int nsamples) {
   // read nsamples of audio from clip or generator
 
   if ((abigendian && capable->hw.byte_order == LIVES_LITTLE_ENDIAN) || (!abigendian &&
-      capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
+									capable->hw.byte_order == LIVES_BIG_ENDIAN)) rev_endian = TRUE;
 
   tbytes = nsamples * cfile->achans * cfile->asampsize / 8;
 
@@ -4333,7 +4641,7 @@ boolean apply_rte_audio(int nsamples) {
 
     if (cfile->asampsize == 8) {
       sample_move_d8_d16(shortbuf, in_buff, nsamples, tbytes,
-                         1.0, cfile->achans, cfile->achans, 0);
+			 1.0, cfile->achans, cfile->achans, 0);
     } else shortbuf = (int16_t *)in_buff;
 
     nsamples = tbytes / cfile->achans / (cfile->asampsize / 8);
@@ -4344,16 +4652,16 @@ boolean apply_rte_audio(int nsamples) {
       // convert s16 to non-interleaved float
       fltbuf[i] = (float *)lives_calloc(nsamples, sizeof(float));
       if (!fltbuf[i]) {
-        while (i--) lives_free(fltbuf[i]);
-        lives_free(fltbuf);
-        if (shortbuf != (int16_t *)in_buff) lives_free(shortbuf);
-        lives_free(in_buff);
-        return FALSE;
+	while (i--) lives_free(fltbuf[i]);
+	lives_free(fltbuf);
+	if (shortbuf != (int16_t *)in_buff) lives_free(shortbuf);
+	lives_free(in_buff);
+	return FALSE;
       }
       lives_memset(fltbuf[i], 0, nsamples * sizeof(float));
       if (nsamples > 0) sample_move_d16_float(fltbuf[i], shortbuf + i, nsamples, cfile->achans, \
-                                                (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
-                                                lives_vol_from_linear(cfile->vol));
+					      (cfile->signed_endian & AFORM_UNSIGNED), rev_endian,
+					      lives_vol_from_linear(cfile->vol));
     }
   } else {
     // read from plugin. This should already be float.
@@ -4381,7 +4689,7 @@ boolean apply_rte_audio(int nsamples) {
 
     if (!fltbufni) {
       for (i = 0; i < cfile->achans; i++) {
-        lives_free(fltbuf[i]);
+	lives_free(fltbuf[i]);
       }
     } else lives_free(fltbufni);
 
@@ -4395,7 +4703,7 @@ boolean apply_rte_audio(int nsamples) {
 
   // convert float audio back to int
   sample_move_float_int(in_buff, fltbuf, onsamples, 1.0, cfile->achans, cfile->asampsize, (cfile->signed_endian & AFORM_UNSIGNED),
-                        !(cfile->signed_endian & AFORM_BIG_ENDIAN), FALSE, 1.0);
+			!(cfile->signed_endian & AFORM_BIG_ENDIAN), FALSE, 1.0);
 
   if (!fltbufni) {
     for (i = 0; i < cfile->achans; i++) {
@@ -4429,7 +4737,7 @@ boolean apply_rte_audio(int nsamples) {
 // read from arena, and possibly resample rate / chans / sampsize / inter
 // we utilise the fact that layers and channels are interchangeable
 int push_adata(weed_layer_t *alayer, int offset, int nsamples, int sampsize, int trate,
-               int tsamps, int tchans, int tinter) {
+	       int tsamps, int tchans, int tinter) {
   int olen = nsamples, xoffset = offset, nchans;
   boolean need_resamp = FALSE;
   void **tmp, **dst, **src;
@@ -4447,7 +4755,7 @@ int push_adata(weed_layer_t *alayer, int offset, int nsamples, int sampsize, int
 
     // nsamples exact, olen is max
     olen = get_swr_fmts(&swr_ctx, sampsize, abuf->arate, 2, FALSE, &nsamples,
-                        tsamps, trate, tchans, FALSE, &outfmt, &infmt, TRUE);
+			tsamps, trate, tchans, FALSE, &outfmt, &infmt, TRUE);
 #else
     double scale = (double)trate / (double)abuf->arate;
     olen = (size_t)(fabs(((double)nsamples * scale)) + .49999);
@@ -4470,8 +4778,8 @@ int push_adata(weed_layer_t *alayer, int offset, int nsamples, int sampsize, int
   else {
     for (int i = 0; i < nchans; i++) {
       if (dst[i] && !((char *)dst[i] - (char *)src[i] <= ABUF_ARENA_SIZE)) {
-        lives_free(dst[i]);
-        dst[i] = NULL;
+	lives_free(dst[i]);
+	dst[i] = NULL;
       }
     }
   }
@@ -4600,12 +4908,12 @@ lives_result_t pull_audio_for_channel(weed_plant_t *filter, weed_channel_t *acha
     if (!has_audio_chans_out(filter, FALSE)) {
       int maxlen = weed_chantmpl_get_max_audio_length(ctmpl);
       if (maxlen > 0) {
-        if (abuf->in_interleaf) maxlen *= abuf->in_achans;
-        if (maxlen < samps) {
-          offset += samps - maxlen;
-          if (offset >= (ABUF_ARENA_SIZE >> 2)) offset -= (ABUF_ARENA_SIZE >> 2);
-          samps = maxlen;
-        }
+	if (abuf->in_interleaf) maxlen *= abuf->in_achans;
+	if (maxlen < samps) {
+	  offset += samps - maxlen;
+	  if (offset >= (ABUF_ARENA_SIZE >> 2)) offset -= (ABUF_ARENA_SIZE >> 2);
+	  samps = maxlen;
+	}
       }
     }
 
@@ -4694,7 +5002,7 @@ boolean start_audio_stream(void) {
 
   astreamer = lives_build_filename(prefs->lib_dir, PLUGIN_EXEC_DIR, PLUGIN_AUDIO_STREAM, playername, NULL);
   com = lives_strdup_printf("%s play %lu \"%s\" \"%s\" %d", astreamer, mainw->vpp->audio_codec, astream_name, astream_name_out,
-                            arate);
+			    arate);
   lives_free(astreamer);
 
   astream_pid = lives_fork(com);
@@ -4725,13 +5033,6 @@ boolean start_audio_stream(void) {
   lives_free(astream_name_out);
 
   return TRUE;
-}
-
-
-void lives_aplayer_prepare(int clip) {
-  // start up our audio player
-  IF_APLAYER_JACK(jack_aud_pb_ready(mainw->jackd, clip););
-  IF_APLAYER_PULSE(pulse_aud_pb_ready(mainw->pulsed, clip););
 }
 
 
@@ -4800,14 +5101,14 @@ LIVES_GLOBAL_INLINE void audio_stream(void *buff, size_t nbytes, int fd) {
 
 LIVES_GLOBAL_INLINE lives_cancel_t handle_audio_timeout(void) {
   char *msg2 = (prefs->audio_player == AUD_PLAYER_PULSE) ? lives_strdup(
-                 _("\nClick Retry to attempt to restart the audio server.\n")) :
-               lives_strdup("");
+									_("\nClick Retry to attempt to restart the audio server.\n")) :
+    lives_strdup("");
 
   char *msg = lives_strdup_printf(
-                _("LiVES was unable to connect to %s.\nPlease check your audio settings and restart %s\n"
-                  "and LiVES if necessary.\n%s"),
-                audio_player_get_display_name(prefs->aplayer),
-                audio_player_get_display_name(prefs->aplayer), msg2);
+				  _("LiVES was unable to connect to %s.\nPlease check your audio settings and restart %s\n"
+				    "and LiVES if necessary.\n%s"),
+				  audio_player_get_display_name(prefs->aplayer),
+				  audio_player_get_display_name(prefs->aplayer), msg2);
   if (prefs->audio_player == AUD_PLAYER_PULSE) {
 #ifdef HAVE_PULSE_AUDIO
     int retval = do_abort_retry_cancel_dialog(msg);
@@ -4861,24 +5162,42 @@ LIVES_GLOBAL_INLINE weed_error_t lives_aplayer_get_seek_velocity(lives_obj_t *ap
   return weed_get_double_value(aplayer, LIVES_LEAF_SEEK_VEL, NULL);
 }
 
-LIVES_GLOBAL_INLINE weed_error_t lives_aplayer_set_limit_behavior(lives_obj_t *aplayer,
-    limit_behaviour_t low,
-    limit_behaviour_t high) {
-  int vals[2];
+
+
+limit_behaviour_t lives_aplayer_get_limit_behaviour_high(lives_obj_instance_t *aplayer) {
+    limit_behaviour_t *vals = (limit_behaviour_t *)lives_obj_instance_get_int_array(aplayer, ATTR_AUDIO_LIMIT_ACT, NULL);
+  limit_behaviour_t high = vals[1];
+  lives_free(vals);
+  return high;
+}
+
+
+limit_behaviour_t lives_aplayer_get_limit_behaviour_low(lives_obj_instance_t *aplayer) {
+  limit_behaviour_t *vals = (limit_behaviour_t *)lives_obj_instance_get_int_array(aplayer, ATTR_AUDIO_LIMIT_ACT, NULL);
+  limit_behaviour_t low = vals[0];
+  lives_free(vals);
+  return low;
+}
+
+
+LIVES_GLOBAL_INLINE weed_error_t lives_aplayer_set_limit_behaviour(lives_obj_instance_t *aplayer,
+								  limit_behaviour_t low,
+								  limit_behaviour_t high) {
+  limit_behaviour_t vals[2];
   vals[0] = low;
   vals[1] = high;
-  return lives_obj_instance_set_attr_array(aplayer, ATTR_AUDIO_LIMIT_ACT, 2, &vals);
+  return lives_obj_instance_set_attr_array(aplayer, ATTR_AUDIO_LIMIT_ACT, 2, (int *)&vals);
 }
 
 
 void lives_aplayer_update_loop_mode(lives_obj_t *aplayer) {
   if (mainw->whentostop != STOP_ON_AUD_END && !mainw->preview) {
     if (mainw->ping_pong && prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS && !mainw->multitrack
-        && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
-            || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
-      lives_aplayer_set_limit_behavior(aplayer, limit_bounce, limit_bounce);
-    else lives_aplayer_set_limit_behavior(aplayer, limit_rollover, limit_rollover);
-  } else lives_aplayer_set_limit_behavior(aplayer, limit_stop, limit_stop);
+	&& (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
+	    || ((prefs->audio_opts & AUDIO_OPTS_LOCKED_PING_PONG))))
+      lives_aplayer_set_limit_behaviour(aplayer, limit_bounce, limit_bounce);
+    else lives_aplayer_set_limit_behaviour(aplayer, limit_rollover, limit_rollover);
+  } else lives_aplayer_set_limit_behaviour(aplayer, limit_stop, limit_stop);
 }
 
 
@@ -4889,21 +5208,16 @@ LIVES_GLOBAL_INLINE int *lives_aplayer_get_limit_behaviour(lives_obj_t *aplayer)
 
 
 void lives_aplayer_set_seek_vals(lives_obj_t *aplayer, int clip, double xtime,
-                                 lives_direction_t dir, double vel) {
-  pthread_mutex_t *aplayer_seek_mutex =
-    (pthread_mutex_t *)weed_get_voidptr_value(aplayer, "seekmutex", NULL);
-  pthread_mutex_lock(aplayer_seek_mutex);
+				 lives_direction_t dir, double vel) {
+  // call with aplayer_seek_mutex locked
   lives_aplayer_set_seek_clip(aplayer, clip);
   lives_aplayer_set_seek_time(aplayer, xtime);
   lives_aplayer_set_seek_direction(aplayer, dir);
   lives_aplayer_set_seek_velocity(aplayer, vel);
-  pthread_mutex_unlock(aplayer_seek_mutex);
 }
 
 
 LIVES_GLOBAL_INLINE weed_error_t lives_aplayer_set_seek_state(lives_obj_t *aplayer, seek_phase state) {
-  seek_phase old = lives_aplayer_get_seek_state(aplayer);
-  if (state == seek_active && old !=  not_seeking) return WEED_SUCCESS;
   return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_SEEK_STATE, (int)state);
 }
 
@@ -4984,7 +5298,7 @@ int64_t lives_aplayer_get_tot_samps(lives_obj_t *aplayer) {
 
 weed_error_t lives_aplayer_add_nsamps(lives_obj_t *aplayer, int64_t nsamps) {
   return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_SMPS_PROCESSED,
-                                         lives_aplayer_get_tot_samps(aplayer) + nsamps);
+					 lives_aplayer_get_tot_samps(aplayer) + nsamps);
 }
 
 weed_error_t lives_aplayer_reset_nsamps(lives_obj_t *aplayer) {
@@ -5037,8 +5351,8 @@ LIVES_GLOBAL_INLINE weed_error_t lives_aplayer_set_status(lives_obj_t *aplayer, 
 LIVES_GLOBAL_INLINE weed_error_t lives_aplayer_set_active_status(lives_obj_t *aplayer, uint64_t astatus) {
   uint64_t status = lives_aplayer_get_status(aplayer);
   return lives_obj_instance_set_attr_val(aplayer, ATTR_AUDIO_STATUS,
-                                         (status & ~APLAYER_ASTATUS_MASK)
-                                         | (astatus & APLAYER_ASTATUS_MASK));
+					 (status & ~APLAYER_ASTATUS_MASK)
+					 | (astatus & APLAYER_ASTATUS_MASK));
 }
 
 LIVES_GLOBAL_INLINE boolean lives_aplayer_get_signed(lives_obj_t *aplayer) {
@@ -5099,10 +5413,10 @@ LIVES_GLOBAL_INLINE lives_result_t lives_aplayer_set_data(lives_obj_t *aplayer, 
     } else {
       int nchans = lives_aplayer_get_achans(aplayer);
       if (nchans > 0) {
-        if (lives_obj_instance_set_attr_array(aplayer, ATTR_AUDIO_DATA,
-                                              nchans, data) == WEED_SUCCESS)
-          return LIVES_RESULT_SUCCESS;
-        return LIVES_RESULT_ERROR;
+	if (lives_obj_instance_set_attr_array(aplayer, ATTR_AUDIO_DATA,
+					      nchans, data) == WEED_SUCCESS)
+	  return LIVES_RESULT_SUCCESS;
+	return LIVES_RESULT_ERROR;
       }
       return LIVES_RESULT_FAILED;
     }
@@ -5130,22 +5444,6 @@ void show_aplayer_attribs(LiVESWidget * w, void **player) {
   }
   if (title) lives_free(title);
 }
-
-
-lives_result_t await_audio_queue(uint64_t nsec) {
-  lives_sys_alarm_set_timeout(audio_msgq_timeout, nsec);
-
-  IF_APLAYER_JACK
-  (lives_microsleep_while_true(jack_get_msgq(mainw->jackd) && !lives_sys_alarm_triggered(audio_msgq_timeout));
-   if (lives_sys_alarm_disarm(audio_msgq_timeout, TRUE) && jack_get_msgq(mainw->jackd)) return LIVES_RESULT_FAIL;)
-
-    IF_APLAYER_PULSE
-    (lives_microsleep_while_true(pulse_get_msgq(mainw->pulsed) && !lives_sys_alarm_triggered(audio_msgq_timeout));
-     if (lives_sys_alarm_disarm(audio_msgq_timeout, TRUE) && pulse_get_msgq(mainw->pulsed)) return LIVES_RESULT_FAIL;)
-
-      return LIVES_RESULT_SUCCESS;
-}
-
 
 
 // fill_layer()

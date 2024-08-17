@@ -1,3 +1,4 @@
+
 // projectM.cpp
 // weed plugin
 // (c) G. Finch (salsaman) 2014 - 2020
@@ -38,6 +39,7 @@ static int package_version = 2; // version of this package
 #define NEED_AUDIO
 #define NEED_PALETTE_UTILS
 #define NEED_RANDOM
+#define NEED_MD5
 
 #include <weed/weed-plugin-utils.h>
 
@@ -145,8 +147,8 @@ typedef struct {
   bool bad_prog, checkforblanks;
   pthread_mutex_t mutex, pcm_mutex;
   pthread_t thread;
-  size_t audio_frames, abufsize, audio_offs;
-  int achans;
+  int64_t audio_offs;
+  int abufsize, achans, audio_frames;
   float *audio;
   float fps, tfps;
   float ncycs;
@@ -168,6 +170,8 @@ typedef struct {
   weed_timecode_t timestamp;
   volatile bool silent;
   bool screen_inited;
+  uint64_t md5sum;
+  int samcnt;
 } _sdata;
 
 static bool resize_buffer(_sdata *sd);
@@ -458,10 +462,10 @@ static int render_frame(_sdata *sd) {
 #define NORM_AUDIO
 
   if (sd->needs_more || sd->audio_frames > sd->audio_offs) {
-    size_t audlen = MAX_AUDLEN;
+    ssize_t audlen = MAX_AUDLEN;
 #ifdef NORM_AUDIO
     float maxvol = 0., myvol;
-    size_t i;
+    ssize_t i;
 #endif
     pthread_mutex_lock(&sd->pcm_mutex);
     if (sd->audio_frames - sd->audio_offs < audlen)
@@ -494,8 +498,9 @@ static int render_frame(_sdata *sd) {
   sd->globalPM->renderFrame();
   XUnlockDisplay(dpy);
   pcount++;
-
+  
   if ((sd->needs_more && checked_audio) || (sd->pidx == -1 && sd->checkforblanks)) {
+    uint64_t md5sum;
     GLubyte *fbuffer;
 
     glMatrixMode(GL_PROJECTION);
@@ -535,6 +540,7 @@ static int render_frame(_sdata *sd) {
     SDL_GL_SwapBuffers();
 #endif
 #endif
+
     if (sd->fbuffer == sd->fbufferA)
       fbuffer = sd->fbufferB;
     else
@@ -547,7 +553,23 @@ static int render_frame(_sdata *sd) {
 #define PCOUNT_LIM (1000 * BLANK_LIM)
 #define ALPHA_MASK 0XF8F8F800F8F8F800
 
-    if (sd->pidx == -1 && sd->checkforblanks) {
+#define SAME_LIM 8
+
+    if (sd->pidx == -1) {
+      md5sum = calc_md5(fbuffer, sd->fbuffer_size);
+      if (md5sum == sd->md5sum) {
+	sd->samcnt++;
+	if (sd->samcnt > SAME_LIM) {
+	  sd->bad_prog = true;
+	}
+      }
+      else {
+	sd->md5sum = md5sum;
+	sd->samcnt = 0;
+      }
+    }
+
+    if (sd->checkforblanks) {
       /// check for blank frames: if the first BLANK_LIM frames from a new program are all blank, mark the program as "bad"
       /// and pick another (not sure why the blank frames happen, but generally if the first two come back blank, so do all the
       /// rest. Possibly we need an image texture to load, which we don't have; more investigation needed).
@@ -1201,7 +1223,7 @@ static weed_error_t projectM_process(weed_plant_t *inst, weed_timecode_t timesta
     //fprintf(stderr, "got audsize, %d\n", adlen);
     pthread_mutex_lock(&sd->pcm_mutex);
     if (adlen > 0 && adata && adata[0]) {
-      if (!sd->audio || ((size_t)adlen > sd->abufsize)) {
+      if (!sd->audio || adlen > sd->abufsize) {
         sd->audio = (float *)weed_realloc(sd->audio, adlen * sizeof(float));
         if (!sd->audio) {
 	  sd->abufsize = 0;
@@ -1305,7 +1327,8 @@ WEED_SETUP_START(200, 200) {
   weed_plant_t *in_chantmpls[] = {weed_audio_channel_template_init("In audio", WEED_CHANNEL_OPTIONAL), NULL};
   weed_plant_t *out_chantmpls[] = {weed_channel_template_init("out channel 0", 0), NULL};
 
-  int flags = WEED_FILTER_PREF_LINEAR_GAMMA;
+  //int flags = WEED_FILTER_PREF_LINEAR_GAMMA;
+  int flags = 0;
 
   weed_plant_t *filter_class = weed_filter_class_init("projectM", "salsaman/projectM authors", 1, flags, palette_list,
                                projectM_init, projectM_process, projectM_deinit,

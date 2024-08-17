@@ -140,35 +140,52 @@ lives_result_t video_sync_ready(void) {
   (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->jackd->is_paused)) {
   mainw->video_seek_beacon = -1;
-  return LIVES_RESULT_FAIL;
-})
+  return LIVES_RESULT_FAIL;})
 
   IF_APLAYER_PULSE
   (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->pulsed->is_paused)) {
   mainw->video_seek_beacon = -1;
   mainw->avsync_time = 0.;
-  return LIVES_RESULT_FAIL;
-})
+  return LIVES_RESULT_FAIL;})
+
+    pthread_mutex_t *aplayer_seek_mutex =
+    (pthread_mutex_t *)weed_get_voidptr_value(aplayer, "seekmutex", NULL);
+
+  pthread_mutex_lock(aplayer_seek_mutex);
 
   if (lives_aplayer_get_seek_state(aplayer) == not_seeking) {
+    pthread_mutex_unlock(aplayer_seek_mutex);
     mainw->video_seek_beacon = 0;
     mainw->avsync_time = 0.;
     return LIVES_RESULT_FAIL;
   }
 
-  if (lives_aplayer_get_seek_state(aplayer) == seek_active ||
-      (mainw->video_seek_beacon && lives_aplayer_get_seek_state(aplayer) == seek_needstarget)) {
-    xtime = (lives_get_session_time() - mainw->avsync_time);
-    if (xtime > AV_SYNC_LIMIT) {
-      mainw->sync_err = xtime;
-      return LIVES_RESULT_TIMEDOUT;
+  if (lives_aplayer_get_seek_state(aplayer) == seek_approximate) {
+    pthread_mutex_unlock(aplayer_seek_mutex);
+
+    pthread_mutex_lock(&mainw->avseek_mutex);
+
+    mainw->mark_time = TRUE;
+    lives_proc_thread_sync_with(mainw->aplayer, SYNCIDX_AVSYNC, MM_IGNORE);
+    mainw->video_seek_beacon = 0;
+    pthread_mutex_unlock(&mainw->avseek_mutex);
+    while (1) {
+      int ss = lives_aplayer_get_seek_state(mainw->aplayer);
+      if (ss == not_seeking) break;
+      lives_microsleep;
     }
+    mainw->mark_time = FALSE;
+    return LIVES_RESULT_SUCCESS;
   }
 
-  if (lives_aplayer_get_seek_state(aplayer) == seek_approximate)
-    return LIVES_RESULT_SUCCESS;
+  pthread_mutex_unlock(aplayer_seek_mutex);
 
+  xtime = (lives_get_session_time() - mainw->avsync_time);
+  if (xtime > AV_SYNC_LIMIT) {
+    mainw->sync_err = xtime;
+    return LIVES_RESULT_TIMEDOUT;
+  }
   return LIVES_RESULT_FAIL;
 }
 
@@ -306,10 +323,10 @@ boolean record_setup(ticks_t actual_ticks) {
       add_filter_init_events(mainw->event_list, actual_ticks);
     }
 
-    if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) {
-      mainw->cancelled = handle_audio_timeout();
-      if (mainw->cancelled != CANCEL_NONE) return FALSE;
-    }
+    /* if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) { */
+    /*   mainw->cancelled = handle_audio_timeout(); */
+    /*   if (mainw->cancelled != CANCEL_NONE) return FALSE; */
+    /* } */
     mainw->record = TRUE;
     mainw->record_paused = FALSE;
   }
@@ -651,7 +668,7 @@ static lives_result_t prepare_frames(frames_t frame) {
           // check first if got handed an external layer to play
           // if so, just copy it (deep) to mainw->frame_layer
 
-          int dir = sig(sfile->pb_fps);
+          lives_direction_t  dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
           frames_t delta_a = 0, delta_l = 0, delta_r = 0, delta_c = 0;
 
           if (mainw->ext_layer) {
@@ -1183,9 +1200,13 @@ frames_t load_frame_image(frames_t frame) {
     }
 
     if (prefs->audio_src == AUDIO_SRC_INT && mainw->aplayer) {
-      // if audi is trying to resync set the target beacon
+      // if audio is trying to resync set the target beacon
+      pthread_mutex_t *aplayer_seek_mutex =
+	(pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
+      //pthread_mutex_lock(aplayer_seek_mutex);
       if (lives_aplayer_get_seek_state(mainw->aplayer) != not_seeking)
         mainw->video_seek_beacon = frame;
+      //pthread_mutex_unlock(aplayer_seek_mutex);
     }
 
     /* in render frame, we would have set all frames to either prepared or loaded */
@@ -1305,24 +1326,14 @@ frames_t load_frame_image(frames_t frame) {
     }
 
     if (prefs->audio_src == AUDIO_SRC_INT && mainw->aplayer) {
-      // if audi is trying to resync set the target beacon
+      // if audio is trying to resync set the target beacon
+      /* pthread_mutex_t *aplayer_seek_mutex = */
+      /* 	(pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL); */
+      /* pthread_mutex_lock(aplayer_seek_mutex); */
       seek_phase skstate = lives_aplayer_get_seek_state(mainw->aplayer);
-
-
+      //pthread_mutex_unlock(aplayer_seek_mutex);
       if (skstate != not_seeking) mainw->video_seek_beacon = frame;
-      if (skstate == seek_approximate) {
-        pthread_mutex_lock(&mainw->avseek_mutex);
-        mainw->mark_time = TRUE;
-        lives_proc_thread_sync_with(mainw->aplayer, SYNCIDX_AVSYNC, MM_IGNORE);
-        mainw->video_seek_beacon = 0;
-        pthread_mutex_unlock(&mainw->avseek_mutex);
-        while (1) {
-          int ss = lives_aplayer_get_seek_state(mainw->aplayer);
-          if (ss == not_seeking) break;
-          lives_microsleep;
-        }
-        mainw->mark_time = FALSE;
-      }
+      if (skstate == seek_approximate) video_sync_ready();
     }
 
     if (mainw->ext_playback) {
@@ -1639,7 +1650,7 @@ lfi_done:
   // this is reset when we call avsync_force()
   // the audio will have seeked to this frame and then be holding (outputting silence)
   // the audio player will signal when it reaches that point by setting audio_seek_ready to TRUE
-  // once we set video_seek_beacon to TRUE, the audio can continue
+  // once we set video_seek_beacoyn to TRUE, the audio can continue
   // the timer will be advancing during this, so we discount the time spent waiting for audio_seek_ready
   //if (!mainw->video_seek_beacon) video_sync_ready();
 
@@ -1777,7 +1788,7 @@ frames_t clamp_frame(int clipno, frames_t nframe) {
       // playing in reverse, F = -5700, -> 5700 - 1000 == -6700 -> nloops == -6, rem -700 -> nloops == -7, rem 300
       //    since 7 is odd, we change to fwd, thus 1000 + 300 = frame 1300
 
-      ndir = dir = LIVES_DIRECTION_PAR(fps >= 0.);
+      ndir = dir = LIVES_DIRECTION_SIG(fps);
 
       if (dir == LIVES_DIRECTION_FORWARD && nframe < first_frame) {
         // if FWD and before lower bound, just jump to lower bound
@@ -1999,7 +2010,7 @@ frames_t reachable_frame(int clipno, lives_decoder_t *dplug, frames_t stframe, f
   // calculate variance as (time for playhead to reach frame) - (time for player to reach it)
   // this is delta (frame - base) / fps - est_time_from_last_frame_decoded
   // ideally we want this to be positive. We also want to arrive with time to spare, this is done by adding to
-  // (or subtracting from) base (depending on dir(fps)) [sign of delta and fp should always produce a =ve value,
+  // (or subtracting from) base (depending on dir(fps)) [sing of delta and fp should always produce a =ve value,
   // so we skip over any -ve delta / fps)
   // if we find such a value going from stframe (up or down) to enframe, we return it
   // if there are no suitable targets we return the frame with the smallest abs(variance)
@@ -2352,7 +2363,7 @@ player_loop:
   //     this can include player frame updates, timeline cursor.
   //     as well as switching to / from sepwin / fullscreen
   //    - apply cached fx toggles
-  //  - check if any chabges require a rebuild of the nodemodel
+  //  - check if any changes require a rebuild of the nodemodel
   //  - return if playback was stopped for any reason
 
   //pthread_yield();
@@ -2675,23 +2686,6 @@ close_clip:
 
   if (mainw->refresh_model) rebuild_nodemodel();
 
-  /* if (!mainw->refresh_model) { */
-  /*   if (mainw->plan_cycle) { */
-  /*     if (mainw->plan_cycle->state == PLAN_STATE_DISCARD */
-  /*         || mainw->plan_cycle->state == PLAN_STATE_ERROR */
-  /*         || mainw->plan_cycle->state == PLAN_STATE_CANCELLED) { */
-  /*       //g_print("pl state is %lu\n", mainw->plan_cycle->state); */
-  /*       if (mainw->plan_runner_proc) { */
-  /*         lives_proc_thread_request_cancel(mainw->plan_runner_proc, FALSE); */
-  /*         lives_proc_thread_join(mainw->plan_runner_proc); */
-  /*         mainw->plan_runner_proc = NULL; */
-  /*       } */
-  /*       exec_plan_free(mainw->plan_cycle); */
-  /*       mainw->plan_cycle = NULL; */
-  /*     } */
-  /*   } */
-  /* } */
-
   // time is obtained as follows:
   // -  if there is an external transport or clock active, we take our time from that
   // -  else if we have a fixed output framerate (e.g. we are streaming) we take our time from
@@ -2873,50 +2867,88 @@ close_clip:
   if (mainw->frame_layer_preload && mainw->pred_clip != mainw->playing_file)
     weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);
 
-  if (sfile->next_frame > 0) {
-    fixed_frame = sfile->next_frame;
-    sfile->next_frame = 0;
-    mainw->force_show = TRUE;
-    mainw->scratch = SCRATCH_JUMP;
-    /* }   */
+  // handle jumps and trickplay first, as this may force the next frame
 
-    /* if (fixed_frame > 0) { */
-    // next_frame can be set, eg. when jumping to a bookmark
-    // we MUST show that frame
-    sfile->frameno =
-      sfile->last_req_frame = requested_frame = fixed_frame = sfile->next_frame;
+  if (sfile->next_frame > 0) {
+    // external (to the player) controllers can force the next frame by
+    // setting next_frame to a value > 0
+    // this has the following results:-
+    // next frame to be played is set, force show is set
+    // next_frame is reset
+    // mainw->scratch is set to SCRATCH_JUMP - this disarms any accounting based on
+    // continuous flux, e.g any preload frame will be flagged as invalid, frame drop counter will be suspended
+    // effort estimation will be bypassed, instant fps counter will be reset, CPU load threshold
+    // will be ignored
+    // if audio is set to resync on video jump that will also be triggered
+
+    // first ensure that audio is not seeking towards old position
+    mainw->video_seek_beacon = -1;
+    
+    sfile->frameno = sfile->last_req_frame = requested_frame
+      = fixed_frame = sfile->next_frame;
+    sfile->next_frame = 0;
+    mainw->force_show = TRUE; 
+    mainw->startticks = mainw->currticks;
+    mainw->scratch = SCRATCH_JUMP;
   }
+
+  if (mainw->scratch == SCRATCH_NONE) {  
+    if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
+      // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
+      // this is to avoid the keyboard repeat delay so we get smooth trickplay
+      if (last_kbd_ticks > 0) handle_cached_keys();
+      last_kbd_ticks = mainw->currticks;
+    }
+
+    //trickplay section
+    // here we deal witha adjustments to frame
+    // or to pb_fps, this is done by adjusting sfile->fps_scale, a muliplier
+    // for appling a tempotary impulse to sfile->pb_fps
+
+    if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
+	|| mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
+      sfile->fps_scale = KEY_RPT_INTERVAL * prefs->scratchback_amount
+	* USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
+      if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
+	sfile->fps_scale = -sfile->fps_scale;
+      }
+      if (mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA)
+	sfile->fps_scale *= 4.;
+
+      if (!clip_can_reverse(mainw->playing_file) && sfile->fps_scale < 0.)
+	sfile->fps_scale = 1. / abs(sfile->fps_scale);
+
+      if (AUD_SRC_EXTERNAL) sfile->last_req_frame = sfile->last_frameno;
+
+      mainw->scratch = SCRATCH_JUMP;
+    }
+  } else sfile->fps_scale = 1.;
 
   // if we have a preload frame, we can keep it iff it is in range of forced frame
   // otherwise, invalidate it
   if (fixed_frame > 0) {
     if (mainw->frame_layer_preload) {
+      delta = dir * (mainw->pred_frame - fixed_frame);
       if (delta < 0 || delta > MAX_JMP_THRESH)
         weed_layer_set_invalid(mainw->frame_layer_preload, TRUE);;
     }
   }
 
   if (mainw->scratch == SCRATCH_JUMP) {
-    avsync_force(mainw->pulsed->inst);
+    if (!(prefs->audio_opts & (AUDIO_OPTS_IS_LOCKED
+			       | AUDIO_OPTS_NO_RESYNC_VPOS)))
+      avsync_force(mainw->aplayer);
     mainw->scratch = SCRATCH_JUMP_NORESYNC;
+    drop_off = TRUE;
   }
 
-  if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
-    // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
-    // this is to avoid the keyboard repeat delay (dammit !) so we get smooth trickplay
-    // BUT we need a timer sufficiently large so it isn't triggered on every loop, to produce a constant repeat rate
-    // but not so large so it doesn't get triggered enough
-    if (last_kbd_ticks > 0) handle_cached_keys();
-    last_kbd_ticks = mainw->currticks;
-  }
-
-  if (mainw->scratch != SCRATCH_NONE && time_source == LIVES_TIME_SOURCE_EXTERNAL) {
-    sfile->frameno = sfile->last_frameno = calc_frame_from_time(mainw->playing_file,
-                                           mainw->currticks / TICKS_PER_SECOND_DBL);
-    mainw->startticks = mainw->currticks;
-    mainw->force_show = TRUE;
-    fixed_frame = sfile->frameno;
-  }
+  /* if (mainw->scratch != SCRATCH_NONE && time_source == LIVES_TIME_SOURCE_EXTERNAL) { */
+  /*   sfile->frameno = sfile->last_frameno = calc_frame_from_time(mainw->playing_file, */
+  /*                                          mainw->currticks / TICKS_PER_SECOND_DBL); */
+  /*   mainw->startticks = mainw->currticks; */
+  /*   mainw->force_show = TRUE; */
+  /*   fixed_frame = sfile->frameno; */
+  /* } */
 
   new_ticks = mainw->currticks;
 
@@ -2928,8 +2960,10 @@ close_clip:
   show_frame = FALSE;
   scratch = SCRATCH_NONE;
 
-  if (sfile->pb_fps != 0.) {
-    dir = LIVES_DIRECTION_SIG(sfile->pb_fps);
+  if (sfile->pb_fps * sfile->fps_scale != 0.) {
+    dir = LIVES_DIRECTION_SIG(sfile->pb_fps * sfile->fps_scale);
+    // TODO - move delivery and target_fps into clip_srcs
+
     if (sfile->delivery == LIVES_DELIVERY_PUSH) {
       if (mainw->force_show) {
         show_frame = TRUE;
@@ -2950,7 +2984,8 @@ close_clip:
       // then either jump ahead again or wait for the timecode to catch up
       // the exception to this is if the requested frame is out of range - then we may adjust it to within bounds,
 
-      // clips can set a target_fps, which is the
+      // clips can set a target_fps, for example a generator
+      // or webcam (
 
       if (sfile->delivery == LIVES_DELIVERY_PUSH ||
           sfile->delivery == LIVES_DELIVERY_PUSH_PULL) {
@@ -2977,42 +3012,17 @@ close_clip:
 #ifdef ENABLE_PRECACHE
       can_precache = FALSE;
 #endif
-
       /////////////////////////////////////
-
-      //trickplay section
-      // here we deal witha adjustments to frame
-      // or to pb_fps
-
-      if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
-          || mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
-        sfile->fps_scale = KEY_RPT_INTERVAL * prefs->scratchback_amount
-                           * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
-        if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
-          sfile->fps_scale = -sfile->fps_scale;
-        }
-        if (mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA)
-          sfile->fps_scale *= 4.;
-
-        if (!clip_can_reverse(mainw->playing_file) && sfile->fps_scale < 0.)
-          sfile->fps_scale = 1. / abs(sfile->fps_scale);
-
-        if (AUD_SRC_EXTERNAL) sfile->last_req_frame = sfile->last_frameno;
-
-        drop_off = TRUE;
-
-        if ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED))
-          mainw->scratch = SCRATCH_JUMP_NORESYNC;
-        else mainw->scratch = SCRATCH_JUMP;
-      } else sfile->fps_scale = 1.;
 
       // paused
       if (LIVES_UNLIKELY(sfile->play_paused)) {
         mainw->startticks = mainw->currticks;
         lives_obj_instance_t *aplayer = get_aplayer_instance(prefs->audio_src);
-        if (lives_aplayer_get_seek_state(aplayer) != not_seeking) video_sync_ready();
+        if (lives_aplayer_get_seek_state(aplayer) != not_seeking) mainw->video_seek_beacon = -1;
       }
 
+      //////////////////////////////////////
+      
       if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
         /// get frame position at current time
         //#define DEBUG_FRAME_TIMING
@@ -3028,17 +3038,18 @@ close_clip:
         lives_printerr("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead);
 #endif
 
-        // deal with jumps and resyncs
-
-        if (mainw->scratch == SCRATCH_JUMP) avsync_force(mainw->aplayer);
-
-        if (mainw->scratch == SCRATCH_JUMP || mainw->scratch == SCRATCH_JUMP_NORESYNC) {
-          fixed_frame = requested_frame;
-        }
+	///////////////////////////////////
 
         /// check if we got a new frame, otherwise we can increment spare_cycles
-
+	if (fixed_frame > 0) {
+	  // we can handle fixed_frame in one of 2 ways - show immediate, show as next frame
+	  requested_frame = xrequested_frame = fixed_frame;
+	  show_frame = TRUE;
+	}
         if (new_ticks != mainw->startticks) {
+	  if (fixed_frame > 0) {
+	    requested_frame = xrequested_frame = fixed_frame;
+	  }
           last_spare_cycles = spare_cycles;
           spare_cycles = 0;
           if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
@@ -3577,13 +3588,13 @@ update_effort:
                                                 mainw->files[mainw->ascrap_file]->asampsize >> 3);
                     mainw->rec_avel = 1.;
                   } else {
-                    if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) {
-                      mainw->cancelled = handle_audio_timeout();
-                      if (mainw->cancelled != CANCEL_NONE) {
-                        retval = ONE_MILLION + mainw->cancelled;
-                        goto err_end;
-                      }
-                    }
+                    /* if (!await_audio_queue(LIVES_SHORT_TIMEOUT)) { */
+                    /*   mainw->cancelled = handle_audio_timeout(); */
+                    /*   if (mainw->cancelled != CANCEL_NONE) { */
+                    /*     retval = ONE_MILLION + mainw->cancelled; */
+                    /*     goto err_end; */
+                    /*   } */
+                    /* } */
                     IF_APLAYER_JACK(jack_get_rec_avals(mainw->jackd);)
                     IF_APLAYER_PULSE(pulse_get_rec_avals(mainw->pulsed);)
                   }
@@ -3779,21 +3790,12 @@ update_effort:
               }
 	      // *INDENT-OFF*
 	    }}}}}
+    // *INDENT-ON*
 #ifdef SHOW_CACHE_PREDICTIONS
       //g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif
 
 #endif
-
-    // *INDENT-ON*
-    if (mainw->video_seek_beacon) {
-      if (new_ticks > mainw->startticks) {
-        mainw->last_startticks = mainw->startticks;
-        mainw->startticks = new_ticks;
-        g_print("pt ppppppppppppa1\n");
-	    // *INDENT-OFF*
-      }}
-    // *INDENT-ON*
   }
 
   // for PUSH delivery, either we go to update_effort oy to skip_load
@@ -3885,7 +3887,7 @@ boolean begin_playback(void) {
     if (!record_setup(lives_get_current_playback_ticks(NULL))) return FALSE;
   }
 
-  if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_beacon = 0;
+  if (mainw->event_list || !CLIP_HAS_VIDEO(mainw->playing_file)) mainw->video_seek_beacon = -1;
   if (mainw->event_list || !CLIP_HAS_AUDIO(mainw->playing_file)) lives_aplayer_set_seek_state(mainw->aplayer, not_seeking);
 
   cfile->last_frameno = cfile->frameno = mainw->play_start;
@@ -3919,13 +3921,6 @@ boolean begin_playback(void) {
   if (prefs->pbq_adaptive) reset_effort();
 
   if (mainw->multitrack && !mainw->multitrack->is_rendering) mainw->effort = EFFORT_RANGE_MAX;
-
-  // must call reset_timebase first, since we set playback ticks
-  if (!mainw->foreign && !mainw->multitrack) {
-    avsync_force(mainw->aplayer);
-  } else {
-    mainw->video_seek_beacon = -1;
-  }
 
   process_one();
 

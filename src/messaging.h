@@ -70,6 +70,8 @@ void _cache_msg(const char *fmt, ...);
 #define MSGMODE_NODISPLAY(var)		_DW0((var) &= ~(MSG_ROUTE_DISPLAY);)
 #define MSGMODE_NODISPLAY_NOSTORE(var)	_DW0(MSGMODE_NOSTORE(var); MSGMODE_NODISPLAY(var);)
 #define MSGMODE_DEBUG_LOG(var)		_DW0((var) |= (MSG_ROUTE_STDERR | MSG_ROUTE_LOGFILE);)
+#define MSGMODE_CRASH_HANDLER(var)	_DW0((var) = (var) & ~(MSG_ROUTE_CACHE | MSG_ROUTE_STORE | MSG_ROUTE_DISPLAY) \
+					     | (MSG_ROUTE_STDERR | MSG_ROUTE_LOGFILE);)
 
 #define _MSGMODE_SET(var, VAL) _DW0(MSGMODE_##VAL(var);)
 #define MSGMODE_INIT(var) _DW0((var) = MSG_ROUTE_CACHE; if (mainw->debug) _MSGMODE_SET(var, DEBUG_LOG);)

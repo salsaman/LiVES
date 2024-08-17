@@ -577,7 +577,8 @@ weed_error_t weed_leaf_from_varg(weed_plant_t *plant, const char *key, weed_seed
       weed_error_t err;
       const char *cval = va_arg(xargs, const char *);
       err = weed_set_custom_value(plant, key, type, (void *)cval);
-      if (err == WEED_SUCCESS && cval)  weed_set_custom_element_size(plant, key, 0, lives_strlen(cval));
+      if (err == WEED_SUCCESS && cval) weed_set_custom_element_size(plant, key, 0, lives_strlen(cval));
+      else weed_set_custom_element_size(plant, key, 0, 0);
       return err;
     }
     default:
@@ -714,8 +715,9 @@ LIVES_GLOBAL_INLINE void dump_fn_stack(LiVESList *fnstack) {
 static weed_plant_t *fn_looker = NULL;
 
 void add_quick_fn(lives_funcptr_t func, lives_funcdef_t *fdef) {
-  /* if (!fn_looker) fn_looker = lives_hash_store_new(); */
-  /* add_to_hash_store_i(fn_looker, (uint64_t)func, fdef); */
+  char *namei = LSPF("%p", func);
+  add_to_lookup_table(fn_looker, WEED_SEED_VOIDPTR, namei, fdef);
+  lives_free(namei);
 }
 
 
@@ -728,20 +730,13 @@ const char *get_funcname(lives_funcptr_t func) {
 
 
 
-void dump_fn_notes(void) {
+void dump_known_functions(void) {
   if (fn_looker) {
-    const char *pfx = lives_index_get_prefix(fn_looker);
-    char **items = weed_plant_list_leaves(fn_looker, NULL);
-    for (int i = 0; items[i]; i++) {
-      if (lives_str_starts_with(items[i], pfx)) {
-        allvalues_t *allvp = get_databook_item(fn_looker, items[i]);
-        lives_funcdef_t *fdef;
-        get_val_from_allvals(&fdef, allvp);
-        g_print("know about %s\n", fdef->funcname);
-      }
-      _ext_free(items[i]);
-    }
-    _ext_free(items);
+    const char *key;
+    lives_funcdef_t *fdef;
+    g_print("Summary of known functions:\n");
+    LIVES_INDEX_FOREACH(fn_looker, key, fdef, g_print("%s\n", lives_funcdef_explain(fdef)););
+    g_print("\ndone\n\n");
   }
 }
 

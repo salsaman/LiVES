@@ -1,0 +1,70 @@
+LiVES rendered effect plugin script
+------------------------------------
+
+<define>
+|1.7
+</define>
+
+<name>
+gmic
+</name>
+
+<version>
+1
+</version>
+
+<author>
+Salsaman|
+</author>
+
+# Menu entry|Action description|min_frames|num_channels|
+<description>
+GMIC generic|Applying GMIC|0|1|
+</description>
+
+# requirements (list)
+<requires>
+gmic
+</requires>
+
+# parameters Label|group|type|default|min|max|      (list)
+<params>
+cmd|_Command to be applied|string||1024|
+</params>
+
+<param_window>
+layout|p0|
+layout|"Example: fx_painting 5,2.5,1.5,50,1,0"|
+</param_window>
+
+# properties/capabilities (bitmap field)
+# 0x0001 == slow (hint to GUI)
+<properties>
+0x0001
+</properties>
+
+# 0xF0 == LiVES-perl
+<language_code>
+0xF0
+</language_code>
+
+# pre loop code (list)
+<pre>
+</pre>
+
+# loop code (list)
+<loop>
+if ($out_prefix eq "PNG32:") {
+   system("gmic $in $p0 -output to_a png:$out");
+}
+else {
+   system("gmic $in $p0 -output jpg:$out");
+}
+</loop>
+
+# post loop code (list)
+<post>
+</post>
+
+<onchange>
+</onchange>

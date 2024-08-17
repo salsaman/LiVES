@@ -307,7 +307,7 @@ EXPORTED  weed_error_t __wbg__(size_t, weed_hash_t, int, weed_plant_t *, const c
 //
 #if WEED_ABI_CHECK_VERSION(203)
 EXPORTED weed_leaf_t * _weed_intern_freeze(weed_plant_t *, const char *);
-EXPORTED weed_error_t _weed_intern_unfreeze(weed_leaf_t *);
+EXPORTED weed_error_t _weed_intern_unfreeze(weed_plant_t *, weed_leaf_t *);
 EXPORTED weed_seed_t _weed_intern_seed_type(weed_leaf_t *);
 EXPORTED weed_size_t _weed_intern_num_elems(weed_leaf_t *);
 EXPORTED weed_size_t _weed_intern_elem_size(weed_leaf_t *, weed_size_t idx, weed_error_t *);
@@ -960,7 +960,7 @@ static weed_error_t _weed_set_custom_element_size(weed_plant_t *plant, const cha
     return_unlock(leaf, WEED_ERROR_WRONG_SEED_TYPE);
   if (leaf->flags & WEED_FLAG_IMMUTABLE)
     return_unlock(leaf, WEED_ERROR_IMMUTABLE);
-  if (idx > leaf->num_elements) return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
+  if (idx >= leaf->num_elements) return_unlock(leaf, WEED_ERROR_NOSUCH_ELEMENT);
 
   leaf->data[idx].size = new_size;
   return_unlock(leaf, WEED_SUCCESS);
@@ -1347,7 +1347,7 @@ EXPORTED weed_leaf_t *_weed_intern_freeze(weed_plant_t *plant, const char *key) 
   return leaf;
 }
 
-EXPORTED weed_error_t _weed_intern_unfreeze(weed_leaf_t *leaf)
+EXPORTED weed_error_t _weed_intern_unfreeze(weed_plant_t *pl, weed_leaf_t *leaf)
 {return leaf ? _unlock(leaf, WEED_SUCCESS) : WEED_ERROR_NOSUCH_LEAF;}
 
 EXPORTED weed_size_t _weed_intern_num_elems(weed_leaf_t *leaf) {return leaf ? leaf->num_elements : 0;}

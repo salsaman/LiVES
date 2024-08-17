@@ -7123,9 +7123,8 @@ boolean weed_deinit_effect(int hotkey) {
     // for external audio, switch back to reading
 
     if (mainw->playing_file > 0 && prefs->audio_src == AUDIO_SRC_EXT) {
-#ifdef ENABLE_JACK
-      if (prefs->audio_player == AUD_PLAYER_JACK) {
-        if (!mainw->jackd_read || !mainw->jackd_read->in_use) {
+      IF_APLAY_TYPE_JACK
+        (if (!mainw->jackd_read || !mainw->jackd_read->in_use) {
           mainw->jackd->in_use = FALSE; // deactivate writer
           jack_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
           jack_time_reset(mainw->jackd_read, lives_jack_get_time(mainw->jackd)); // ensure time continues monotonically
@@ -7134,13 +7133,10 @@ boolean weed_deinit_effect(int hotkey) {
           mainw->jackd_read->in_use = TRUE;
           if (mainw->jackd) {
             mainw->jackd->playing_file = -1;
-          }
-        }
-      }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-      if (prefs->audio_player == AUD_PLAYER_PULSE) {
-        if (!mainw->pulsed_read || !mainw->pulsed_read->in_use) {
+          }})
+
+	IF_APLAY_TYPE_PULSE
+	(if (!mainw->pulsed_read || !mainw->pulsed_read->in_use) {
           if (mainw->pulsed) mainw->pulsed->in_use = FALSE; // deactivate writer
           pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
           if (mainw->pulsed) {
@@ -7162,10 +7158,7 @@ boolean weed_deinit_effect(int hotkey) {
             lives_aplayer_set_clip(mainw->areader, mainw->ascrap_file);
             mainw->pulsed_read->is_paused = FALSE;
             mainw->pulsed_read->in_use = TRUE;
-          }
-        }
-      }
-#endif
+          }})
     } else if (mainw->playing_file > 0) {
       // for internal, continue where we should
       if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file, TRUE);
@@ -7174,22 +7167,17 @@ boolean weed_deinit_effect(int hotkey) {
           // audio doesn't follow clip switches and we were playing this...
           mainw->cancelled = CANCEL_AUD_END;
         } else {
-#ifdef HAVE_PULSE_AUDIO
-          if (prefs->audio_player == AUD_PLAYER_PULSE) {
-            if (mainw->pulsed) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
-            if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-              pulse_get_rec_avals(mainw->pulsed);
-            }
-          }
-#endif
-#ifdef ENABLE_JACK
-          if (prefs->audio_player == AUD_PLAYER_JACK) {
-            if (mainw->jackd) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
-            if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-              jack_get_rec_avals(mainw->jackd);
-            }
-          }
-#endif
+	  IF_APLAYER_PULSE
+	    (if (mainw->pulsed) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
+	     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+	       pulse_get_rec_avals(mainw->pulsed);
+	     })
+
+	    IF_APLAYER_JACK
+            (if (mainw->jackd) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
+	     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+	       jack_get_rec_avals(mainw->jackd);
+	     })
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*

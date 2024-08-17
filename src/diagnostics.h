@@ -28,8 +28,6 @@
 
 #define ABORT_AFTER		(1ull << 60)
 
-lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *, boolean readonly);
-
 lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 
 #define DIAG_ALL		(uint64_t)-1
@@ -40,6 +38,8 @@ lives_result_t do_startup_diagnostics(uint64_t tests_to_run);
 void print_diagnostics(uint64_t types);
 
 char *md5_print(void *md5sum);
+
+void dump_know_funcsigs(void);
 
 //////////////////////////////////
 double check_thrd_latency(double *act_time);

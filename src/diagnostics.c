@@ -29,9 +29,9 @@
 //
 /*
     Example:
-    boolean is_rdonly = TRUE;
+    boolean readwrite = FALSE;
 
-    lives_rfx_t *rfx = obj_attrs_to_rfx(obj, is_rdonly);
+    lives_rfx_t *rfx = obj_attrs_to_rfx(obj, readwrite);
 
     if (rfx) {
 	const char *title = "Details";
@@ -48,46 +48,6 @@
     }
 */
 
-LIVES_GLOBAL_INLINE lives_rfx_t *obj_attrs_to_rfx(lives_obj_t *obj, boolean readonly) {
-  /*   lives_obj_attr_t **attrs = lives_object_get_attrs(obj); */
-  /*   lives_rfx_t *rfx = (lives_rfx_t *)lives_calloc(1, sizeof(lives_rfx_t)); */
-  /*   rfx->status = RFX_STATUS_OBJECT; */
-  /*   rfx->source = (void *)obj; */
-  /*   rfx->source_type = LIVES_RFX_SOURCE_OBJECT; */
-
-  /*   *rfx->delim = '|'; */
-  /*   lives_snprintf(rfx->rfx_version, 64, "%s", RFX_VERSION); */
-
-  /*   // obj attrs and funcinst params are basicaly the same, except - finst params are held in finst->params */
-  /*   // obj attrs are held in an attr grp */
-  /*   // for finst params we have the notion of "ordering", hence the params have names p0. p1 etc */
-  /*   //  attrgrps are simple index plants indexed by name */
-
-  /*   rfx->num_params = 19;//ylives_object_get_num_attributes(obj); */
-  /*   if (attrs) { */
-  /*     rfx->params = lives_calloc(rfx->num_params, sizeof(lives_param_t)); */
-  /*     for (int i = 0; i < rfx->num_params; i++) { */
-  /*       lives_obj_attr_t *attr = attrs[i]; */
-  /*       weed_plant_t *gui = weed_get_plantptr_value(attr, WEED_LEAF_GUI, NULL); */
-  /*       char *name = weed_get_string_value(attr, WEED_LEAF_NAME, NULL); */
-  /*       char *label = weed_get_string_value(attr, WEED_LEAF_LABEL, NULL); */
-  /*       int param_type = weed_get_int_value(attr, WEED_LEAF_PARAM_TYPE, NULL); */
-  /*       if (!gui) { */
-  /*         gui = weed_plant_new(WEED_PLANT_GUI); */
-  /*         weed_set_plantptr_value(attr, WEED_LEAF_GUI, gui); */
-  /*       } */
-  /*       rfx->params[i].source = attr; */
-  /*       rfx->params[i].source_type = LIVES_RFX_SOURCE_OBJECT; */
-  /*       build_rfx_param(&rfx->params[i], attr, param_type, label, gui, attr); */
-  /*       if (readonly) rfx->params[i].flags |= PARAM_FLAG_READONLY; */
-  /*       lives_free(label); */
-  /*       lives_free(name); */
-  /*     } */
-  /*     lives_free(attrs); */
-  /*   } */
-  //return rfx;
-  return NULL;
-}
 
 #define PTMLH _DW0(pthread_mutex_lock(hmutex);)
 #define PTMUH _DW0(pthread_mutex_unlock(hmutex);)
@@ -219,6 +179,16 @@ char *args_fmt_filter(const char *args_fmt) {
 }
 
 
+void dump_known_funcsigs(void) {
+  g_print("\n\nShowing known funcsigs:\n");
+  for (LiVESList *list = capable->known_funcsigs; list; list = list->next) {
+    funcsig_t fsig = *(funcsig_t *)list->data;
+    if (fsig) g_print("%s\n", funcsig_to_param_string(fsig));
+  }
+  g_print("\nDone\n\n");
+}
+
+
 boolean validate_args_fmt(const char *args_fmt, const char *funcname, const char **pnames) {
   if (!args_fmt) return TRUE;
 
@@ -267,10 +237,11 @@ char *funcsig_to_param_string(funcsig_t sig) {
   if (sig) {
     char *fmtstring = lives_strdup("");
     for (int i = 60; i >= 0; i -= 4) {
-      uint8_t ch = (sig >> i) & 0X0F;
-      if (!ch) continue;
+      uint8_t val = (sig >> i) & 0X0F;
+      if (!val) continue;
       fmtstring = lives_strdup_concat_sep(fmtstring, ", ", "%s",
-                                          weed_seed_to_ctype(get_seedtype(ch), FALSE));
+                                          weed_seed_to_ctype(get_seedtype(get_typeletter(val)),
+							     FALSE));
     }
     return fmtstring;
   }

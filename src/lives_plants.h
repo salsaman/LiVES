@@ -59,6 +59,12 @@
 
 #define STRUCT_ADAPTOR 999
 
+// 1024+ are interfaces
+#define LIVES_DEF_INTERFACE 1024
+#define LIVES_REFCOUNTER_INTERFACE 1025
+
+
+
 #if 0
 // TODO: WEED_PLANT_LIVES_EXT
 ///  will have a special feature,
@@ -92,8 +98,18 @@ int64_t lives_plant_get_subtype(weed_plant_t *);
 // default value follows flags
 #define BLU_FLAG_HAS_DEFAULT	(1ull << 16)
 
+// valdef is placeholder for interface, type is in "name"
+#define BLU_FLAG_INTERFACE	(1ull << 20)
+
 #define BLU_FLAG_ARRAY		(1ull << 31)
 //#define BLU_FLAG_HAS_SIZE	(1ull << 32)
+
+// type may be zero (not defined) if so, cant build this
+#define BLU_FLAG_EXT_TYPE	(1ull << 40)
+
+// if set, flags must be followed by the name of the mutex strand
+// also addds atomic_exchange and atomic cmp exchg 
+#define BLU_FLAG_ATOMIC_OPS	(1ull << 41)
 
 // add undel host, simlar to  rdonlyhost; applies unless..
 #define BLU_FLAGS_REMOVABLE	(BLU_FLAG_OPTIONAL | BLU_FLAG_OPTREM)
@@ -117,6 +133,9 @@ typedef struct {
 typedef weed_plant_t lives_blueprint_t;
 typedef weed_plant_t lives_valdef_t;
 
+
+void add_blueprint_interface(weed_plant_t *, lives_blueprint_t *, uint64_t iftype);
+
 lives_result_t lives_plant_include_sub(weed_plant_t *parent, const char *name, weed_plant_t *sub);
 
 weed_plant_t *plant_from_blueprint(int pltype, ...);
@@ -133,11 +152,12 @@ void dump_blueprint(uint64_t pltype);
 #define PLANT_FROM_BLUEPRINT(bltype, ...) plant_from_blueprint(LIVES_PLANT_##bltype, ADD_DEF_LEAVES(NULL) __VA_OPT__(,) __VA_ARGS__, NULL)
 
 #define LIVES_DEF_BLUEPRINT WEED_LEAF_UNIQUE_ID, WEED_SEED_UINT64, BLU_FLAGS_NONE, \
-    LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE,	\
-    LIVES_LEAF_UPDATE_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
-    LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
-    LIVES_LEAF_FIND_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\
-    LIVES_LEAF_GET_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL
+    LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR, BLU_FLAGS_NONE
+
+/* LIVES_LEAF_UPDATE_COND, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\ */
+/*     LIVES_LEAF_UPDATE_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\ */
+/*     LIVES_LEAF_FIND_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL,	\ */
+/*     LIVES_LEAF_GET_SCRIPT, LIVES_SEED_ALLVALUES, BLU_FLAG_OPTIONAL */
 
 #define ADD_DEF_LEAVES(blptr) WEED_LEAF_UNIQUE_ID, gen_unique_id(), LIVES_LEAF_BLUEPRINT_PTR, blptr
 
@@ -154,9 +174,17 @@ void dump_blueprint(uint64_t pltype);
   LIVES_DEF_BLUEPRINT, LIVES_LEAF_BLUEPRINT_IDX, WEED_SEED_UINT64, BLU_FLAGS_NONE,	\
     INCLUDES_SUB(INDEX, LIVES_LEAF_VALUE_DEFS)
 
-#define EXTENDS_PLANT(plant) "@EXTENDS", LIVES_##plant##_BLUEPRINT
+// adds leaves at toplevel
+#define EXTENDS_BLUEPRINT(bpname) "@EXTENDS", LIVES_##bpname##_BLUEPRINT
+
+// adds leaves at toplevel, prefixed by .ifname.
+#define USES_INTERFACE(ifname) "@USES", LIVES_##ifname##_INTERFACE
+
+// includes subplant(s)adds 
 #define INCLUDES_SUB(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_AUTOUNREF
 #define INCLUDES_SUB_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY | BLU_FLAG_AUTOUNREF
+
+// adds ref to external plants 
 #define ADD_REF(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, 0
 #define ADD_REF_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY
 
@@ -406,6 +434,7 @@ extern lives_index_t *indices[idx_type_max];
 #define LIVES_LEAF_PRIV_DATA "_priv_data"
 #define LIVES_LEAF_ATTR_GRP "_attr_grp"
 #define LIVES_LEAF_NAME "name"
+#define LIVES_LEAF_MUTEX "_mutex_"
 #define LIVES_LEAF_VALUE WEED_LEAF_VALUE
 #define LIVES_LEAF_PARENT "parent"
 #define LIVES_LEAF_OBJ_TYPE "obj_type"

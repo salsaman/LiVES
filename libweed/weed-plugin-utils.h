@@ -242,7 +242,29 @@ FN_DECL int is_big_endian(void);
 #define ABS(a) (((a) < 0) ? -(a) : (a))
 #endif
 
-// functions for process_func()
+  // functions for process_func()
+
+  // md5 functions for detecting repeated frames
+#ifdef NEED_MD5
+#define _A(b,c,d)(d^(b&(c^d)))
+#define _B(b,c,d)_A(d,b,c)
+#define _C(b,c,d)(b^c^d)
+#define _D(b,c,d)(c^(b|~d))
+#define A_(w,s)(w=(w<<s)|(w>>(32-s)))
+#define B_(g,h,i,j,s,T)do{g+=_A(h,i,j)+(*_X++=*w)+T;++w;A_(g,s);g+=h;}while(0)
+#define BX(W,X,Y,Z)B_(A,B,C,D,7,W);B_(B,C,D,A,22,X);B_(C,D,A,B,17,Y);B_(D,A,B,X,12,Z);
+#define C_(f,k,s,T,g,h,i,j)do{g+=f(h,i,j)+X[k]+T;A_(g,s);g+=h;}while(0)
+#define CA_(M,w,W,x,X,y,Y,z,Z,g,h,i,j)C_(M,w,g,W,A,B,C,D);\
+  C_(M,x,h,X,D,A,B,C);C_(M,y,i,Y,C,D,A,B);C_(M,z,j,Z,B,C,D,A);
+#define CW(...)CA_(_B,__VA_ARGS__,5,9,14,20)
+#define CX(...)CA_(_C,__VA_ARGS__,4,11,16,23)
+#define CY(...)CA_(_D,__VA_ARGS__,6,10,15,21)
+typedef struct {uint32_t A, B, C, D, t[2], bl; char buf[128];} md5priv;
+#define MD5_VALUE_CALCULATION_MAGIC BX(0xd76aa478,0xe8c7b756,0x242070db,0xc1bdceee)BX(0xf57c0faf,0x4787c62a,0xa8304613,0xfd469501)BX(0x698098d8,0x8b44f7af,0xffff5bb1,0x895cd7be)BX(0x6b901122,0xfd987193,0xa679438e,0x49b40821)CW(1,0xf61e2562,6,0xc040b340,11,0x265e5a51,0,0xe9b6c7aa)CW(5,0xd62f105d,10,0x02441453,15,0xd8a1e681,4,0xe7d3fbc8)CW(9,0x21e1cde6,14,0xc33707d6,3,0xf4d50d87,8,0x455a14ed)CW(13,0xa9e3e905,2,0xfcefa3f8,7,0x676f02d9,12,0x8d2a4c8a)CX(5,0xfffa3942,8,0x8771f681,11,0x6d9d6122,14,0xfde5380c)CX(1,0xa4beea44,4,0x4bdecfa9,7,0xf6bb4b60,10,0xbebfbc70)CX(13,0x289b7ec6,0,0xeaa127fa,3,0xd4ef3085,6,0x04881d05)CX(9,0xd9d4d039,12,0xe6db99e5,15,0x1fa27cf8,2,0xc4ac5665)CY(0,0xf4292244,7,0x432aff97,14,0xab9423a7,5,0xfc93a039)CY(12,0x655b59c3,3,0x8f0ccc92,10,0xffeff47d,1,0x85845dd1)CY(8,0x6fa87e4f,15,0xfe2ce6e0,6,0xa3014314,13,0x4e0811a1)CY(4,0xf7537e82,11,0xbd3af235,2,0x2ad7d2bb,9,0xeb86d391);
+#define MD5_SIZE 16
+// returns array of uint8_t output[16]
+FN_DECL uint64_t calc_md5(void *data, size_t dsize);
+#endif
 
 #ifdef NEED_RANDOM
 FN_DECL uint64_t fastrnd_int64(void);

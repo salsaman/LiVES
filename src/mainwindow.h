@@ -2055,14 +2055,4 @@ _fx_dialog *fx_dialog[2];
 #define LIVES_SIGQUIT SIGQUIT
 #endif
 
-#ifdef ENABLE_JACK
-volatile aserver_message_t jack_message;
-volatile aserver_message_t jack_message2;
-#endif
-
-#ifdef HAVE_PULSE_AUDIO
-volatile aserver_message_t pulse_message;
-volatile aserver_message_t pulse_message2;
-#endif
-
-#endif // HAS_LIVES_MAINWINDOW_H
+#endif // !HAS_LIVES_MAINWINDOW_H

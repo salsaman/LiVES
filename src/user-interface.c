@@ -1346,24 +1346,31 @@ void redraw_timeline_noblock(int clipno) {
 
 
 boolean get_timeline_lock(void) {
+  boolean is_fg = is_fg_thread();
   lives_proc_thread_t lpt = NULL;
   lives_proc_thread_ref(drawtl_thread);
   if (drawtl_thread) {
     lpt = drawtl_thread;
-    while (1) {
-      if (!pthread_mutex_trylock(&tlthread_mutex)) return TRUE;
+  }
+  //ile (1) {
+  if (!pthread_mutex_trylock(&tlthread_mutex)) return TRUE;
+  while (pthread_mutex_trylock(&tlthread_mutex)) {
+    lives_millisleep;
+    if (is_fg) fg_service_fulfill();
+    if (lpt) {
       if (!lives_proc_thread_check_finished(lpt)
-          && lives_proc_thread_should_cancel(lpt)) {
-        lpt = STEAL_POINTER(drawtl_thread);
-        lives_proc_thread_join_void(lpt);
-        lives_proc_thread_unref(lpt);
-        lives_proc_thread_unref(lpt);
-        break;
+	  && lives_proc_thread_should_cancel(lpt)) {
+	lpt = STEAL_POINTER(drawtl_thread);
+	lives_proc_thread_join_void(lpt);
+	lives_proc_thread_unref(lpt);
+	lives_proc_thread_unref(lpt);
+	lpt = NULL;
+	//eak;
       }
-      lives_microsleep;
+      //ves_microsleep;
     }
   }
-  return FALSE;
+  return TRUE;
 }
 
 

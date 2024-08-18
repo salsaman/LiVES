@@ -449,8 +449,8 @@ boolean lives_cb_receipt_is_in_list(void *hook_cb_receipt);
 
 // add remove from self cb_added list
 void lives_cb_receipt_add_to_list(void *hook_cb_receipt);
-lives_result_t lives_cb_receipt_remove_from_list(void *hook_cb_receipt);
-#define lives_hook_cb_remove(receipt) lives_cb_receipt_remove_from_list((receipt))
+lives_result_t lives_cb_receipt_remove_from_list(void *hook_cb_receipt, boolean keep_persist);
+#define lives_hook_cb_remove(receipt) lives_cb_receipt_remove_from_list((receipt), FALSE)
 
 void lives_cb_receipt_block_cb(void *hook_cb_receipt);
 void lives_cb_receipt_unblock_cb(void *hook_cb_receipt);

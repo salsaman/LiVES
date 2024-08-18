@@ -543,7 +543,7 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
 
 
 
-    
+
     if (list) {
       boolean done = FALSE;
       // mark n chunks allocted
@@ -636,7 +636,7 @@ void speedy_free(void *ptr) {
     // double free or corruption...
     BREAK_ME("DVL GREE");
     char *msg = lives_strdup_printf("Double free ot corruption in speedy_free, ptr %p points to "
-				    "a free block of size %d chunks\n", ptr, nchunks);
+                                    "a free block of size %d chunks\n", ptr, nchunks);
     pthread_mutex_unlock(&(smblock_pool->mutex));
     //VES_FATAL(msg);
     return;
@@ -657,7 +657,7 @@ void speedy_free(void *ptr) {
       nchunks += nxtchunks;
 
       if (smblock_pool->first_avail_chunk == list->next)
-	smblock_pool->first_avail_chunk = list;
+        smblock_pool->first_avail_chunk = list;
 
       smblock_pool->chunk_list  = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
     }
@@ -671,7 +671,7 @@ void speedy_free(void *ptr) {
       SET_BLOCK_SIZE(list->prev, nchunks);
       smblock_pool->chunk_list  = lives_list_remove_node(smblock_pool->chunk_list, list, TRUE);
       if (smblock_pool->first_avail_chunk == list->next)
-	smblock_pool->first_avail_chunk = list->prev;
+        smblock_pool->first_avail_chunk = list->prev;
     }
   } else SET_BLOCK_SIZE(list, nchunks);
 
@@ -761,72 +761,72 @@ static  void *speedy_realloc(void *op, size_t xsize) {
       SET_BLOCK_SIZE(list, -nchunks_req);
       smblock_pool->alloc_list  = lives_list_prepend(smblock_pool->alloc_list, (void *)list);
       if (nchunks > nchunks_req) {
-	if (nxtchunks) {
-	  nxtchunks += nchunks - nchunks_req;
-	  SET_BLOCK_SIZE(list->next, nxtchunks);
-	  SET_BLOCK_OFFS(list->next, offs + nchunks_req);
-	} else {
-	  alloc_block_t *block = make_alloc_block(nchunks, offs + nchunks_req);
-	  list = lives_list_append(list, (void *)block);
-	}
+        if (nxtchunks) {
+          nxtchunks += nchunks - nchunks_req;
+          SET_BLOCK_SIZE(list->next, nxtchunks);
+          SET_BLOCK_OFFS(list->next, offs + nchunks_req);
+        } else {
+          alloc_block_t *block = make_alloc_block(nchunks, offs + nchunks_req);
+          list = lives_list_append(list, (void *)block);
+        }
       }
     } else {
       if (nchunks + nxtchunks >= nchunks_req) {
-	// new alloc fits in node + next
-	SET_BLOCK_SIZE(list, -nchunks_req);
-	if (nxtchunks) {
-	  nxtchunks += nchunks - nchunks_req;
-	  SET_BLOCK_SIZE(list->next, nxtchunks);
-	  SET_BLOCK_OFFS(list->next, offs + nchunks_req);
-	} else {
-	  // delete next block
-	  smblock_pool->chunk_list = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
-	  if (smblock_pool->first_avail_chunk == list->next)
-	    smblock_pool->first_avail_chunk = list;
-	}
+        // new alloc fits in node + next
+        SET_BLOCK_SIZE(list, -nchunks_req);
+        if (nxtchunks) {
+          nxtchunks += nchunks - nchunks_req;
+          SET_BLOCK_SIZE(list->next, nxtchunks);
+          SET_BLOCK_OFFS(list->next, offs + nchunks_req);
+        } else {
+          // delete next block
+          smblock_pool->chunk_list = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
+          if (smblock_pool->first_avail_chunk == list->next)
+            smblock_pool->first_avail_chunk = list;
+        }
       } else {
-	// doe not fit in this + next
-	// see if we can fit in prev block + thi block, or prev + this + next
-	if (list->prev) {
-	  prevchunks = GET_BLOCK_SIZE(list->prev);
-	  if (prevchunks < 0) prevchunks = 0;
-	  if (prevchunks) {
-	    // subsume next node into this
-	    if (nchunks + prevchunks >= nchunks_req) {
-	      SET_BLOCK_SIZE(list->prev, -nchunks_req);
-	      if (nchunks_req <= prevchunks) {
-		// assign from previous block, this block get extra added
-		nchunks += prevchunks - nchunks_req;
-		SET_BLOCK_SIZE(list, nchunks);
-		SET_BLOCK_OFFS(list, offs - prevchunks + nchunks_req);
-	      }
-	    }
-	  }
-	  if (prevchunks + nchunks + nxtchunks >= nchunks_req) {
-	    // assign combining prev, current and next
-	    SET_BLOCK_SIZE(list->prev, -nchunks_req);
-	    // delete this node
-	    smblock_pool->chunk_list  = lives_list_remove_node(smblock_pool->chunk_list, list, TRUE);
-	    if (smblock_pool->first_avail_chunk == list->next
-		|| smblock_pool->first_avail_chunk == list)
-	      smblock_pool->first_avail_chunk = list->prev->next;
+        // doe not fit in this + next
+        // see if we can fit in prev block + thi block, or prev + this + next
+        if (list->prev) {
+          prevchunks = GET_BLOCK_SIZE(list->prev);
+          if (prevchunks < 0) prevchunks = 0;
+          if (prevchunks) {
+            // subsume next node into this
+            if (nchunks + prevchunks >= nchunks_req) {
+              SET_BLOCK_SIZE(list->prev, -nchunks_req);
+              if (nchunks_req <= prevchunks) {
+                // assign from previous block, this block get extra added
+                nchunks += prevchunks - nchunks_req;
+                SET_BLOCK_SIZE(list, nchunks);
+                SET_BLOCK_OFFS(list, offs - prevchunks + nchunks_req);
+              }
+            }
+          }
+          if (prevchunks + nchunks + nxtchunks >= nchunks_req) {
+            // assign combining prev, current and next
+            SET_BLOCK_SIZE(list->prev, -nchunks_req);
+            // delete this node
+            smblock_pool->chunk_list  = lives_list_remove_node(smblock_pool->chunk_list, list, TRUE);
+            if (smblock_pool->first_avail_chunk == list->next
+                || smblock_pool->first_avail_chunk == list)
+              smblock_pool->first_avail_chunk = list->prev->next;
 
-	    if (prevchunks + nchunks + nxtchunks > nchunks_req) {
-	      // if any overflow, this becomes size for nxt block, otherwie we delete next block
-	      nxtchunks = prevchunks + nchunks + nxtchunks - nchunks_req;
-	      SET_BLOCK_SIZE(list->next, -nchunks_req);
-	      if (smblock_pool->first_avail_chunk == list->prev
-		  || smblock_pool->first_avail_chunk == list)
-		smblock_pool->first_avail_chunk = list->next;
-	    } else {
-	      // delete next node
-	      if (smblock_pool->first_avail_chunk == list->prev
-		  || smblock_pool->first_avail_chunk == list
-		  || smblock_pool->first_avail_chunk == list->next)
-		smblock_pool->first_avail_chunk = list->next->next;
-	      smblock_pool->chunk_list  = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
-	    }
-	    if (list->next) SET_BLOCK_OFFS(list->next, offs - prevchunks + nchunks_req);
+            if (prevchunks + nchunks + nxtchunks > nchunks_req) {
+              // if any overflow, this becomes size for nxt block, otherwie we delete next block
+              nxtchunks = prevchunks + nchunks + nxtchunks - nchunks_req;
+              SET_BLOCK_SIZE(list->next, -nchunks_req);
+              if (smblock_pool->first_avail_chunk == list->prev
+                  || smblock_pool->first_avail_chunk == list)
+                smblock_pool->first_avail_chunk = list->next;
+            } else {
+              // delete next node
+              if (smblock_pool->first_avail_chunk == list->prev
+                  || smblock_pool->first_avail_chunk == list
+                  || smblock_pool->first_avail_chunk == list->next)
+                smblock_pool->first_avail_chunk = list->next->next;
+              smblock_pool->chunk_list  = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
+            }
+            if (list->next) SET_BLOCK_OFFS(list->next, offs - prevchunks + nchunks_req);
 	    // *INDENT-OFF*
 	  }}}}}
   // *INDENT-ON*
@@ -912,9 +912,9 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     if (nchunks > 0) {
       if (nchunks >= nchunks_req) break;
       if (nchunks > avail_size) {
-	smblock_pool->first_avail_chunk = list;
-	SET_BLOCK_OFFS(smblock_pool->first_avail_chunk, offs);
-	avail_size = nchunks;
+        smblock_pool->first_avail_chunk = list;
+        SET_BLOCK_OFFS(smblock_pool->first_avail_chunk, offs);
+        avail_size = nchunks;
       }
       offs += nchunks;
     } else {
@@ -929,14 +929,14 @@ static void *_speedy_alloc(size_t nmemb, size_t xsize) {
     nchunks_req = nchunks_req - nchunks;
     if (nchunks_req > 0) {
       if (((void **)list)[1]) {
-	int nxtchunks = GET_BLOCK_SIZE(list->next);
-	if (nxtchunks > 0) {
-	  SET_BLOCK_SIZE(list->next, nxtchunks + nchunks_req);
-	  SET_BLOCK_OFFS(list->next, offs + nchunks_req);
-	}
+        int nxtchunks = GET_BLOCK_SIZE(list->next);
+        if (nxtchunks > 0) {
+          SET_BLOCK_SIZE(list->next, nxtchunks + nchunks_req);
+          SET_BLOCK_OFFS(list->next, offs + nchunks_req);
+        }
       } else {
-	alloc_block_t *block = make_alloc_block(nchunks, offs + nchunks_req);
-	list = lives_list_append(list, block);
+        alloc_block_t *block = make_alloc_block(nchunks, offs + nchunks_req);
+        list = lives_list_append(list, block);
       }
     }
 
@@ -1062,12 +1062,12 @@ static void *speedy_realloc(void *op, size_t xsize) {
     smblock_pool->alloc_list = lives_list_prepend(smblock_pool->alloc_list, (void *)list);
     if (nchunks > nchunks_req) {
       if (nxtchunks) {
-	nxtchunks += nchunks - nchunks_req;
-	SET_BLOCK_SIZE(list->next, nxtchunks);
-	SET_BLOCK_OFFS(list->next, offs + nchunks_req);
+        nxtchunks += nchunks - nchunks_req;
+        SET_BLOCK_SIZE(list->next, nxtchunks);
+        SET_BLOCK_OFFS(list->next, offs + nchunks_req);
       } else {
-	alloc_block_t *block = make_alloc_block(nchunks - nchunks_req, offs + nchunks_req);
-	list = lives_list_append(list, (void *)block);
+        alloc_block_t *block = make_alloc_block(nchunks - nchunks_req, offs + nchunks_req);
+        list = lives_list_append(list, (void *)block);
       }
     }
     pthread_mutex_unlock(&(smblock_pool->mutex));
@@ -1076,21 +1076,21 @@ static void *speedy_realloc(void *op, size_t xsize) {
     if (nchunks + nxtchunks >= nchunks_req) {
       SET_BLOCK_SIZE(list, -nchunks_req);
       if (nxtchunks) {
-	nxtchunks += nchunks - nchunks_req;
-	SET_BLOCK_SIZE(list->next, nxtchunks);
-	SET_BLOCK_OFFS(list->next, offs + nchunks_req);
+        nxtchunks += nchunks - nchunks_req;
+        SET_BLOCK_SIZE(list->next, nxtchunks);
+        SET_BLOCK_OFFS(list->next, offs + nchunks_req);
       } else {
-	smblock_pool->chunk_list = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
-	if (smblock_pool->first_avail_chunk == list->next)
-	  smblock_pool->first_avail_chunk = list;
+        smblock_pool->chunk_list = lives_list_remove_node(smblock_pool->chunk_list, list->next, TRUE);
+        if (smblock_pool->first_avail_chunk == list->next)
+          smblock_pool->first_avail_chunk = list;
       }
       pthread_mutex_unlock(&(smblock_pool->mutex));
       return op;
     } else {
       nptr = lives_malloc(xsize);
       if (!nptr) {
-	pthread_mutex_unlock(&(smblock_pool->mutex));
-	return NULL; // handle the error appropriately
+        pthread_mutex_unlock(&(smblock_pool->mutex));
+        return NULL; // handle the error appropriately
       }
       memcpy(nptr, op, nchunks * smblock_pool->chunk_size);
       speedy_free(op);
@@ -1244,7 +1244,7 @@ void smallblock_init(void) {
     smblock_pool->chunk_list = lives_list_append(smblock_pool->chunk_list, block);
     smblock_pool->first_avail_chunk = smblock_pool->chunk_list->next;
     smblock_pool->alloc_list  = lives_list_prepend(smblock_pool->alloc_list,
-						   (void *)smblock_pool->chunk_list);
+                                (void *)smblock_pool->chunk_list);
     smblock_pool->free_chunks -= nxtchunks;
     smblock_pool->toobig_size -= nxtchunks;
 
@@ -1272,13 +1272,13 @@ char *get_memstats(void) {
   char *msg;
 
   if (smblock_pool) msg = lives_strdup_printf("smallblock: total size %d, block size %d, page_size = %ld, "
-					      "cachline_size = %d\n"
-					      "Blocks in use: %d of %d (%.2f %%)\n",
-					      TOT_CHUNKS * CHUNK_SIZE, CHUNK_SIZE,
-					      capable->hw.pagesize, capable->hw.cacheline_size,
-					      smblock_pool->num_chunks - smblock_pool->free_chunks, smblock_pool->num_chunks,
-					      (double)(smblock_pool->num_chunks - smblock_pool->free_chunks)
-					      / (double)smblock_pool->num_chunks * 100.);
+                            "cachline_size = %d\n"
+                            "Blocks in use: %d of %d (%.2f %%)\n",
+                            TOT_CHUNKS * CHUNK_SIZE, CHUNK_SIZE,
+                            capable->hw.pagesize, capable->hw.cacheline_size,
+                            smblock_pool->num_chunks - smblock_pool->free_chunks, smblock_pool->num_chunks,
+                            (double)(smblock_pool->num_chunks - smblock_pool->free_chunks)
+                            / (double)smblock_pool->num_chunks * 100.);
   else msg = lives_strdup("smallblock not in use\n");
   return msg;
 }
@@ -1290,14 +1290,14 @@ static void *lives_calloc_mapped_inner(size_t npages, boolean do_mlock,  char *f
   void *p = mmap(NULL, npages * PAGESIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
   if (!p || p == MAP_FAILED) {
     lives_snprintf(errmsg, 128, "Unable to mmap %lu pages at line %d, in %s\n",
-		   npages, lref, fref);
+                   npages, lref, fref);
     LIVES_WARN(errmsg);
     return NULL;
   }
 
   if (do_mlock && mlock(p, npages * PAGESIZE)) {
     lives_snprintf(errmsg, 128, "Unable to mlock %lu pages at line %d, in %s\n",
-		   npages, lref, fref);
+                   npages, lref, fref);
     munmap(p, npages * PAGESIZE);
     return NULL;
   }
@@ -1378,18 +1378,18 @@ LIVES_GLOBAL_INLINE void *lives_recalloc(void *op, size_t nmemb, size_t omemb, s
       int xblocks = ((nmemb - omemb) * xsize + hwlim - 1) / hwlim;
       int ysize = GET_SIZE(i + nblocks);
       if (!IN_USE(i + nblocks) && xblocks <= ysize) {
-	pthread_rwlock_wrlock(&memlist_lock);
-	ysize = GET_SIZE(i + nblocks);
-	if (!IN_USE(i + nblocks) && xblocks <= ysize) {
-	  SET_PREV(i + nblocks, i + nblocks - 1);
-	  SET_NEXT(i + nblocks - 1, i + nblocks);
-	  SET_SIZE(i, nblocks + xblocks);
-	  SET_SIZE(i + nblocks, ysize - xblocks);
-	  smblock_count -= xblocks;
-	  for (int j = i + nblocks; j < i + nblocks + xblocks; j++) SET_IN_USE(j);
-	}
-	pthread_rwlock_unlock(&memlist_lock);
-	return op;
+        pthread_rwlock_wrlock(&memlist_lock);
+        ysize = GET_SIZE(i + nblocks);
+        if (!IN_USE(i + nblocks) && xblocks <= ysize) {
+          SET_PREV(i + nblocks, i + nblocks - 1);
+          SET_NEXT(i + nblocks - 1, i + nblocks);
+          SET_SIZE(i, nblocks + xblocks);
+          SET_SIZE(i + nblocks, ysize - xblocks);
+          smblock_count -= xblocks;
+          for (int j = i + nblocks; j < i + nblocks + xblocks; j++) SET_IN_USE(j);
+        }
+        pthread_rwlock_unlock(&memlist_lock);
+        return op;
       }
     }
   }
@@ -1543,8 +1543,8 @@ void bigblock_init(void) {
 
     if (bbcachesize / bmemsize < MIN_BBLOCKS) {
       char *msg = lives_strdup_printf(_("Insufficient memory for big block allocator, "
-					"need at least %ld bytes, but only %ld avaialble"), MIN_BBLOCKS * bmemsize,
-				      capable->hw.memavail);
+                                        "need at least %ld bytes, but only %ld avaialble"), MIN_BBLOCKS * bmemsize,
+                                      capable->hw.memavail);
       LIVES_WARN(msg);
       lives_free(msg);
       return;
@@ -1585,8 +1585,8 @@ static int get_bblock_idx(void *bstart, off_t * offs, int *bbafter) {
     for (int i = 1; i <= bbidx; i++) {
       if (i > 3) break;
       if (used[bbidx - i] > i) {
-	if (bbafter) *bbafter = bbidx - i;
-	break;
+        if (bbafter) *bbafter = bbidx - i;
+        break;
       }
     }
   return bbidx;
@@ -1602,9 +1602,9 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
   if (sizeb > bmemsize) {
     if (sizeb > (bmemsize << 1)) {
       if (sizeb > (bmemsize << 2)) {
-	if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
-					  sizeb, bmemsize << 2);
-	return -2;
+        if (prefs->show_dev_opts) g_print("msize req %lu > %lu, cannot use bblockalloc\n",
+                                            sizeb, bmemsize << 2);
+        return -2;
       }
       nblocks = 4;
     } else nblocks = 2;
@@ -1644,10 +1644,10 @@ static int _alloc_bigblock(size_t sizeb, int oblock) {
       u = used[i + j];
       //g_print("block %d + %d (%d) used %d blocks\n", i, j, i + j, u);
       if (u) {
-	if (oblock != -1) return -1;
-	i += u + j;
-	count += u + j;
-	break;
+        if (oblock != -1) return -1;
+        i += u + j;
+        count += u + j;
+        break;
       }
     }
     if (j == nblocks) break;
@@ -1700,11 +1700,11 @@ void bbsummary(void) {
     if (used[i]) {
       g_print("BB %d : %d", i, used[i]);
       if (!seqset[i]) {
-	g_print("New !!");
-	seqset[i] = seq;
+        g_print("New !!");
+        seqset[i] = seq;
       } else {
-	g_print("held for %d iters", seq - seqset[i]);
-	if (seq - seqset[i] > 14) g_print("assigned in seqeuence %d", seqset[i]);
+        g_print("held for %d iters", seq - seqset[i]);
+        if (seq - seqset[i] > 14) g_print("assigned in seqeuence %d", seqset[i]);
       }
       g_print("\n");
       i += used[i] - 1;
@@ -1753,61 +1753,61 @@ void *realloc_bigblock(void *p, size_t new_size) {
 #ifdef DEBUG_BBLOCKS
 static void *_free_bigblock(void *bstart) {
 #else
-  static void *free_bigblock(void *bstart) {
+static void *free_bigblock(void *bstart) {
 #endif
-    char *msg;
-    off_t offs;
-    int bbidx, bbafter;
+  char *msg;
+  off_t offs;
+  int bbidx, bbafter;
 
-    if (bstart == mainw->debug_ptr) {
-      BREAK_ME("badfree");
-    }
-
-    pthread_mutex_lock(&bigblock_mutex);
-    bbidx = get_bblock_idx(bstart, &offs, &bbafter);
-
-    if (bbidx < 0) {
-      pthread_mutex_unlock(&bigblock_mutex);
-      msg = lives_strdup_printf("Invalid free of bigblock, %p not in range %p -> %p\n",
-				bstart, bigblocks[0], bigblocks[0] + NBBLOCKS * bmemsize);
-      LIVES_WARN(msg);
-      lives_free(msg);
-      lives_free(bstart);
-      return bstart;
-    }
-
-    if (offs) {
-      pthread_mutex_unlock(&bigblock_mutex);
-      msg = lives_strdup_printf("Invalid free of bigblock, %p is at offset %ld after block %d\n",
-				bstart, offs, bbafter);
-      LIVES_FATAL(msg);
-      return NULL;
-    }
-
-    if (bbafter != bbidx) {
-      msg = lives_strdup_printf("Invalid free of bigblock, %p is %d blocks after block %d, with size %d blocks\n",
-				bstart, bbidx - bbafter, bbafter, used[bbafter]);
-      pthread_mutex_unlock(&bigblock_mutex);
-      LIVES_FATAL(msg);
-      return NULL;
-    }
-
-    bbused -= used[bbidx];
-#ifdef BBL_TEST
-    g_print("bigblocks in use after free %d\n", bbused);
-#endif
-    seqset[bbidx] = 0;
-    used[bbidx] = 0;
-#ifdef TRACE_BBALLOC
-    lives_list_free_all(&ustacks[bbidx]);
-    tuid[bbidx] = 0;
-#endif
-    pthread_mutex_unlock(&bigblock_mutex);
-    //g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
-    return bstart;
-#if 0
+  if (bstart == mainw->debug_ptr) {
+    BREAK_ME("badfree");
   }
-  #endif
+
+  pthread_mutex_lock(&bigblock_mutex);
+  bbidx = get_bblock_idx(bstart, &offs, &bbafter);
+
+  if (bbidx < 0) {
+    pthread_mutex_unlock(&bigblock_mutex);
+    msg = lives_strdup_printf("Invalid free of bigblock, %p not in range %p -> %p\n",
+                              bstart, bigblocks[0], bigblocks[0] + NBBLOCKS * bmemsize);
+    LIVES_WARN(msg);
+    lives_free(msg);
+    lives_free(bstart);
+    return bstart;
+  }
+
+  if (offs) {
+    pthread_mutex_unlock(&bigblock_mutex);
+    msg = lives_strdup_printf("Invalid free of bigblock, %p is at offset %ld after block %d\n",
+                              bstart, offs, bbafter);
+    LIVES_FATAL(msg);
+    return NULL;
+  }
+
+  if (bbafter != bbidx) {
+    msg = lives_strdup_printf("Invalid free of bigblock, %p is %d blocks after block %d, with size %d blocks\n",
+                              bstart, bbidx - bbafter, bbafter, used[bbafter]);
+    pthread_mutex_unlock(&bigblock_mutex);
+    LIVES_FATAL(msg);
+    return NULL;
+  }
+
+  bbused -= used[bbidx];
+#ifdef BBL_TEST
+  g_print("bigblocks in use after free %d\n", bbused);
+#endif
+  seqset[bbidx] = 0;
+  used[bbidx] = 0;
+#ifdef TRACE_BBALLOC
+  lives_list_free_all(&ustacks[bbidx]);
+  tuid[bbidx] = 0;
+#endif
+  pthread_mutex_unlock(&bigblock_mutex);
+  //g_print("\n\nFREEBIG %p %d\n", bigblocks[bbidx], bbidx);
+  return bstart;
+#if 0
+}
+#endif
 
 }
 
@@ -1907,7 +1907,7 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
 
   if (chunk <= 8) {
     if ((chunk != 8 && chunk != 4 && chunk != 2 && chunk != 1)
-	|| (count % chunk) != 0) return FALSE;
+        || (count % chunk) != 0) return FALSE;
   } else {
     if ((chunk & 0x01) || (count % chunk) != 0) return FALSE;
     else {
@@ -1919,11 +1919,11 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
       start++;
       end = ocount - 1 - chunk;
       while (start + chunk < end) {
-	lives_memcpy(tbuff, &buff[end], chunk);
-	lives_memcpy(&buff[end], &buff[start], chunk);
-	lives_memcpy(&buff[start], tbuff, chunk);
-	start += chunk;
-	end -= chunk;
+        lives_memcpy(tbuff, &buff[end], chunk);
+        lives_memcpy(&buff[end], &buff[start], chunk);
+        lives_memcpy(&buff[start], tbuff, chunk);
+        start += chunk;
+        end -= chunk;
       }
 #if USE_RPMALLOC
       rpfree(tbuff);
@@ -1943,15 +1943,15 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
     if ((void *)buff8 == (void *)buff) {
       end = ocount  >> 3;
       for (; count >= 8; count -= 8) {
-	/// swap 8 bytes at a time from start and end
-	uint64_t tmp8 = buff8[--end];
-	if (chunk == 8) {
-	  buff8[end] = buff8[++start];
-	  buff8[start] = tmp8;
-	} else {
-	  swab8(&buff8[end], &buff8[++start], chunk);
-	  swab8(&buff8[start], &tmp8, chunk);
-	}
+        /// swap 8 bytes at a time from start and end
+        uint64_t tmp8 = buff8[--end];
+        if (chunk == 8) {
+          buff8[end] = buff8[++start];
+          buff8[start] = tmp8;
+        } else {
+          swab8(&buff8[end], &buff8[++start], chunk);
+          swab8(&buff8[start], &tmp8, chunk);
+        }
       }
       if (count <= chunk / 2) return TRUE;
       start = (start + 1) << 3;
@@ -1966,19 +1966,19 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
     uint32_t *buff4 = (uint32_t *)buff;
     if ((void *)buff4 == (void *)buff) {
       if (start > 0) {
-	end = (ocount - start) >> 2;
-	start >>= 2;
+        end = (ocount - start) >> 2;
+        start >>= 2;
       } else end = ocount >> 2;
       for (; count >= 4; count -= 4) {
-	/// swap 4 bytes at a time from start and end
-	uint32_t tmp4 = buff4[--end];
-	if (chunk == 4) {
-	  buff4[end] = buff4[++start];
-	  buff4[start] = tmp4;
-	} else {
-	  swab4(&buff4[end], &buff4[++start], chunk);
-	  swab4(&buff4[start], &tmp4, chunk);
-	}
+        /// swap 4 bytes at a time from start and end
+        uint32_t tmp4 = buff4[--end];
+        if (chunk == 4) {
+          buff4[end] = buff4[++start];
+          buff4[start] = tmp4;
+        } else {
+          swab4(&buff4[end], &buff4[++start], chunk);
+          swab4(&buff4[start], &tmp4, chunk);
+        }
       }
       if (count <= chunk / 2) return TRUE;
       start = (start + 1) << 2;
@@ -1993,20 +1993,20 @@ boolean reverse_buffer(uint8_t *buff, size_t count, size_t chunk) {
     uint16_t *buff2 = (uint16_t *)buff;
     if ((void *)buff2 == (void *)buff) {
       if (start > 0) {
-	end = (ocount - start) >> 1;
-	start >>= 1;
+        end = (ocount - start) >> 1;
+        start >>= 1;
       } else end = ocount >> 1;
       for (; count >= chunk / 2; count -= 2) {
-	/// swap 2 bytes at a time from start and end
-	uint16_t tmp2 = buff2[--end];
-	if (chunk >= 2) {
-	  buff2[end] = buff2[++start];
-	  buff2[start] = tmp2;
-	}
-	/// swap single bytes
-	else {
-	  swab2(&buff2[end], &buff2[++start], 1);
-	  swab2(&buff2[start], &tmp2, 1);
+        /// swap 2 bytes at a time from start and end
+        uint16_t tmp2 = buff2[--end];
+        if (chunk >= 2) {
+          buff2[end] = buff2[++start];
+          buff2[start] = tmp2;
+        }
+        /// swap single bytes
+        else {
+          swab2(&buff2[end], &buff2[++start], 1);
+          swab2(&buff2[start], &tmp2, 1);
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*
@@ -2084,7 +2084,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
     if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
-	haslock = TRUE;
+        haslock = TRUE;
       }
     }
   }
@@ -2148,7 +2148,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
     if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
-	haslock = TRUE;
+        haslock = TRUE;
       }
     }
   }

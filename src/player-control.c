@@ -182,11 +182,11 @@ static void prep_audio_player(void) {
   // - set time to (real) pointer time (which can be > video lenght)
   // --  if playing a selection, audio cannot start before sel start pos
   // -- if audio start <= video len, we will possibly realign
-  // we first set aseek_pos (bytes) for the file, then convert back to time 
+  // we first set aseek_pos (bytes) for the file, then convert back to time
   boolean realign = TRUE;
 
   mainw->video_seek_beacon = 0;
-  
+
   if (!mainw->preview && cfile->achans > 0) {
     double xtime = cfile->real_pointer_time;
     cfile->aseek_pos = (off64_t)(xtime * (double)cfile->arate) * cfile->achans * (cfile->asampsize >> 3);
@@ -194,8 +194,7 @@ static void prep_audio_player(void) {
       off64_t apos = (off64_t)((double)(mainw->play_start - 1.) / cfile->fps * (double)cfile->arate) * cfile->achans *
                      (cfile->asampsize / 8);
       if (apos > cfile->aseek_pos) cfile->aseek_pos = apos;
-    }
-    else if (xtime > cfile->video_time) realign = FALSE;
+    } else if (xtime > cfile->video_time) realign = FALSE;
     if (cfile->aseek_pos > cfile->afilesize) cfile->aseek_pos = 0.;
   }
 
@@ -203,18 +202,19 @@ static void prep_audio_player(void) {
     // set seek values initially in the player
     pthread_mutex_t *aplayer_seek_mutex =
       (pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
-    g_print("SETTing initial seek tome to %ld, %f, clip is %d\n", cfile->aseek_pos, BYTES_TO_TIME(cfile, cfile->aseek_pos), mainw->current_file);
+    g_print("SETTing initial seek tome to %ld, %f, clip is %d\n", cfile->aseek_pos, BYTES_TO_TIME(cfile, cfile->aseek_pos),
+            mainw->current_file);
     pthread_mutex_lock(aplayer_seek_mutex);
     lives_aplayer_set_seek_vals(mainw->aplayer, mainw->current_file,
-				BYTES_TO_TIME(cfile, cfile->aseek_pos),
-				cfile->adirection, 1.);
+                                BYTES_TO_TIME(cfile, cfile->aseek_pos),
+                                cfile->adirection, 1.);
     pthread_mutex_unlock(aplayer_seek_mutex);
 
     // start up our audio player
     // - we will create a buffer layer (if not already created), set seek values in it
     // then pre-fill the layer. If realign is set we will fine align with the video player after doing the first fill
 
-    // we have aplayer_prepare -> pulse / jack pb_ready -> 
+    // we have aplayer_prepare -> pulse / jack pb_ready ->
     lives_aplayer_do_seek(mainw->aplayer, realign, FALSE);
   }
 }
@@ -342,6 +342,16 @@ static void post_playback(void) {
   reset_ext_player_layer(TRUE);
   reset_old_frame_layer();
 
+  if (mainw->layers) {
+    for (int i = 0; i < mainw->num_tracks; i++) {
+      if (mainw->layers[i]) {
+        weed_layer_unref(mainw->layers[i]);
+        mainw->layers[i] = NULL;
+      }
+    }
+    lives_free(STEAL_POINTER(mainw->layers));
+  }
+
   if (prefs->show_player_stats && mainw->fps_measure > 0)
     d_print(_("Average FPS was %.4f (%d frames in clock time of %f)\n"),
             fps_med, mainw->fps_measure, lives_get_session_time());
@@ -426,6 +436,8 @@ static void post_playback(void) {
   }
 
   player_sensitize();
+
+  lives_widget_queue_draw_and_update(LIVES_MAIN_WINDOW_WIDGET);
 }
 
 
@@ -773,6 +785,7 @@ void play_file(void) {
         mainw->layers[i] = NULL;
       }
     }
+    lives_free(STEAL_POINTER(mainw->layers));
   }
 
   mainw->refresh_model = TRUE;
@@ -931,7 +944,7 @@ void play_file(void) {
 
       if (!mainw->multitrack || !mainw->multitrack->pb_start_event) {
 
-	begin_playback();
+        begin_playback();
 
         // reset audio buffers
         IF_APLAYER_JACK
@@ -1176,10 +1189,6 @@ void play_file(void) {
 
   //  ann_roll_cancel();
 
-  // wait for drawing operations to finish
-  fg_stack_wait();
-  lives_microsleep_while_true(mainw->do_ctx_update);
-
   // PLAY FINISHED...
 
   if (prefs->stop_screensaver) lives_reenable_screensaver();
@@ -1203,8 +1212,7 @@ void play_file(void) {
     mainw->mark_time = FALSE;
     if (lives_proc_thread_is_paused(mainw->player_proc))
       lives_proc_thread_request_resume(mainw->player_proc);
-  }
-  else pthread_mutex_unlock(&mainw->avseek_mutex);
+  } else pthread_mutex_unlock(&mainw->avseek_mutex);
 
   // TODO ***: use MIDI output port for this
   if (!mainw->foreign && prefs->midisynch) {
@@ -1214,6 +1222,10 @@ void play_file(void) {
   }
 
   mainw->noswitch = FALSE;
+
+  // wait for drawing operations to finish
+  fg_stack_wait();
+  lives_microsleep_while_true(mainw->do_ctx_update);
 
   if (mainw->foreign) {
     // recording from external window capture
@@ -1385,8 +1397,8 @@ void play_file(void) {
   }
 
   // allow the main thread to exit from its blocking loop, it will resume normal operations
-  lives_millisleep_while_true(mainw->do_ctx_update);
 
+  lives_microsleep_while_false(!mainw->do_ctx_update && get_screen_updated());
   mainw->block_accels = TRUE;
 
   // return to NORMAL GUi SERVICING

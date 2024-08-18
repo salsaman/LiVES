@@ -241,7 +241,7 @@ char *funcsig_to_param_string(funcsig_t sig) {
       if (!val) continue;
       fmtstring = lives_strdup_concat_sep(fmtstring, ", ", "%s",
                                           weed_seed_to_ctype(get_seedtype(get_typeletter(val)),
-							     FALSE));
+                                              FALSE));
     }
     return fmtstring;
   }

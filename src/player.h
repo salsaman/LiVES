@@ -92,6 +92,8 @@ boolean begin_playback(void);
 
 void clear_player_hooks(void);
 
+boolean get_screen_updated(void);
+
 boolean clip_can_reverse(int clipno);
 
 const char *get_cache_stats(void);

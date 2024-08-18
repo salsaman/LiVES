@@ -183,56 +183,56 @@ void _register_blueprint(uint64_t pltype, const char *regstr, ...) {
                                 st = weed_get_int_value(def, LIVES_LEAF_VALUE_TYPE, NULL);
                                 flags = weed_get_uint64_value(def, WEED_LEAF_FLAGS, NULL);
                                 valdef_plant = plant_from_blueprint(LIVES_PLANT_VALUE_DEF,
-								    LIVES_LEAF_BLUEPRINT_PTR, NULL,
-								    WEED_LEAF_NAME, NULL,
-								    LIVES_LEAF_VALUE_TYPE, st,
-								    WEED_LEAF_FLAGS, flags, NULL);
-				if (key) name = lives_strdup(key);
-				lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
-				lives_index_set_autofree(val_index, name, TRUE); lives_free(name););
+                                               LIVES_LEAF_BLUEPRINT_PTR, NULL,
+                                               WEED_LEAF_NAME, NULL,
+                                               LIVES_LEAF_VALUE_TYPE, st,
+                                               WEED_LEAF_FLAGS, flags, NULL);
+                                if (key) name = lives_strdup(key);
+                                lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
+                                lives_index_set_autofree(val_index, name, TRUE); lives_free(name););
 
-				continue;
+            continue;
           }
           goto baderr;
         }
-	if (!lives_strcmp(name, "@USES")) {
-	  // just add a placeholder, when we create the blueprint, we call the setter func(blueprint)
-	  // an interface is like a bluprint, but it has const char *ifname, and a funcdef completion fun
-	  uint64_t pltype2 = va_arg(va, uint64_t);
+        if (!lives_strcmp(name, "@USES")) {
+          // just add a placeholder, when we create the blueprint, we call the setter func(blueprint)
+          // an interface is like a bluprint, but it has const char *ifname, and a funcdef completion fun
+          uint64_t pltype2 = va_arg(va, uint64_t);
           char *pltypestr2 = LSPF("%"PRIu64, pltype2);
 
-	  // get blueprint for type
-	  err = lives_index_get_value(&blup, allblu, pltypestr2);
-	  if (err != WEED_SUCCESS) {
-	    lives_free(pltypestr2);
-	    goto baderr;
-	  }
-	  char *iftypename = LSPF("%lu", pltypestr2);
-	  lives_free(pltypestr2);
-	  
-	  // checked now just add placeholder
+          // get blueprint for type
+          err = lives_index_get_value(&blup, allblu, pltypestr2);
+          if (err != WEED_SUCCESS) {
+            lives_free(pltypestr2);
+            goto baderr;
+          }
+          char *iftypename = LSPF("%lu", pltypestr2);
+          lives_free(pltypestr2);
 
-	  st = weed_get_int_value(blup, LIVES_LEAF_VALUE_TYPE, NULL);
-	  flags = weed_get_uint64_value(blup, WEED_LEAF_FLAGS, NULL);
+          // checked now just add placeholder
 
-	  valdef_plant = plant_from_blueprint(LIVES_PLANT_VALUE_DEF,
-					      LIVES_LEAF_BLUEPRINT_PTR, NULL,
-					      WEED_LEAF_NAME, iftypename,
-					      LIVES_LEAF_VALUE_TYPE, st,
-					      WEED_LEAF_FLAGS, flags, NULL);
-	  lives_free(iftypename);
-	  name = lives_strdup(iftypename);
-	  lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
-	  lives_index_set_autofree(val_index, name, TRUE);
-	  lives_free(name);
-	  continue;
-	}
+          st = weed_get_int_value(blup, LIVES_LEAF_VALUE_TYPE, NULL);
+          flags = weed_get_uint64_value(blup, WEED_LEAF_FLAGS, NULL);
+
+          valdef_plant = plant_from_blueprint(LIVES_PLANT_VALUE_DEF,
+                                              LIVES_LEAF_BLUEPRINT_PTR, NULL,
+                                              WEED_LEAF_NAME, iftypename,
+                                              LIVES_LEAF_VALUE_TYPE, st,
+                                              WEED_LEAF_FLAGS, flags, NULL);
+          lives_free(iftypename);
+          name = lives_strdup(iftypename);
+          lives_index_set_value(val_index, name, WEED_SEED_PLANTPTR, valdef_plant);
+          lives_index_set_autofree(val_index, name, TRUE);
+          lives_free(name);
+          continue;
+        }
       }
       //
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
         //valdef->pl_subtype =
-	  va_arg(va, int64_t);
+        va_arg(va, int64_t);
         //subtype = va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
@@ -315,7 +315,7 @@ baderr:
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
         //valdef->pl_subtype =
-	va_arg(va, int64_t);
+        va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
@@ -351,8 +351,8 @@ baderr:
       if (!name) break;
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
-	// valdef->pl_subtype =
-	va_arg(va, int64_t);
+        // valdef->pl_subtype =
+        va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
@@ -394,7 +394,7 @@ baderr:
       st = va_arg(va, weed_seed_t);
       if (st == LIVES_SEED_LIVES_PLANT) {
         //valdef->pl_subtype =
-	va_arg(va, int64_t);
+        va_arg(va, int64_t);
         st = WEED_SEED_PLANTPTR;
         xflags |= BLU_FLAG_AUTOUNREF;
       }
@@ -456,7 +456,7 @@ void register_blueprints(void) {
   //
   register_blueprint(INDEX, LIVES_DEF_BLUEPRINT, LIVES_LEAF_PREFIX, LIVES_SEED_CONST_CHARPTR,
                      BLU_FLAGS_NONE, LIVES_LEAF_INDEX_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE,
-		     LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, NULL);
+                     LIVES_LEAF_ITEM_TYPE, WEED_SEED_INT, BLU_FLAGS_NONE, NULL);
   //
   register_blueprint(VALUE_DEF, LIVES_LEAF_BLUEPRINT_PTR, WEED_SEED_VOIDPTR,
                      BLU_FLAGS_NONE, WEED_LEAF_NAME, LIVES_SEED_CONST_CHARPTR,
@@ -535,7 +535,6 @@ static weed_plant_t *plant_from_template_va(bootstrap_template *templ, va_list v
     uint64_t flags = 0;
     char *name = va_arg(va, char *);
     if (!name) break;
-    g_print("nmm id %s\n", name);
     bootstrap_valdef *valdef;
     // search for "name" in value_defs
     LiVESList *list;

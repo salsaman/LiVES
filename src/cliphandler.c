@@ -2483,8 +2483,8 @@ lives_result_t switch_audio_clip(int new_file, boolean activate) {
       (pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
     pthread_mutex_lock(aplayer_seek_mutex);
     lives_aplayer_set_seek_vals(mainw->aplayer, new_file,
-				BYTES_TO_TIME(sfile, sfile->aseek_pos),
-				sfile->adirection, 1.);
+                                BYTES_TO_TIME(sfile, sfile->aseek_pos),
+                                sfile->adirection, 1.);
     pthread_mutex_unlock(aplayer_seek_mutex);
     lives_aplayer_do_seek(mainw->aplayer, FALSE, FALSE);
   }

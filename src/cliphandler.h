@@ -593,7 +593,7 @@ typedef struct _lives_clip_t {
   // fields after here can be removed or changed or added to
 
 #undef boolean
-  
+
   boolean has_binfmt;
 
   // TODO - this will change soon. In the future, we can have multiple clip_srcs per clip

@@ -42,12 +42,14 @@ LIVES_GLOBAL_INLINE int lives_unset_status(int status) {
 }
 
 
-static boolean all_updated = TRUE;
+static boolean screen_updated = TRUE;
+
+boolean get_screen_updated(void) {return screen_updated;}
 
 static boolean updates_done(lives_proc_thread_t self, void *unused) {
   //g_main_context_iteration(NULL, FALSE);
   mainw->do_ctx_update = TRUE;
-  all_updated = TRUE;
+  screen_updated = TRUE;
   return TRUE;
 }
 
@@ -55,23 +57,23 @@ static boolean updates_done(lives_proc_thread_t self, void *unused) {
 void clear_player_hooks(void) {
   lives_hook_stack_t *sah =
     lives_proc_thread_get_hook_stacks(mainw->player_proc)[SYNC_ANNOUNCE_HOOK];
-  lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
+  lives_microsleep_while_false(!mainw->do_ctx_update && screen_updated);
   fg_stack_wait();
   rte_keys_update();
-  if (sah->stack && all_updated) {
+  if (sah->stack && screen_updated) {
     GET_PROC_THREAD_SELF(self);
-    all_updated = FALSE;
+    screen_updated = FALSE;
     lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done);
     mainw->gui_much_events = TRUE;
     mainw->do_ctx_update = TRUE;
     lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
-    lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
+    lives_microsleep_while_false(!mainw->do_ctx_update && screen_updated);
     fg_stack_wait();
   }
 }
 
 
-boolean is_all_updated(void) {return all_updated;}
+boolean is_screen_updated(void) {return screen_updated;}
 
 LIVES_GLOBAL_INLINE boolean lives_has_status(int status) {return (mainw->status & status) ? TRUE : FALSE;}
 
@@ -140,16 +142,18 @@ lives_result_t video_sync_ready(void) {
   (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->jackd->is_paused)) {
   mainw->video_seek_beacon = -1;
-  return LIVES_RESULT_FAIL;})
+  return LIVES_RESULT_FAIL;
+});
 
   IF_APLAYER_PULSE
   (if (LIVES_UNLIKELY(mainw->event_list && LIVES_IS_PLAYING && !mainw->record
   && !mainw->record_paused && mainw->pulsed->is_paused)) {
   mainw->video_seek_beacon = -1;
   mainw->avsync_time = 0.;
-  return LIVES_RESULT_FAIL;})
+  return LIVES_RESULT_FAIL;
+});
 
-    pthread_mutex_t *aplayer_seek_mutex =
+  pthread_mutex_t *aplayer_seek_mutex =
     (pthread_mutex_t *)weed_get_voidptr_value(aplayer, "seekmutex", NULL);
 
   pthread_mutex_lock(aplayer_seek_mutex);
@@ -1202,11 +1206,11 @@ frames_t load_frame_image(frames_t frame) {
     if (prefs->audio_src == AUDIO_SRC_INT && mainw->aplayer) {
       // if audio is trying to resync set the target beacon
       pthread_mutex_t *aplayer_seek_mutex =
-	(pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
-      //pthread_mutex_lock(aplayer_seek_mutex);
+        (pthread_mutex_t *)weed_get_voidptr_value(mainw->aplayer, "seekmutex", NULL);
+      pthread_mutex_lock(aplayer_seek_mutex);
       if (lives_aplayer_get_seek_state(mainw->aplayer) != not_seeking)
         mainw->video_seek_beacon = frame;
-      //pthread_mutex_unlock(aplayer_seek_mutex);
+      pthread_mutex_unlock(aplayer_seek_mutex);
     }
 
     /* in render frame, we would have set all frames to either prepared or loaded */
@@ -1538,29 +1542,23 @@ frames_t load_frame_image(frames_t frame) {
       frame_layer = weed_layer_new(WEED_LAYER_TYPE_VIDEO);
       weed_layer_copy(frame_layer, mainw->frame_layer);
     }
-    /* if (!mainw->debug_ptr) */
-    /*   mainw->debug_ptr = frame_layer; */
 
-
-    lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
+    //lives_microsleep_while_false(!mainw->do_ctx_update && screen_updated);
 
     // this will ensure the layer is unreffed even if the func data is replaced by UNIQUE_DATA
     // otherwise only free_lpt is unreffed
 
     // make sure this gets freed eventually
     lives_funcinst_t *free_finst = lives_funcinst_create(weed_layer_unref, WEED_SEED_VOID, "V", frame_layer);
-    mainw->debug_ptr = free_finst;
+    //mainw->debug_ptr = free_finst;
+    void *draw_target = (void *)mainw->play_image;
 
-    if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window))) {
-      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
-                                         HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-                                         lives_layer_draw, WEED_SEED_VOID, "VV", mainw->preview_image, NULL, frame_layer, free_finst);
-    } else {
-      lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA | HOOK_OPT_PRIORITY |
-                                         HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
-                                         lives_layer_draw, WEED_SEED_VOID, "VV", mainw->play_image, NULL, frame_layer, free_finst);
-    }
+    if (mainw->play_window && LIVES_IS_XWINDOW(lives_widget_get_xwindow(mainw->play_window)))
+      draw_target = (void *)mainw->preview_image;
 
+    lives_proc_thread_add_hook_cb_full(mainw->player_proc, SYNC_ANNOUNCE_HOOK, HOOK_UNIQUE_DATA |
+                                       HOOK_CB_HAS_FREEFUNCS | HOOK_OPT_FG_LIGHT,
+                                       lives_layer_draw, WEED_SEED_VOID, "VV", draw_target, NULL, frame_layer, free_finst);
     frame_layer = NULL;
     goto lfi_done;
   }
@@ -1574,9 +1572,9 @@ frames_t load_frame_image(frames_t frame) {
 
     if (!cr) ____FUNC_EXIT_VAL____(0);
 
-    if (mainw->rec_vid_frames == -1) {
+    if (mainw->rec_vid_frames == -1)
       lives_entry_set_text(LIVES_ENTRY(mainw->framecounter), (tmp = lives_strdup_printf("%9d", frame)));
-    } else {
+    else {
       if (frame > mainw->rec_vid_frames) {
         mainw->cancelled = CANCEL_KEEP;
         if (CURRENT_CLIP_HAS_VIDEO) cfile->frames = mainw->rec_vid_frames;
@@ -1647,13 +1645,6 @@ lfi_done:
     frame_layer = NULL;
   }
 
-  // this is reset when we call avsync_force()
-  // the audio will have seeked to this frame and then be holding (outputting silence)
-  // the audio player will signal when it reaches that point by setting audio_seek_ready to TRUE
-  // once we set video_seek_beacoyn to TRUE, the audio can continue
-  // the timer will be advancing during this, so we discount the time spent waiting for audio_seek_ready
-  //if (!mainw->video_seek_beacon) video_sync_ready();
-
   if (framecount) {
     if ((!mainw->fs || (prefs->play_monitor != 0 &&
                         prefs->play_monitor != widget_opts.monitor + 1))
@@ -1687,7 +1678,7 @@ lfi_done:
   if (!success) {
     if (!mainw->refresh_model && mainw->cancelled == CANCEL_NONE) {
       if (errpt <= 15) {
-        lives_microsleep_while_false(!mainw->do_ctx_update && all_updated);
+        lives_microsleep_while_false(!mainw->do_ctx_update && screen_updated);
         if (!mainw->refresh_model) {
           // free pixdata for frame_layer, then run the next cycle
           run_next_cycle();
@@ -1697,7 +1688,6 @@ lfi_done:
     ____FUNC_EXIT_VAL____(0);
   }
 
-  //fg_stack_wait();
   rte_keys_update();
 
   if (!mainw->refresh_model) {
@@ -1705,7 +1695,7 @@ lfi_done:
       self_hook_stack(SYNC_ANNOUNCE_HOOK);
     if (sah->stack) {
       GET_PROC_THREAD_SELF(self);
-      all_updated = FALSE;
+      screen_updated = FALSE;
       lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, 0, updates_done);
       mainw->gui_much_events = TRUE;
       mainw->do_ctx_update = TRUE;
@@ -2762,7 +2752,7 @@ close_clip:
 
   //////////////
   if (!mainw->plan_cycle) {
-    if (!mainw->do_ctx_update && all_updated) {
+    if (!mainw->do_ctx_update && screen_updated) {
       rte_keys_update();
       if (!mainw->refresh_model && mainw->cancelled == CANCEL_NONE) {
         fg_stack_wait();
@@ -2842,10 +2832,10 @@ close_clip:
     }
 
     // screen update during event playback
-    if (!mainw->do_ctx_update && all_updated) {
+    if (!mainw->do_ctx_update && screen_updated) {
       if (sah->stack) {
         GET_PROC_THREAD_SELF(self);
-        all_updated = FALSE;
+        screen_updated = FALSE;
         lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK, HOOK_OPT_FG_LIGHT, updates_done);
         lives_proc_thread_trigger_hook(SYNC_ANNOUNCE_HOOK);
       }
@@ -2883,16 +2873,16 @@ close_clip:
 
     // first ensure that audio is not seeking towards old position
     mainw->video_seek_beacon = -1;
-    
+
     sfile->frameno = sfile->last_req_frame = requested_frame
-      = fixed_frame = sfile->next_frame;
+                     = fixed_frame = sfile->next_frame;
     sfile->next_frame = 0;
-    mainw->force_show = TRUE; 
+    mainw->force_show = TRUE;
     mainw->startticks = mainw->currticks;
     mainw->scratch = SCRATCH_JUMP;
   }
 
-  if (mainw->scratch == SCRATCH_NONE) {  
+  if (mainw->scratch == SCRATCH_NONE) {
     if (mainw->currticks - last_kbd_ticks > KEY_RPT_INTERVAL * 100000) {
       // if we have a cached key (ctrl-up, ctrl-down, ctrl-left, crtl-right) trigger it here
       // this is to avoid the keyboard repeat delay so we get smooth trickplay
@@ -2906,17 +2896,17 @@ close_clip:
     // for appling a tempotary impulse to sfile->pb_fps
 
     if (mainw->scratch == SCRATCH_FWD || mainw->scratch == SCRATCH_BACK
-	|| mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
+        || mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA) {
       sfile->fps_scale = KEY_RPT_INTERVAL * prefs->scratchback_amount
-	* USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
+                         * USEC_TO_TICKS / TICKS_PER_SECOND_DBL;
       if (mainw->scratch == SCRATCH_BACK || mainw->scratch == SCRATCH_BACK_EXTRA) {
-	sfile->fps_scale = -sfile->fps_scale;
+        sfile->fps_scale = -sfile->fps_scale;
       }
       if (mainw->scratch == SCRATCH_FWD_EXTRA || mainw->scratch == SCRATCH_BACK_EXTRA)
-	sfile->fps_scale *= 4.;
+        sfile->fps_scale *= 4.;
 
       if (!clip_can_reverse(mainw->playing_file) && sfile->fps_scale < 0.)
-	sfile->fps_scale = 1. / abs(sfile->fps_scale);
+        sfile->fps_scale = 1. / abs(sfile->fps_scale);
 
       if (AUD_SRC_EXTERNAL) sfile->last_req_frame = sfile->last_frameno;
 
@@ -2936,7 +2926,7 @@ close_clip:
 
   if (mainw->scratch == SCRATCH_JUMP) {
     if (!(prefs->audio_opts & (AUDIO_OPTS_IS_LOCKED
-			       | AUDIO_OPTS_NO_RESYNC_VPOS)))
+                               | AUDIO_OPTS_NO_RESYNC_VPOS)))
       avsync_force(mainw->aplayer);
     mainw->scratch = SCRATCH_JUMP_NORESYNC;
     drop_off = TRUE;
@@ -3022,7 +3012,7 @@ close_clip:
       }
 
       //////////////////////////////////////
-      
+
       if (LIVES_LIKELY(mainw->cancelled == CANCEL_NONE)) {
         /// get frame position at current time
         //#define DEBUG_FRAME_TIMING
@@ -3038,18 +3028,18 @@ close_clip:
         lives_printerr("POST: %ld %ld %d (%ld %d)\n", mainw->startticks, new_ticks, requested_frame, mainw->pred_frame, getahead);
 #endif
 
-	///////////////////////////////////
+        ///////////////////////////////////
 
         /// check if we got a new frame, otherwise we can increment spare_cycles
-	if (fixed_frame > 0) {
-	  // we can handle fixed_frame in one of 2 ways - show immediate, show as next frame
-	  requested_frame = xrequested_frame = fixed_frame;
-	  show_frame = TRUE;
-	}
+        if (fixed_frame > 0) {
+          // we can handle fixed_frame in one of 2 ways - show immediate, show as next frame
+          requested_frame = xrequested_frame = fixed_frame;
+          show_frame = TRUE;
+        }
         if (new_ticks != mainw->startticks) {
-	  if (fixed_frame > 0) {
-	    requested_frame = xrequested_frame = fixed_frame;
-	  }
+          if (fixed_frame > 0) {
+            requested_frame = xrequested_frame = fixed_frame;
+          }
           last_spare_cycles = spare_cycles;
           spare_cycles = 0;
           if (!IS_PHYSICAL_CLIP(mainw->playing_file)) {
@@ -3677,7 +3667,7 @@ update_effort:
                                            dir * (sfile->last_req_frame - sfile->last_frameno) >= MAX_JMP_THRESH))) {
             if ((prefs->audio_opts & AUDIO_OPTS_IS_LOCKED) || AUD_SRC_EXTERNAL) {
               mainw->startticks = mainw->currticks;
-              sfile->last_frameno = sfile->frameno = sfile->last_req_frame; 
+              sfile->last_frameno = sfile->frameno = sfile->last_req_frame;
               can_precache = FALSE;
             } else {
               lives_decoder_t *dplug = NULL;
@@ -3792,7 +3782,7 @@ update_effort:
 	    }}}}}
     // *INDENT-ON*
 #ifdef SHOW_CACHE_PREDICTIONS
-      //g_print("frame %ld already in cache\n", mainw->pred_frame);
+    //g_print("frame %ld already in cache\n", mainw->pred_frame);
 #endif
 
 #endif
@@ -3823,7 +3813,7 @@ skip_load:
       // the audio thread wants to update the parameter scroll(s)
       if (mainw->ce_thumbs) ce_thumbs_apply_rfx_changes();
 
-      if (!mainw->do_ctx_update && all_updated && !mainw->refresh_model) {
+      if (!mainw->do_ctx_update && screen_updated && !mainw->refresh_model) {
         // redrawing  the embedded frame image and
         // events like fullscreen on / off are not acted on directly, instead these are stacked
         // for execution at this point. The callbacks are triggered and will pass requests to the main
@@ -3836,7 +3826,7 @@ skip_load:
 
         if (sah->stack) {
           GET_PROC_THREAD_SELF(self);
-          all_updated = FALSE;
+          screen_updated = FALSE;
           // here we trigger only "light" updates, e.g drawing updates
           lives_proc_thread_add_hook_cb(self, SYNC_ANNOUNCE_HOOK,
                                         HOOK_OPT_FG_LIGHT, updates_done);

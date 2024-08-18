@@ -1922,7 +1922,7 @@ static boolean _do_auto_dialog(const char *text, int type, weed_funcptr_t xstopf
   double time_rem, last_time_rem = 10000000.;
 
 
-  
+
   g_print("TYPE IS %d\n", type);
 
   LIVES_ASSERT(type >= 0 && type <= 2);

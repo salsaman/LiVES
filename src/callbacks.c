@@ -5318,8 +5318,7 @@ boolean fps_reset_callback(LiVESAccelGroup * group, LiVESWidgetObject * obj, uin
   if (!(prefs->audio_opts & AUDIO_OPTS_NO_RESYNC_FPS)
       && (!(prefs->audio_opts & AUDIO_OPTS_IS_LOCKED)
           || (prefs->audio_opts & AUDIO_OPTS_LOCKED_RESET))) {
-
-
+    lives_aplayer_set_velocity(mainw->aplayer, 1.);
     mainw->scratch = SCRATCH_JUMP;
   } else if (mainw->scratch != SCRATCH_JUMP) mainw->scratch = SCRATCH_JUMP_NORESYNC;
 
@@ -10204,18 +10203,10 @@ void changed_fps_during_pb(LiVESSpinButton * spinbutton, livespointer user_data)
           mainw->scratch = SCRATCH_JUMP;
       } else {
         if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_FPS) {
-#ifdef ENABLE_JACK
-          if (prefs->audio_player == AUD_PLAYER_JACK) {
-            jack_set_avel(mainw->jackd, mainw->playing_file, sfile->pb_fps / sfile->fps);
-          }
-#endif
-#ifdef HAVE_PULSE_AUDIO
-          if (prefs->audio_player == AUD_PLAYER_PULSE) {
-            //pulse_set_avel(mainw->pulsed, mainw->playing_file, sfile->pb_fps / sfile->fps);
-          }
-#endif
+          lives_aplayer_set_velocity(mainw->aplayer, sfile->pb_fps / sfile->fps);
+        }
 	  // *INDENT-OFF*
-	}}}}
+	}}}
   // *INDENT-ON*
 
   if (sfile->play_paused && new_fps != 0.) {

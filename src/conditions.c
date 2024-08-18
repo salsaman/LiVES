@@ -202,10 +202,8 @@ static allvalues_t *cond_local_var(const char *item) {return allvalues_copy(get_
 
 // book vals are allvalues so we dont know type till we read them
 static allvalues_t *cond_local_value(LiVESList **va_magic, const char *item) {
-  g_print("item is %s\n", item);
   if (!item) {
     GET_CONDVAL(item, const char *, va_magic);
-    g_print("2item is %s\n", item);
     check_for_surprises(va_magic);
     d_print_debug(", %s", item);
   }

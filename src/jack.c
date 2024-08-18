@@ -3564,7 +3564,7 @@ void jack_aud_pb_ready(jack_driver_t *jackd, boolean realign) {
   lives_clip_t *sfile;
   int clipno = lives_aplayer_get_seek_clip(jackd->inst);
   double seektime = lives_aplayer_get_seek_time(jackd->inst);
-  
+
   if (!jackd || !IS_VALID_CLIP(clipno)) return;
   sfile = mainw->files[clipno];
 

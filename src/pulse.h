@@ -55,7 +55,7 @@ typedef struct {
   pa_stream_state_t state;
 
   audio_dtls attached;
-  
+
   // app side
   volatile int in_arate; /**< samples(frames) per second */
   int in_achans; /**< number of input channels(1 is mono, 2 stereo etc..) */

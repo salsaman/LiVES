@@ -7124,41 +7124,43 @@ boolean weed_deinit_effect(int hotkey) {
 
     if (mainw->playing_file > 0 && prefs->audio_src == AUDIO_SRC_EXT) {
       IF_APLAY_TYPE_JACK
-        (if (!mainw->jackd_read || !mainw->jackd_read->in_use) {
-          mainw->jackd->in_use = FALSE; // deactivate writer
-          jack_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
-          jack_time_reset(mainw->jackd_read, lives_jack_get_time(mainw->jackd)); // ensure time continues monotonically
-          if (mainw->record) mainw->jackd_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
-          mainw->jackd_read->is_paused = FALSE;
-          mainw->jackd_read->in_use = TRUE;
-          if (mainw->jackd) {
-            mainw->jackd->playing_file = -1;
-          }})
+      (if (!mainw->jackd_read || !mainw->jackd_read->in_use) {
+      mainw->jackd->in_use = FALSE; // deactivate writer
+      jack_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
+        jack_time_reset(mainw->jackd_read, lives_jack_get_time(mainw->jackd)); // ensure time continues monotonically
+        if (mainw->record) mainw->jackd_read->playing_file = mainw->ascrap_file; // if recording, continue to write to ascrap file
+        mainw->jackd_read->is_paused = FALSE;
+        mainw->jackd_read->in_use = TRUE;
+        if (mainw->jackd) {
+          mainw->jackd->playing_file = -1;
+        }
+      })
 
-	IF_APLAY_TYPE_PULSE
-	(if (!mainw->pulsed_read || !mainw->pulsed_read->in_use) {
-          if (mainw->pulsed) mainw->pulsed->in_use = FALSE; // deactivate writer
-          pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
-          if (mainw->pulsed) {
-            ticks_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
-            if (audio_ticks == -1) {
-              mainw->cancelled = handle_audio_timeout();
-              weed_instance_unref(instance); // remove ref from weed instance obtain
-              return TRUE;
-            }
-            pa_time_reset(mainw->pulsed_read, -audio_ticks); // ensure time continues monotonically
-            pulse_driver_uncork(mainw->pulsed_read);
-            if (mainw->pulsed) {
-              pulse_driver_cork(mainw->pulsed);
-              lives_aplayer_set_clip(mainw->aplayer, -1);
-            }
+      IF_APLAY_TYPE_PULSE
+      (if (!mainw->pulsed_read || !mainw->pulsed_read->in_use) {
+      if (mainw->pulsed) mainw->pulsed->in_use = FALSE; // deactivate writer
+        pulse_rec_audio_to_clip(-1, 0, RECA_MONITOR); //activate reader
+        if (mainw->pulsed) {
+          ticks_t audio_ticks = lives_pulse_get_time(mainw->pulsed_read);
+          if (audio_ticks == -1) {
+            mainw->cancelled = handle_audio_timeout();
+            weed_instance_unref(instance); // remove ref from weed instance obtain
+            return TRUE;
           }
-          if (mainw->record) {
-            // if recording, continue to write to ascrap file
-            lives_aplayer_set_clip(mainw->areader, mainw->ascrap_file);
-            mainw->pulsed_read->is_paused = FALSE;
-            mainw->pulsed_read->in_use = TRUE;
-          }})
+          pa_time_reset(mainw->pulsed_read, -audio_ticks); // ensure time continues monotonically
+          pulse_driver_uncork(mainw->pulsed_read);
+          if (mainw->pulsed) {
+            pulse_driver_cork(mainw->pulsed);
+            lives_aplayer_set_clip(mainw->aplayer, -1);
+          }
+        }
+        if (mainw->record) {
+          // if recording, continue to write to ascrap file
+          lives_aplayer_set_clip(mainw->areader, mainw->ascrap_file);
+          mainw->pulsed_read->is_paused = FALSE;
+          mainw->pulsed_read->in_use = TRUE;
+        }
+      })
     } else if (mainw->playing_file > 0) {
       // for internal, continue where we should
       if (prefs->audio_opts & AUDIO_OPTS_FOLLOW_CLIPS) switch_audio_clip(mainw->playing_file, TRUE);
@@ -7167,17 +7169,17 @@ boolean weed_deinit_effect(int hotkey) {
           // audio doesn't follow clip switches and we were playing this...
           mainw->cancelled = CANCEL_AUD_END;
         } else {
-	  IF_APLAYER_PULSE
-	    (if (mainw->pulsed) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
-	     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-	       pulse_get_rec_avals(mainw->pulsed);
-	     })
+          IF_APLAYER_PULSE
+          (if (mainw->pulsed) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
+          if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+            pulse_get_rec_avals(mainw->pulsed);
+            })
 
-	    IF_APLAYER_JACK
-            (if (mainw->jackd) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
-	     if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
-	       jack_get_rec_avals(mainw->jackd);
-	     })
+          IF_APLAYER_JACK
+          (if (mainw->jackd) lives_aplayer_set_clip(mainw->aplayer, mainw->pre_src_audio_file);
+          if (mainw->record && !mainw->record_paused && (prefs->rec_opts & REC_AUDIO)) {
+            jack_get_rec_avals(mainw->jackd);
+            })
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*

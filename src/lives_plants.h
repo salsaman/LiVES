@@ -108,7 +108,7 @@ int64_t lives_plant_get_subtype(weed_plant_t *);
 #define BLU_FLAG_EXT_TYPE	(1ull << 40)
 
 // if set, flags must be followed by the name of the mutex strand
-// also addds atomic_exchange and atomic cmp exchg 
+// also addds atomic_exchange and atomic cmp exchg
 #define BLU_FLAG_ATOMIC_OPS	(1ull << 41)
 
 // add undel host, simlar to  rdonlyhost; applies unless..
@@ -180,11 +180,11 @@ void dump_blueprint(uint64_t pltype);
 // adds leaves at toplevel, prefixed by .ifname.
 #define USES_INTERFACE(ifname) "@USES", LIVES_##ifname##_INTERFACE
 
-// includes subplant(s)adds 
+// includes subplant(s)adds
 #define INCLUDES_SUB(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_AUTOUNREF
 #define INCLUDES_SUB_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY | BLU_FLAG_AUTOUNREF
 
-// adds ref to external plants 
+// adds ref to external plants
 #define ADD_REF(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, 0
 #define ADD_REF_ARRAY(ptype, name) name, LIVES_SEED_LIVES_PLANT, LIVES_PLANT_##ptype, BLU_FLAG_ARRAY
 

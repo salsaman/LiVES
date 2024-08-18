@@ -54,7 +54,7 @@ typedef struct {
 // (needstarget)
 // seek target locked in, or bb_pos shifted
 // exact_target or approx -> conv, conv approx
-// 
+//
 // (layer filled at new pos)
 
 // cbuffer filled after search or shif
@@ -68,41 +68,41 @@ typedef struct {
 
 // P = player set state, C = cache set state
 typedef enum {
-	      not_seeking,
-	      // player sets seek
-	      
-	      // for resync
-	      seek_needstarget, //P
-	      // if we get video beacon
-	      seek_targetA, //P
-	      // seek to a time, ignoring video beacon
-	      seek_targetE, //P
+  not_seeking,
+  // player sets seek
 
-	      // cacher gets target values
-	      
-	      // cache thread sets this for approx target after confirming seek target
-	      seek_convergingA, // C
-	      // cache thread sets this for exact target
-	      // then after seek, resets to not_seeking
-	      seek_convergingE, // C
+  // for resync
+  seek_needstarget, //P
+  // if we get video beacon
+  seek_targetA, //P
+  // seek to a time, ignoring video beacon
+  seek_targetE, //P
 
-	      // converging && seek done and load
-	      // (or only offset)
-	      seek_loadedE, // C
-	      
-	      // vidplayer freezes
-	      seek_approximate, // C
+  // cacher gets target values
 
-	      // loaded && cbuffer filled
-	      // seek_loadedE -> not_seeking
+  // cache thread sets this for approx target after confirming seek target
+  seek_convergingA, // C
+  // cache thread sets this for exact target
+  // then after seek, resets to not_seeking
+  seek_convergingE, // C
 
-	      // seek_approximate && vidplayer frozen
-	      // player  sets final seek
-	      seek_realign, // P ?
+  // converging && seek done and load
+  // (or only offset)
+  seek_loadedE, // C
 
-	      // realign && cbuffer load
-	      // avsync, the not_seeking
-	      seek_ready, // P
+  // vidplayer freezes
+  seek_approximate, // C
+
+  // loaded && cbuffer filled
+  // seek_loadedE -> not_seeking
+
+  // seek_approximate && vidplayer frozen
+  // player  sets final seek
+  seek_realign, // P ?
+
+  // realign && cbuffer load
+  // avsync, the not_seeking
+  seek_ready, // P
 } seek_phase;
 
 #define Q_SAMPLE(sfile, bytes) ((int64_t)((double)bytes / (double)((sfile)->asampsize >> 3) \
@@ -110,17 +110,17 @@ typedef enum {
 				* ((sfile)->asampsize >> 3) * (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.))
 
 #define BYTES_TO_SAMPS(sfile, bytes) ((sfile) ? ((double)(bytes) / (double)((sfile)->asampsize >> 3) \
-						 / (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.) 
+						 / (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.)
 
 #define SAMPS_TO_BYTES(sfile, samps)  ((sfile) ? ((double)(bytes) / (double)((sfile)->asampsize >> 3) \
 						  / (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.)
 
 #define BYTES_TO_TIME(sfile, bytes) ((sfile) ? ((double)(bytes) / (double)((sfile)->arate) \
 						/ (double)((sfile)->asampsize >> 3) \
-						/ (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.) 
+						/ (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0.)
 #define TIME_TO_BYTES(sfile, time) ((sfile) ? Q_SAMPLE((sfile), (time) * (double)((sfile)->arate) \
 						       * (double)((sfile)->asampsize >> 3) \
-						       * (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0) 
+						       * (!((sfile)->aplanar) ? (double)(sfile)->achans : 1.)) : 0)
 
 #define BYTES_TO_FRAME(sfile, bytes) (TIME_TO_FRAME(BYTES_TO_TIME(sfile, bytes)))
 #define FRAME_TO_BYTES(sfile, frame) (TIME_TO_BYTES(FRAME_TO_TIME(sfile, frame)))
@@ -132,7 +132,7 @@ typedef enum {
 #define FRAME_TO_SAMPS(sfile, frame) (TIME_TO_SAMPS(FRAME_TO_TIME(sfile, frame)))
 
 #define FRAME_TO_TIME(sfile, frame) (((sfile) && (sfile)->fps) ? (double)((frame) - 1.) / (sfile)->fps : 0.)
-#define TIME_TO_FRAME(sfile, time) ((sfile) ? (time) * (sfile)->fps + 1. : 0) 
+#define TIME_TO_FRAME(sfile, time) ((sfile) ? (time) * (sfile)->fps + 1. : 0)
 
 #define LIVES_LEAF_AUDIO_INTERLEAVED 	"audio_inter"
 #define LIVES_LEAF_AUDIO_SAMPS 		"audio_samps"
@@ -163,7 +163,7 @@ typedef struct {
 
 lives_obj_instance_t *get_aplayer_instance(int source);
 weed_error_t lives_aplayer_set_limit_behaviour(lives_obj_instance_t *aplayer,
-					      limit_behaviour_t low, limit_behaviour_t high);
+    limit_behaviour_t low, limit_behaviour_t high);
 limit_behaviour_t lives_aplayer_get_limit_behaviour_high(lives_obj_instance_t *aplayer);
 limit_behaviour_t lives_aplayer_get_limit_behaviour_low(lives_obj_instance_t *aplayer);
 int lives_aplayer_get_source(lives_obj_instance_t *aplayer);
@@ -351,10 +351,10 @@ weed_error_t lives_aplayer_set_data(lives_obj_instance_t *aplayer, void **data);
 /////////////////////////////////////
 
 typedef enum {
-	      LIVES_NOP_OPERATION = 0,
-	      LIVES_READ_OPERATION,
-	      LIVES_WRITE_OPERATION,
-	      LIVES_CONVERT_OPERATION
+  LIVES_NOP_OPERATION = 0,
+  LIVES_READ_OPERATION,
+  LIVES_WRITE_OPERATION,
+  LIVES_CONVERT_OPERATION
 } lives_operation_t;
 
 typedef struct {
@@ -494,15 +494,15 @@ boolean adjust_clip_volume(int fileno, float newvol, boolean make_backup);
 lives_result_t await_audio_queue(uint64_t nsec);
 
 typedef enum {
-	      RECA_MONITOR = 0,
-	      RECA_WINDOW_GRAB,
-	      RECA_DESKTOP_GRAB_INT,
-	      RECA_DESKTOP_GRAB_EXT,
-	      RECA_NEW_CLIP,
-	      RECA_EXISTING,
-	      RECA_EXTERNAL,
-	      RECA_GENERATED,
-	      RECA_MIXED
+  RECA_MONITOR = 0,
+  RECA_WINDOW_GRAB,
+  RECA_DESKTOP_GRAB_INT,
+  RECA_DESKTOP_GRAB_EXT,
+  RECA_NEW_CLIP,
+  RECA_EXISTING,
+  RECA_EXTERNAL,
+  RECA_GENERATED,
+  RECA_MIXED
 } lives_rec_audio_type_t;
 
 
@@ -569,7 +569,7 @@ lives_result_t audio_sync_ready(lives_obj_instance_t *aplayer);
 void freeze_unfreeze_audio(boolean is_frozen);
 
 lives_audio_track_state_t *get_audio_and_effects_state_at(weed_plant_t *event_list, weed_plant_t *st_event,
-							  weed_timecode_t fill_tc, int what_to_get, boolean exact, int *ntracks);
+    weed_timecode_t fill_tc, int what_to_get, boolean exact, int *ntracks);
 
 boolean get_audio_from_plugin(float **fbuffer, int nchans, int arate, int nsamps, boolean is_audio_thread);
 void reinit_audio_gen(void);
@@ -634,4 +634,40 @@ void show_aplayer_attribs(LiVESWidget *, void **player);
 
 lives_obj_instance_t *get_current_aplayer(void);
 
+#endif
+
+#if 0
+// TODO:
+enum weed_achan_pos_t {
+  WEED_CH_INVALID = -1,
+  WEED_CH_MONO,
+  WEED_CH_FRONT_LEFT,
+  WEED_CH_FRONT_RIGHT,
+  WEED_CH_FRONT_CENTER,
+  WEED_CH_LFE,
+  WEED_CH_BACK_LEFT,
+  WEED_CH_BACK_RIGHT,
+  WEED_CH_BACK_CENTER,
+  WEED_CH_FRONT_LEFT_OF_CENTER,
+  WEED_CH_FRONT_RIGHT_OF_CENTER,
+  WEED_CH_SIDE_LEFT,
+  WEED_CH_SIDE_RIGHT,
+  WEED_CH_TOP_CENTER,
+  WEED_CH_TOP_FRONT_LEFT,
+  WEED_CH_TOP_FRONT_RIGHT,
+  WEED_CH_TOP_FRONT_CENTER,
+  WEED_CH_TOP_BACK_LEFT,
+  WEED_CH_TOP_BACK_RIGHT,
+  WEED_CH_TOP_BACK_CENTER,
+  WEED_CH_STEREO_LEFT,
+  WEED_CH_STEREO_RIGHT,
+  WEED_CH_WIDE_LEFT,
+  WEED_CH_WIDE_RIGHT,
+  WEED_CH_SURROUND_DIRECT_LEFT,
+  WEED_CH_SURROUND_DIRECT_RIGHT,
+  WEED_CH_LFE2,
+  WEED_CH_AUX0,
+  // ...
+  WEED_CH_AUX31,
+}
 #endif

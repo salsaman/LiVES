@@ -7511,9 +7511,9 @@ _prefsw *create_prefs_dialog(LiVESWidget * saved_dialog) {
   ACTIVE(spinbutton_pmoni, VALUE_CHANGED);
 
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_gmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed), NULL);
+                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed), prefsw);
   lives_signal_sync_connect(LIVES_GUI_OBJECT(prefsw->spinbutton_pmoni), LIVES_WIDGET_VALUE_CHANGED_SIGNAL,
-                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed), NULL);
+                            LIVES_GUI_CALLBACK(pmoni_gmoni_changed), prefsw);
 
   ACTIVE(forcesmon, TOGGLED);
   ACTIVE(checkbutton_stream_audio, TOGGLED);

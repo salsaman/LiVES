@@ -1423,7 +1423,8 @@ void flush_cb_added_list(lives_proc_thread_t lpt, boolean all) {
         // funcinst level. 'all' is set when a proc_thread is freed
         if (all || RCPT_SHOULD_REMOVE(xrcpt->status)
             || lives_cb_receipt_get_nrefs(rcpt) == -1) {
-          lives_cb_receipt_remove_from_list(rcpt);
+          //
+          lives_cb_receipt_remove_from_list(rcpt, all ? TRUE : FALSE);
 	  // *INDENT-OFF*
 	}}}}
   // *INDENT-ON*
@@ -1840,9 +1841,8 @@ void  lives_cb_receipt_add_to_list(void *receipt) {
 }
 
 
-lives_result_t lives_cb_receipt_remove_from_list(void *receipt) {
+lives_result_t lives_cb_receipt_remove_from_list(void *receipt, boolean keep_persist) {
   // removes receipt from self cb_added_list
-  // - if rexeipt is expired we also free receipt
   //
   // the next time the hook is triggered (or when the owner is freed)
   // receipts not in a list will be expired and freed
@@ -1867,7 +1867,7 @@ lives_result_t lives_cb_receipt_remove_from_list(void *receipt) {
   pthread_mutex_lock(xmutex);
 
   // if the function is called directly, we force remove persistent cllbacks
-  xrcpt->status &= ~HOOK_CB_PERSISTENT;
+  if (!keep_persist) xrcpt->status &= ~HOOK_CB_PERSISTENT;
 
   lives_cb_receipt_set_in_list(receipt, FALSE);
 
@@ -2857,7 +2857,7 @@ lives_result_t _lives_obj_instance_trigger_hook_async(lives_obj_instance_t *obj,
 
 
 LIVES_GLOBAL_INLINE lives_result_t lives_hook_cb_invalidate(void *rcpt) {
-  return lives_cb_receipt_remove_from_list(rcpt);
+  return lives_cb_receipt_remove_from_list(rcpt, FALSE);
 }
 
 

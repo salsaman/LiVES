@@ -8231,8 +8231,6 @@ lives_result_t run_next_cycle(void) {
         if (mainw->layers[i] != mainw->frame_layer && mainw->layers[i] != get_old_frame_layer()
             && mainw->layers[i] != mainw->cached_frame && mainw->layers[i] != mainw->ext_player_layer
             && mainw->layers[i] != mainw->frame_layer_preload) {
-          /* weed_layer_set_invalid(mainw->layers[i], TRUE); */
-          /* weed_layer_pixel_data_free(mainw->layers[i]); */
           weed_layer_unref(mainw->layers[i]);
         }
         mainw->layers[i] = NULL;
@@ -8351,15 +8349,11 @@ void rebuild_nodemodel(void) {
 
       planrunner_lock();
       mainw->refresh_model = 0;
-      //mainw->frame_layer = NULL;
-      g_print("rsofl\n");
       reset_old_frame_layer();
       reset_ext_player_layer(FALSE);
-      g_print("rsofl done\n");
       mainw->nodemodel = mainw->qnodemodels[prefs->pb_quality - 1];
       mainw->exec_plan = mainw->qexec_plans[prefs->pb_quality - 1];
       align_with_model(mainw->nodemodel);
-      //mainw->layers = map_sources_to_tracks(FALSE, FALSE);
       ///goto ready;
       planrunner_unlock();
       return;

@@ -370,7 +370,7 @@ LIVES_GLOBAL_INLINE weed_seed_t lives_attr_get_value_type(lives_obj_attr_t *attr
 
 LIVES_GLOBAL_INLINE int lives_attr_grp_get_nattrs(lives_index_t *attrgrp) {
   return attrgrp ? weed_refcount_query(attrgrp) : 0;
-} 
+}
 
 ///
 
@@ -460,7 +460,7 @@ size_t weigh_object(lives_obj_instance_t *obj) {
   lives_index_t *attr_grp = lives_obj_instance_get_attr_group(obj);
   size_t tot = weed_plant_weigh(obj);
   const char *key;
-  weed_plant_t * val;
+  weed_plant_t *val;
   LIVES_INDEX_FOREACH(attr_grp, key, val, tot += weed_plant_weigh(val););
   return tot;
 }
@@ -530,50 +530,50 @@ char *lives_obj_instance_dump_attributes(lives_obj_t *obj) {
   out = lives_strdup_concat_sep(out, NULL, "%s with UID 0X%016lX ", thing, uid);
   if (attr_grp) {
     const char *key;
-    lives_attribute_t * attr;
+    lives_attribute_t *attr;
     tmp = lives_strdup_printf("%s the following %s:", out, what);
     lives_free(out);
     out = tmp;
 
     LIVES_INDEX_FOREACH(attr_grp, key, attr,
-      const char *notes, *obs;
-      char *valstr = NULL;
-      weed_size_t ne = weed_leaf_num_elements(attr, WEED_LEAF_VALUE);
-      const char *pname = weed_get_const_string_value(attr, WEED_LEAF_NAME, NULL);
-      uint32_t st = weed_leaf_seed_type(attr, WEED_LEAF_VALUE);
-      if (ne) {
-        if (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) & PARAM_FLAG_READONLY)
-          notes = " (readonly)";
-        else notes = "";
-        obs = "";
-      } else {
-        obs = "value undefined";
-        notes = "";
-      }
-      if (st == WEED_SEED_INT && ne == 1) {
-        int ival = lives_attribute_get_value_int(attr);
-        valstr = lives_strdup_printf("%d", ival);
-        /* if (!strcmp(pname, WEED_LEAF_TYPE)) type = ival; */
-        /* if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = ival; */
-      }
-      if (st == WEED_SEED_INT64 && ne == 1) {
-        int64_t i64val = lives_attribute_get_value_int64(attr);
-        valstr = lives_strdup_printf("%ld", i64val);
-	//        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = i64val;
-      }
+                        const char *notes, *obs;
+                        char *valstr = NULL;
+                        weed_size_t ne = weed_leaf_num_elements(attr, WEED_LEAF_VALUE);
+                        const char *pname = weed_get_const_string_value(attr, WEED_LEAF_NAME, NULL);
+                        uint32_t st = weed_leaf_seed_type(attr, WEED_LEAF_VALUE);
+    if (ne) {
+    if (weed_get_int_value(attr, WEED_LEAF_FLAGS, NULL) & PARAM_FLAG_READONLY)
+        notes = " (readonly)";
+      else notes = "";
+      obs = "";
+    } else {
+      obs = "value undefined";
+      notes = "";
+    }
+    if (st == WEED_SEED_INT && ne == 1) {
+    int ival = lives_attribute_get_value_int(attr);
+      valstr = lives_strdup_printf("%d", ival);
+      /* if (!strcmp(pname, WEED_LEAF_TYPE)) type = ival; */
+      /* if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = ival; */
+    }
+    if (st == WEED_SEED_INT64 && ne == 1) {
+    int64_t i64val = lives_attribute_get_value_int64(attr);
+      valstr = lives_strdup_printf("%ld", i64val);
+      //        if (!strcmp(pname, LIVES_LEAF_SUBTYPE)) subtype = i64val;
+    }
 
-      out = lives_strdup_concat_sep(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
-                                    weed_seed_to_ctype(weed_leaf_seed_type(attr,
-                                        WEED_LEAF_VALUE), FALSE), obs, valstr);
-      if (valstr) lives_free(valstr);
-			//if (type) {
-        /* char *ptyp = ptype_to_string(type); */
-        /* if (ptyp) { */
-        /*   out = lives_strdup_concat_sep(out, NULL, "Plant type identifed as %s\n", prtyp); */
-        /*   lives_free(ptyp); */
-        /* } */
-			//      }
-			);
+    out = lives_strdup_concat_sep(out, NULL, "\n%s%s (%s)%s%s", pname, notes,
+                                  weed_seed_to_ctype(weed_leaf_seed_type(attr,
+                                      WEED_LEAF_VALUE), FALSE), obs, valstr);
+          if (valstr) lives_free(valstr);
+          //if (type) {
+          /* char *ptyp = ptype_to_string(type); */
+          /* if (ptyp) { */
+          /*   out = lives_strdup_concat_sep(out, NULL, "Plant type identifed as %s\n", prtyp); */
+          /*   lives_free(ptyp); */
+          /* } */
+          //      }
+                       );
   } else {
     tmp = lives_strdup_printf("%s no attributes", out);
     lives_free(out);

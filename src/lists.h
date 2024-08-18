@@ -33,7 +33,7 @@ typedef struct {
 // sync_list is a variety of double ended priotity queue; a rwlock ensures data consistency
 // can be created by pushing to a NULL sync_list. New values are always pushed to head,
 // unles push_tail() is used.
-// In LIFO mode (default) we pop / peek from head. If mode is set to LILO then we pop from tail. 
+// In LIFO mode (default) we pop / peek from head. If mode is set to LILO then we pop from tail.
 // by default, when the last value is popped or removed, the sync_list is freed, and NULL is returned
 
 void lives_sync_list_dump(lives_sync_list_t *);
@@ -167,7 +167,7 @@ boolean lives_list_check_remove_data(LiVESList **, livespointer data, boolean fr
 
 //////
 
-///// idx (deprecated -use lives_index_t) 
+///// idx (deprecated -use lives_index_t)
 
 // idx_list pairs data with an order value. Values can be unique or multi
 // default order is DESCENDING
@@ -184,7 +184,7 @@ LiVESList *idx_list_update(LiVESList *, int64_t idx, void *data, boolean allow_m
 LiVESList *idx_list_remove(LiVESList *, int idx, boolean free_data);
 boolean idx_list_get_data(LiVESList *, int idx, void **val_locn);
 
-///// hash stores (deprecated -use lives_index_t) 
+///// hash stores (deprecated -use lives_index_t)
 
 #ifndef LIVES_LEAF_ID
 #define LIVES_LEAF_ID "identifier"

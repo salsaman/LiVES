@@ -722,9 +722,11 @@ void add_quick_fn(lives_funcptr_t func, lives_funcdef_t *fdef) {
 
 
 const char *get_funcname(lives_funcptr_t func) {
-  return NULL;
-  if (!fn_looker) return NULL;
-  lives_funcdef_t *fdef = (lives_funcdef_t *)get_from_hash_store_i(fn_looker, (uint64_t)func);
+  lives_funcdef_t *fdef = NULL;
+  char *namei = LSPF("%p", func);
+  allvalues_t *avp = find_in_lookup_table(fn_looker, namei);
+  lives_free(namei);
+  if (avp) fdef = (lives_funcdef_t *)avp->values.V[0];
   return fdef ? fdef->funcname : NULL;
 }
 

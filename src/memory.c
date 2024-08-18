@@ -2081,7 +2081,7 @@ livespointer lives_orc_memcpy(livespointer dest, livesconstpointer src, size_t n
   /// however, it is a simple matter to adjust the cost calculation
 
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
-    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 2);
+    if (!tuned && !tuner) tuner = lives_plant_new_with_serialno(LIVES_PLANT_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         haslock = TRUE;
@@ -2145,7 +2145,7 @@ livespointer lives_oil_memcpy(livespointer dest, livesconstpointer src, size_t n
 
 #if AUTOTUNE_MALLOC_SIZES
   if (!mainw->multitrack && !LIVES_IS_PLAYING) {
-    if (!tuned && !tuner) tuner = lives_plant_new_with_index(LIVES_PLANT_TUNABLE, 2);
+    if (!tuned && !tuner) tuner = lives_plant_new_with_serialno(LIVES_PLANT_TUNABLE, 2);
     if (tuner) {
       if (!pthread_mutex_trylock(&tuner_mutex)) {
         haslock = TRUE;
